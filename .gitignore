@@ -1,0 +1,30 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.realm
+
+# If using Room, exclude the database location
+app/src/main/assets/databases/
+app/databases/
+
+# If storing in internal storage paths
+/data/data/*/databases/
