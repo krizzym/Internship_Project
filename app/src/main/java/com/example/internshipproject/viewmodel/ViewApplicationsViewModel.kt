@@ -30,22 +30,53 @@ class ViewApplicationsViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            // Load posting details
-            repository.getInternshipById(postingId).onSuccess { posting ->
-                _state.value = _state.value.copy(posting = posting)
-            }
+            try {
+                // ✅ DEBUG: Log what we're loading
+                println("🔍 ViewApplicationsViewModel: Loading data for posting: $postingId")
 
-            // Load applications
-            repository.getApplicationsByPosting(postingId).onSuccess { applications ->
-                _state.value = _state.value.copy(applications = applications)
-            }
+                // Load posting details
+                repository.getInternshipById(postingId).onSuccess { posting ->
+                    println("✅ Posting loaded: ${posting?.title}")
+                    _state.value = _state.value.copy(posting = posting)
+                }.onFailure { e ->
+                    println("❌ Failed to load posting: ${e.message}")
+                }
 
-            // Load status counts
-            val statusCounts = repository.getApplicationStatusCounts(postingId)
-            _state.value = _state.value.copy(
-                statusCounts = statusCounts,
-                isLoading = false
-            )
+                // Load applications
+                repository.getApplicationsByPosting(postingId).onSuccess { applications ->
+                    println("✅ Applications loaded: ${applications.size} applications")
+                    applications.forEachIndexed { index, app ->
+                        println("   [$index] ${app.studentEmail} - ${app.status}")
+                    }
+                    _state.value = _state.value.copy(applications = applications)
+                }.onFailure { e ->
+                    println("❌ Failed to load applications: ${e.message}")
+                    _state.value = _state.value.copy(errorMessage = "Failed to load applications: ${e.message}")
+                }
+
+                // Load status counts
+                val statusCounts = repository.getApplicationStatusCounts(postingId)
+                println("✅ Status counts loaded: $statusCounts")
+
+                _state.value = _state.value.copy(
+                    statusCounts = statusCounts,
+                    isLoading = false
+                )
+
+                // ✅ DEBUG: Final state check
+                println("🎯 Final state:")
+                println("   Posting: ${_state.value.posting?.title}")
+                println("   Applications: ${_state.value.applications.size}")
+                println("   Status counts: ${_state.value.statusCounts}")
+
+            } catch (e: Exception) {
+                println("❌ EXCEPTION in loadData: ${e.message}")
+                e.printStackTrace()
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    errorMessage = "Error loading data: ${e.message}"
+                )
+            }
         }
     }
 

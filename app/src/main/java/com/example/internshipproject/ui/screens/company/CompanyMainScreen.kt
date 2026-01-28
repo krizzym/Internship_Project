@@ -8,6 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.example.internshipproject.navigation.Screen
 import com.example.internshipproject.ui.screens.company.CompanyApplicationsScreen
 import com.example.internshipproject.ui.screens.company.CompanyDashboardScreen
 import com.example.internshipproject.ui.screens.company.CompanyMyPostingsScreen
@@ -17,6 +19,7 @@ import com.example.internshipproject.ui.theme.PurpleButton
 @Composable
 fun CompanyMainScreen(
     userId: String,
+    navController: NavHostController,
     onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
@@ -101,7 +104,8 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                navigationState = NavigationState.EditPosting(postingId)
+                                // ✅ FIXED: Use NavGraph navigation instead of internal state
+                                navController.navigate(Screen.EditInternship.createRoute(postingId))
                             },
                             onReviewApplication = { applicationId ->
                                 navigationState = NavigationState.ReviewApplication(applicationId)
@@ -114,7 +118,8 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                navigationState = NavigationState.EditPosting(postingId)
+                                // ✅ FIXED: Use NavGraph navigation instead of internal state
+                                navController.navigate(Screen.EditInternship.createRoute(postingId))
                             }
                         )
                         2 -> CompanyApplicationsScreen(
@@ -136,8 +141,8 @@ fun CompanyMainScreen(
                     )
                 }
                 is NavigationState.EditPosting -> {
-                    // TODO: Create EditPostingScreen
-                    // For now, just go back
+                    // ✅ NOTE: This state is no longer used since we navigate via NavGraph
+                    // Keeping it here for backward compatibility
                     LaunchedEffect(Unit) {
                         navigationState = NavigationState.Tab(selectedTab)
                     }
@@ -157,6 +162,6 @@ fun CompanyMainScreen(
 sealed class NavigationState {
     data class Tab(val index: Int) : NavigationState()
     data class ViewApplications(val postingId: String) : NavigationState()
-    data class EditPosting(val postingId: String) : NavigationState()
+    data class EditPosting(val postingId: String) : NavigationState()  // ✅ Kept for compatibility
     data class ReviewApplication(val applicationId: String) : NavigationState()
 }

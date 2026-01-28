@@ -17,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-// ❌ REMOVED: import androidx.navigation.NavController
 import com.example.internshipproject.data.model.Internship
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.CompanyPostingsViewModel
@@ -27,10 +26,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun CompanyMyPostingsScreen(
     userId: String,
-    // ❌ REMOVED: navController: NavController,
     onLogout: () -> Unit,
     onViewApplications: (String) -> Unit = {},
-    onEditPosting: (String) -> Unit = {},  // ✅ ADDED: This parameter
+    onEditPosting: (String) -> Unit = {},
     viewModel: CompanyPostingsViewModel = viewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -161,12 +159,15 @@ fun CompanyMyPostingsScreen(
                                     posting = posting,
                                     applicationCount = viewModel.getApplicationCount(posting.id),
                                     onViewApplications = { onViewApplications(posting.id) },
-                                    onEdit = {
-                                        // ✅ FIXED: Use callback instead of navController
-                                        onEditPosting(posting.id)
-                                    },
+                                    onEdit = { onEditPosting(posting.id) },
                                     onClose = {
                                         viewModel.closePosting(posting.id) {
+                                            viewModel.loadPostings(userId)
+                                        }
+                                    },
+                                    onReopen = {
+                                        // ✅ NEW: Reopen callback
+                                        viewModel.reopenPosting(posting.id) {
                                             viewModel.loadPostings(userId)
                                         }
                                     },
@@ -194,8 +195,59 @@ fun CompanyPostingCard(
     onViewApplications: () -> Unit,
     onEdit: () -> Unit,
     onClose: () -> Unit,
+    onReopen: () -> Unit,  // ✅ NEW: Reopen parameter
     onDelete: () -> Unit
 ) {
+    // ✅ NEW: State for confirmation dialogs
+    var showCloseDialog by remember { mutableStateOf(false) }
+    var showReopenDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // ✅ NEW: Close Confirmation Dialog
+    if (showCloseDialog) {
+        ConfirmationDialog(
+            title = "Close Posting",
+            message = "Are you sure you want to close this posting? Applications will no longer be accepted.",
+            confirmText = "Close",
+            confirmColor = Color(0xFFF59E0B),
+            onConfirm = {
+                onClose()
+                showCloseDialog = false
+            },
+            onDismiss = { showCloseDialog = false }
+        )
+    }
+
+    // ✅ NEW: Reopen Confirmation Dialog
+    if (showReopenDialog) {
+        ConfirmationDialog(
+            title = "Reopen Posting",
+            message = "Are you sure you want to reopen this posting? It will become active again and accept new applications.",
+            confirmText = "Reopen",
+            confirmColor = Color(0xFF10B981),
+            onConfirm = {
+                onReopen()
+                showReopenDialog = false
+            },
+            onDismiss = { showReopenDialog = false }
+        )
+    }
+
+    // ✅ NEW: Delete Confirmation Dialog
+    if (showDeleteDialog) {
+        ConfirmationDialog(
+            title = "Delete Posting",
+            message = "Are you sure you want to delete this posting? This action cannot be undone.",
+            confirmText = "Delete",
+            confirmColor = Color(0xFFEF4444),
+            onConfirm = {
+                onDelete()
+                showDeleteDialog = false
+            },
+            onDismiss = { showDeleteDialog = false }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -446,38 +498,60 @@ fun CompanyPostingCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Close Button
-                OutlinedButton(
-                    onClick = onClose,
-                    modifier = Modifier.weight(1f),
-                    enabled = posting.isActive,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFFF59E0B),
-                        disabledContentColor = Color.Gray
-                    ),
-                    border = BorderStroke(
-                        1.dp,
-                        if (posting.isActive) Color(0xFFF59E0B) else Color.Gray
-                    ),
-                    contentPadding = PaddingValues(vertical = 10.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Block,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Close",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                // ✅ UPDATED: Dynamic Close/Reopen Button
+                if (posting.isActive) {
+                    // Close Button (when active)
+                    OutlinedButton(
+                        onClick = { showCloseDialog = true },  // ✅ Show dialog instead of direct action
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFF59E0B)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFFF59E0B)),
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Block,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Close",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    // ✅ NEW: Reopen Button (when closed)
+                    OutlinedButton(
+                        onClick = { showReopenDialog = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF10B981)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFF10B981)),
+                        contentPadding = PaddingValues(vertical = 10.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Reopen",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
                 // Delete Button
                 OutlinedButton(
-                    onClick = onDelete,
+                    onClick = { showDeleteDialog = true },  // ✅ Show dialog instead of direct action
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -501,4 +575,63 @@ fun CompanyPostingCard(
             }
         }
     }
+}
+
+// ✅ NEW: Reusable Confirmation Dialog Component
+@Composable
+fun ConfirmationDialog(
+    title: String,
+    message: String,
+    confirmText: String,
+    confirmColor: Color,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.Warning,
+                contentDescription = null,
+                tint = confirmColor,
+                modifier = Modifier.size(32.dp)
+            )
+        },
+        title = {
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        },
+        text = {
+            Text(
+                text = message,
+                fontSize = 14.sp,
+                color = TextSecondary
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = confirmColor
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(confirmText, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, Color.Gray)
+            ) {
+                Text("Cancel", color = TextSecondary)
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = CardWhite
+    )
 }

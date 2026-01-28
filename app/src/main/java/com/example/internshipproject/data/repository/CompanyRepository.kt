@@ -77,13 +77,13 @@ class CompanyRepository {
     }
 
     // ============================================
-    // INTERNSHIP POSTINGS (FIXED)
+    // INTERNSHIP POSTINGS
     // ============================================
 
     suspend fun createInternship(userId: String, internship: Internship): Result<String> {
         return try {
             val internshipData = hashMapOf(
-                "companyId" to userId, // ✅ Store userId for filtering
+                "companyId" to userId,
                 "title" to internship.title,
                 "companyName" to internship.companyName,
                 "companyLogo" to (internship.companyLogo ?: ""),
@@ -114,7 +114,7 @@ class CompanyRepository {
     }
 
     /**
-     * ✅ UPDATED: This method accepts an Internship object (for backward compatibility)
+     * Update internship - Accepts Internship object
      */
     suspend fun updateInternship(postingId: String, internship: Internship): Result<Unit> {
         return try {
@@ -148,7 +148,7 @@ class CompanyRepository {
     }
 
     /**
-     * ✅ NEW: This method accepts a Map<String, Any> for flexible updates (for Edit Screen)
+     * Update internship - Accepts Map for flexible updates
      */
     suspend fun updateInternship(internshipId: String, updateData: Map<String, Any>): Result<Unit> {
         return try {
@@ -181,7 +181,7 @@ class CompanyRepository {
     }
 
     /**
-     * ✅ REAL-TIME: Get company internships with Flow
+     * Get company internships with real-time updates (Flow)
      */
     fun getCompanyInternshipsFlow(companyId: String): Flow<List<Internship>> = callbackFlow {
         val listener = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -228,7 +228,7 @@ class CompanyRepository {
     }
 
     /**
-     * Backward compatibility: suspend function version
+     * Get company internships (suspend function version)
      */
     suspend fun getCompanyInternships(companyId: String): Result<List<Internship>> {
         return try {
@@ -268,7 +268,7 @@ class CompanyRepository {
     }
 
     /**
-     * ✅ Get internship by ID - Returns Result<Internship>
+     * Get internship by ID
      */
     suspend fun getInternshipById(postingId: String): Result<Internship> {
         return try {
@@ -305,16 +305,25 @@ class CompanyRepository {
     }
 
     // ============================================
-    // APPLICATIONS (Unchanged)
+    // APPLICATIONS - FIXED
     // ============================================
 
+    /**
+     * ✅ FIXED: Get applications for a posting
+     * Removed .orderBy() that was causing query to fail
+     */
     suspend fun getApplicationsByPosting(postingId: String): Result<List<Application>> {
         return try {
+            Log.d("CompanyRepo", "Querying applications for posting: $postingId")
+
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .whereEqualTo("internshipId", postingId)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+                // ✅ REMOVED: .orderBy("createdAt", Query.Direction.DESCENDING)
+                // This was causing the query to fail when createdAt field doesn't exist
                 .get()
                 .await()
+
+            Log.d("CompanyRepo", "Found ${snapshot.documents.size} application documents")
 
             val applications = snapshot.documents.mapNotNull { doc ->
                 try {
@@ -331,15 +340,25 @@ class CompanyRepository {
                         appliedDate = doc.getString("appliedDate") ?: ""
                     )
                 } catch (e: Exception) {
+                    Log.e("CompanyRepo", "Error mapping application: ${e.message}")
                     null
                 }
             }
-            Result.success(applications)
+
+            // ✅ Sort in memory instead of in query
+            val sortedApps = applications.sortedByDescending { it.appliedDate }
+
+            Log.d("CompanyRepo", "Successfully mapped ${sortedApps.size} applications")
+            Result.success(sortedApps)
         } catch (e: Exception) {
+            Log.e("CompanyRepo", "Error getting applications: ${e.message}")
             Result.failure(e)
         }
     }
 
+    /**
+     * Get all applications for all of a company's postings
+     */
     suspend fun getAllCompanyApplications(companyId: String): Result<List<Application>> {
         return try {
             val internshipsSnapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -388,6 +407,9 @@ class CompanyRepository {
         }
     }
 
+    /**
+     * Get application by ID
+     */
     suspend fun getApplicationById(applicationId: String): Result<Application> {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -417,6 +439,9 @@ class CompanyRepository {
         }
     }
 
+    /**
+     * Update application status
+     */
     suspend fun updateApplicationStatus(
         applicationId: String,
         status: ApplicationStatus
@@ -437,6 +462,9 @@ class CompanyRepository {
         }
     }
 
+    /**
+     * Get application count for a posting
+     */
     suspend fun getApplicationCountForPosting(postingId: String): Result<Int> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -449,6 +477,9 @@ class CompanyRepository {
         }
     }
 
+    /**
+     * Get application status counts for a posting
+     */
     suspend fun getApplicationStatusCounts(postingId: String): Map<ApplicationStatus, Int> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)

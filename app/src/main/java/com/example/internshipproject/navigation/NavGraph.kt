@@ -411,10 +411,6 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
-        // ============================================
-        // COMPANY ROUTES
-        // ============================================
-
         composable(
             route = Screen.CompanyMain.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
@@ -422,6 +418,7 @@ fun NavGraph(navController: NavHostController) {
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             CompanyMainScreen(
                 userId = userId,
+                navController = navController,
                 onLogout = {
                     FirebaseManager.signOut()
                     navController.navigate(Screen.Join.route) {
@@ -430,10 +427,6 @@ fun NavGraph(navController: NavHostController) {
                 }
             )
         }
-
-        // ============================================
-        // EDIT INTERNSHIP ROUTE
-        // ============================================
 
         composable(
             route = Screen.EditInternship.route,

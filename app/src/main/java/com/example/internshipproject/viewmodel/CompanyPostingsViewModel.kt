@@ -56,6 +56,17 @@ class CompanyPostingsViewModel(
         }
     }
 
+    // ✅ NEW: Reopen functionality
+    fun reopenPosting(postingId: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val posting = _state.value.postings.find { it.id == postingId } ?: return@launch
+            repository.updateInternship(postingId, posting.copy(isActive = true))
+                .onSuccess {
+                    onComplete()
+                }
+        }
+    }
+
     fun deletePosting(postingId: String, onComplete: () -> Unit) {
         viewModelScope.launch {
             repository.deleteInternship(postingId).onSuccess {
