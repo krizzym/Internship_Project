@@ -1,3 +1,4 @@
+// CompanyDashboardScreen.kt - UPDATED: Removed Recent Applications + Fixed Spacing
 package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.background
@@ -18,8 +19,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.internshipproject.data.model.Application
-import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.Internship
 import com.example.internshipproject.ui.company.StatCard
 import com.example.internshipproject.ui.theme.*
@@ -93,7 +92,7 @@ fun CompanyDashboardScreen(
                     ) {
                         Column(modifier = Modifier.padding(24.dp)) {
                             Text(
-                                "Welcome, ${state.company?.companyName ?: "Company"}! ",
+                                "Welcome, ${state.company?.companyName ?: "Company"}! 👋",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
@@ -145,7 +144,7 @@ fun CompanyDashboardScreen(
                     }
                 }
 
-                // Your Internship Postings Section
+                // Your Internship Postings Section (Only Section Now)
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -201,60 +200,10 @@ fun CompanyDashboardScreen(
                     }
                 }
 
-                // Recent Applications Section
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardWhite),
-                        elevation = CardDefaults.cardElevation(2.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            Text(
-                                "Recent Applications",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
+                // ✅ REMOVED: Recent Applications Section
 
-                            if (viewModel.getRecentApplications().isEmpty()) {
-                                // Empty State
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 32.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text("📧", fontSize = 48.sp)
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        "No applications yet",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = TextPrimary
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        "Applications from students will appear here",
-                                        fontSize = 14.sp,
-                                        color = TextSecondary
-                                    )
-                                }
-                            } else {
-                                viewModel.getRecentApplications().forEach { application ->
-                                    ImprovedApplicationCard(
-                                        application = application,
-                                        onReview = { onReviewApplication(application.id) }
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                // Bottom padding for better scrolling (reduced from 16dp)
+                item { Spacer(modifier = Modifier.height(8.dp)) }
             }
         }
     }
@@ -421,127 +370,6 @@ fun ImprovedPostingCard(
                 ) {
                     Text("View", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun ImprovedApplicationCard(
-    application: Application,
-    onReview: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = application.studentEmail.substringBefore("@"),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.School,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            application.studentEmail,
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Status Badge
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = when (application.status) {
-                        ApplicationStatus.PENDING -> Color(0xFFF59E0B)
-                        ApplicationStatus.REVIEWED -> Color(0xFF3B82F6)
-                        ApplicationStatus.SHORTLISTED -> Color(0xFF8B5CF6)
-                        ApplicationStatus.ACCEPTED -> Color(0xFF10B981)
-                        ApplicationStatus.REJECTED -> Color(0xFFEF4444)
-                    }
-                ) {
-                    Text(
-                        text = application.status.name.lowercase()
-                            .replaceFirstChar { it.uppercase() },
-                        fontSize = 11.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Applied For
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.Work,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = TextSecondary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    "Applied for: ${application.internshipTitle}",
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Applied Date
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.CalendarToday,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = TextSecondary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    application.appliedDate,
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.2f))
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Action Button
-            Button(
-                onClick = onReview,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                Text("Review Application", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

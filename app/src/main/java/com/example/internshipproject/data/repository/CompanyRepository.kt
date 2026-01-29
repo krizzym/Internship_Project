@@ -7,6 +7,7 @@ import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.Company
 import com.example.internshipproject.data.model.Internship
+import com.example.internshipproject.data.model.StudentProfile
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
@@ -305,12 +306,11 @@ class CompanyRepository {
     }
 
     // ============================================
-    // APPLICATIONS - FIXED
+    // APPLICATIONS
     // ============================================
 
     /**
-     * ✅ FIXED: Get applications for a posting
-     * Removed .orderBy() that was causing query to fail
+     * Get applications for a posting
      */
     suspend fun getApplicationsByPosting(postingId: String): Result<List<Application>> {
         return try {
@@ -318,8 +318,6 @@ class CompanyRepository {
 
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .whereEqualTo("internshipId", postingId)
-                // ✅ REMOVED: .orderBy("createdAt", Query.Direction.DESCENDING)
-                // This was causing the query to fail when createdAt field doesn't exist
                 .get()
                 .await()
 
@@ -334,6 +332,10 @@ class CompanyRepository {
                         companyName = doc.getString("companyName") ?: "",
                         studentEmail = doc.getString("studentEmail") ?: "",
                         coverLetter = doc.getString("coverLetter") ?: "",
+                        resumeBase64 = doc.getString("resumeBase64"),
+                        resumeFileName = doc.getString("resumeFileName"),
+                        resumeSize = doc.getLong("resumeSize"),
+                        resumeMimeType = doc.getString("resumeMimeType"),
                         status = ApplicationStatus.valueOf(
                             doc.getString("status") ?: ApplicationStatus.PENDING.name
                         ),
@@ -345,7 +347,6 @@ class CompanyRepository {
                 }
             }
 
-            // ✅ Sort in memory instead of in query
             val sortedApps = applications.sortedByDescending { it.appliedDate }
 
             Log.d("CompanyRepo", "Successfully mapped ${sortedApps.size} applications")
@@ -389,6 +390,10 @@ class CompanyRepository {
                             companyName = doc.getString("companyName") ?: "",
                             studentEmail = doc.getString("studentEmail") ?: "",
                             coverLetter = doc.getString("coverLetter") ?: "",
+                            resumeBase64 = doc.getString("resumeBase64"),
+                            resumeFileName = doc.getString("resumeFileName"),
+                            resumeSize = doc.getLong("resumeSize"),
+                            resumeMimeType = doc.getString("resumeMimeType"),
                             status = ApplicationStatus.valueOf(
                                 doc.getString("status") ?: ApplicationStatus.PENDING.name
                             ),
@@ -425,6 +430,10 @@ class CompanyRepository {
                     companyName = doc.getString("companyName") ?: "",
                     studentEmail = doc.getString("studentEmail") ?: "",
                     coverLetter = doc.getString("coverLetter") ?: "",
+                    resumeBase64 = doc.getString("resumeBase64"),
+                    resumeFileName = doc.getString("resumeFileName"),
+                    resumeSize = doc.getLong("resumeSize"),
+                    resumeMimeType = doc.getString("resumeMimeType"),
                     status = ApplicationStatus.valueOf(
                         doc.getString("status") ?: ApplicationStatus.PENDING.name
                     ),
@@ -504,6 +513,51 @@ class CompanyRepository {
             counts
         } catch (e: Exception) {
             ApplicationStatus.values().associateWith { 0 }
+        }
+    }
+
+    // ============================================
+    // STUDENT PROFILE - NEW
+    // ============================================
+
+    /**
+     * Get student profile by email
+     */
+    suspend fun getStudentProfileByEmail(email: String): Result<StudentProfile> {
+        return try {
+            Log.d("CompanyRepo", "Fetching student profile for: $email")
+
+            val snapshot = firestore.collection(FirebaseManager.Collections.STUDENTS)
+                .whereEqualTo("email", email)
+                .limit(1)
+                .get()
+                .await()
+
+            if (snapshot.documents.isNotEmpty()) {
+                val doc = snapshot.documents[0]
+                val profile = StudentProfile(
+                    firstName = doc.getString("firstName") ?: "",
+                    middleName = doc.getString("middleName") ?: "",
+                    surname = doc.getString("lastName") ?: "",
+                    email = doc.getString("email") ?: "",
+                    school = doc.getString("school") ?: "",
+                    course = doc.getString("course") ?: "",
+                    yearLevel = doc.getString("yearLevel") ?: "",
+                    city = doc.getString("city") ?: "",
+                    barangay = doc.getString("barangay") ?: "",
+                    internshipTypes = listOf(doc.getString("internshipTypes") ?: ""),
+                    skills = doc.getString("skills") ?: "",
+                    resumeUri = doc.getString("resumeUri")
+                )
+                Log.d("CompanyRepo", "Student profile found: ${profile.firstName} ${profile.surname}")
+                Result.success(profile)
+            } else {
+                Log.w("CompanyRepo", "Student profile not found for: $email")
+                Result.failure(Exception("Student profile not found"))
+            }
+        } catch (e: Exception) {
+            Log.e("CompanyRepo", "Error fetching student profile: ${e.message}")
+            Result.failure(e)
         }
     }
 }

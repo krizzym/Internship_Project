@@ -1,3 +1,4 @@
+// StudentRegistrationViewModel
 package com.example.internshipproject.viewmodel
 
 import android.net.Uri
@@ -114,11 +115,6 @@ class StudentRegistrationViewModel(
     fun updateSkills(value: String) {
         _state.value = _state.value.copy(skills = value)
     }
-
-    fun updateResumeUri(uri: Uri?) {
-        _state.value = _state.value.copy(resumeUri = uri)
-    }
-
     fun toggleAgreement() {
         _state.value = _state.value.copy(agreedToTerms = !_state.value.agreedToTerms)
         validateField("terms")
@@ -267,7 +263,7 @@ class StudentRegistrationViewModel(
             barangay = currentState.barangay,
             internshipTypes = internshipTypes,
             skills = currentState.skills,
-            resumeUri = currentState.resumeUri?.toString()
+            resumeUri = null
         )
 
         viewModelScope.launch {

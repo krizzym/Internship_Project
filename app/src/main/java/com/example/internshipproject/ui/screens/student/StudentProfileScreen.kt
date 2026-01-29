@@ -1,8 +1,6 @@
+// StudentProfileScreen.kt - UPDATED: Removed Resume Section + Account Info Note
 package com.example.internshipproject.ui.screens.student
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -35,12 +33,6 @@ fun StudentProfileScreen(
     viewModel: StudentProfileViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-
-    val resumePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        viewModel.updateNewResumeUri(uri)
-    }
 
     LaunchedEffect(Unit) {
         viewModel.loadProfile(profile)
@@ -249,12 +241,35 @@ fun StudentProfileScreen(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     )
-                    Text(
-                        text = "Email cannot be changed",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // ✅ NEW: Account Information Note
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFFF3CD)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Color(0xFF856404),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Account information cannot be changed",
+                                fontSize = 13.sp,
+                                color = Color(0xFF856404)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -501,96 +516,7 @@ fun StudentProfileScreen(
                 }
             }
 
-            // Resume Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = CardWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    SectionTitle("Resume")
-
-                    // Display current resume with icon and filename
-                    if (state.resumeUri != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Description,
-                                contentDescription = "PDF Icon",
-                                tint = Color.Red,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = state.resumeUri.toString().substringAfterLast("/"),
-                                fontSize = 14.sp,
-                                color = TextPrimary,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = { /* TODO: Open/View resume */ },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF6C757D)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("View Resume", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    Text(
-                        text = "Upload New Resume (PDF)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    OutlinedButton(
-                        onClick = { resumePicker.launch("application/pdf") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = TextSecondary
-                        )
-                    ) {
-                        Text(
-                            text = if (state.newResumeUri != null) "File selected ✓" else "Choose File",
-                            fontSize = 14.sp
-                        )
-                    }
-
-                    Text(
-                        text = "Supported format: PDF | Maximum file size: 5MB",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    PrimaryButton(
-                        text = "Update Resume",
-                        onClick = { viewModel.updateResume() },
-                        isLoading = state.isUpdating,
-                        enabled = state.newResumeUri != null
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

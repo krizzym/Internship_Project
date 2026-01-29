@@ -1,3 +1,4 @@
+// InternshipRepository
 package com.example.internshipproject.data.repository
 
 import android.util.Log

@@ -1,3 +1,4 @@
+// StudentDashboardScreen
 package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background
@@ -172,7 +173,7 @@ fun StudentDashboardScreen(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "Welcome back, ${studentProfile.firstName}! 👋",
+                            text = "Welcome, ${studentProfile.firstName}! 👋",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary

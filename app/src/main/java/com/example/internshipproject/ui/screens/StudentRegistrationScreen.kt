@@ -1,8 +1,6 @@
+// StudentRegistrationScreen
 package com.example.internshipproject.ui.screens
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -27,6 +25,7 @@ import com.example.internshipproject.ui.components.*
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentRegistrationViewModel
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.icons.filled.Info
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,13 +39,6 @@ fun StudentRegistrationScreen(
 
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
-
-    val resumePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        viewModel.updateResumeUri(uri)
-    }
-
     var expandedCourse by remember { mutableStateOf(false) }
     var showOtherCourseInput by remember { mutableStateOf(false) }
 
@@ -271,7 +263,7 @@ fun StudentRegistrationScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     var expandedYearLevel by remember { mutableStateOf(false) }
-                    val yearLevels = listOf("2nd Year", "3rd Year", "4th Year", "5th Year")
+                    val yearLevels = listOf("4th Year", "5th Year")
 
                     ExposedDropdownMenuBox(
                         expanded = expandedYearLevel,
@@ -370,35 +362,6 @@ fun StudentRegistrationScreen(
                     if (state.errors.containsKey("internshipTypes")) {
                         Text(
                             text = state.errors["internshipTypes"] ?: "",
-                            color = Color.Red,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    SectionTitle("Resume / CV")
-
-                    Button(
-                        onClick = { resumePicker.launch("application/pdf") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
-                    ) {
-                        Text("Upload Resume (PDF)")
-                    }
-
-                    state.resumeUri?.let {
-                        Text(
-                            text = "Resume selected: ${it.path}",
-                            modifier = Modifier.padding(top = 8.dp),
-                            color = TextPrimary
-                        )
-                    }
-
-                    if (state.errors.containsKey("resume")) {
-                        Text(
-                            text = state.errors["resume"] ?: "",
                             color = Color.Red,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(start = 4.dp, top = 4.dp)

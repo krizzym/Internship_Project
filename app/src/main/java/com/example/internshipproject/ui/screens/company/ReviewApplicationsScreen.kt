@@ -1,3 +1,4 @@
+// ReviewApplicationsScreen.kt - COMPLETE with Student Profile Display
 package com.example.internshipproject.ui.company
 
 import androidx.compose.foundation.background
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,12 +27,13 @@ import com.example.internshipproject.viewmodel.ReviewApplicationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReviewApplicationScreen(
+fun ReviewApplicationsScreen(
     applicationId: String,
     onBack: () -> Unit,
     viewModel: ReviewApplicationViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(applicationId) {
         viewModel.loadApplication(applicationId)
@@ -93,7 +96,9 @@ fun ReviewApplicationScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = application.studentEmail.substringBefore("@"),
+                                    text = state.studentProfile?.let {
+                                        "${it.firstName} ${it.middleName} ${it.surname}".trim()
+                                    } ?: application.studentEmail.substringBefore("@"),
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
@@ -127,28 +132,110 @@ fun ReviewApplicationScreen(
                     }
                 }
 
-                // Contact Information
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite),
-                    elevation = CardDefaults.cardElevation(2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        SectionTitle("Contact Information")
+                // ✅ NEW: Student Account Information
+                state.studentProfile?.let { profile ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            SectionTitle("Student Information")
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Email,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = TextSecondary
+                            // Name
+                            InfoRow(
+                                icon = Icons.Default.Person,
+                                label = "Full Name",
+                                value = "${profile.firstName} ${profile.middleName} ${profile.surname}".trim()
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(application.studentEmail, fontSize = 14.sp, color = TextPrimary)
+
+                            // Email
+                            InfoRow(
+                                icon = Icons.Default.Email,
+                                label = "Email",
+                                value = profile.email
+                            )
+                        }
+                    }
+
+                    // Educational Information
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            SectionTitle("Educational Information")
+
+                            InfoRow(
+                                icon = Icons.Default.School,
+                                label = "School / University",
+                                value = profile.school
+                            )
+
+                            InfoRow(
+                                icon = Icons.Default.MenuBook,
+                                label = "Course / Program",
+                                value = profile.course
+                            )
+
+                            InfoRow(
+                                icon = Icons.Default.DateRange,
+                                label = "Year Level",
+                                value = profile.yearLevel
+                            )
+                        }
+                    }
+
+                    // Location
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            SectionTitle("Location")
+
+                            InfoRow(
+                                icon = Icons.Default.LocationOn,
+                                label = "City",
+                                value = profile.city
+                            )
+
+                            InfoRow(
+                                icon = Icons.Default.Place,
+                                label = "Barangay",
+                                value = profile.barangay
+                            )
+                        }
+                    }
+
+                    // Internship Preferences
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            SectionTitle("Internship Preferences")
+
+                            InfoRow(
+                                icon = Icons.Default.Work,
+                                label = "Preferred Types",
+                                value = profile.internshipTypes.toString()
+                            )
+
+                            if (profile.skills.isNotEmpty()) {
+                                InfoRow(
+                                    icon = Icons.Default.Build,
+                                    label = "Skills",
+                                    value = profile.skills
+                                )
+                            }
                         }
                     }
                 }
@@ -169,6 +256,103 @@ fun ReviewApplicationScreen(
                             color = TextSecondary,
                             lineHeight = 20.sp
                         )
+                    }
+                }
+
+                // ✅ NEW: Resume Section
+                if (application.hasResume) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            SectionTitle("Resume")
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Description,
+                                    contentDescription = null,
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = application.resumeFileName ?: "resume.pdf",
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = TextPrimary
+                                    )
+                                    Text(
+                                        text = "${(application.resumeSize ?: 0) / 1024} KB • PDF Document",
+                                        fontSize = 13.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = { viewModel.viewResume(context, application) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PurpleButton
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Default.Visibility, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("View", fontSize = 14.sp)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { viewModel.downloadResume(context, application) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Icon(Icons.Default.Download, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Download", fontSize = 14.sp)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFFF3CD)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Color(0xFF856404)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "No resume attached to this application",
+                                fontSize = 13.sp,
+                                color = Color(0xFF856404)
+                            )
+                        }
                     }
                 }
 
@@ -201,6 +385,7 @@ fun ReviewApplicationScreen(
                         }
                     }
                 }
+
                 // Update Application Status
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -213,7 +398,7 @@ fun ReviewApplicationScreen(
 
                         var expandedStatus by remember { mutableStateOf(false) }
                         val statuses =
-                            listOf("Pending", "Reviewed", "Shortlisted", "Accepted", "Rejected")
+                            listOf("PENDING", "REVIEWED", "SHORTLISTED", "ACCEPTED", "REJECTED")
 
                         Text(
                             text = "Status *",
@@ -245,7 +430,7 @@ fun ReviewApplicationScreen(
                             ) {
                                 statuses.forEach { status ->
                                     DropdownMenuItem(
-                                        text = { Text(status) },
+                                        text = { Text(status.lowercase().replaceFirstChar { it.uppercase() }) },
                                         onClick = {
                                             viewModel.updateSelectedStatus(status)
                                             expandedStatus = false
@@ -267,6 +452,41 @@ fun ReviewApplicationScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun InfoRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = TextSecondary
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Column {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                color = TextSecondary
+            )
+            Text(
+                text = value,
+                fontSize = 14.sp,
+                color = TextPrimary,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

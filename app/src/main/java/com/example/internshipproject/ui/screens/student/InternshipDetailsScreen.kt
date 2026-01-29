@@ -1,5 +1,9 @@
+// InternshipDetailsScreen.kt - UPDATED with Resume Upload
 package com.example.internshipproject.ui.screens.student
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -7,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,10 +28,21 @@ import com.example.internshipproject.ui.theme.*
 fun InternshipDetailsScreen(
     internship: Internship,
     onBackClick: () -> Unit,
-    onSubmitApplication: (String) -> Unit,
+    onSubmitApplication: (String, Uri?) -> Unit, // ✅ UPDATED: Now includes resume URI
     isSubmitting: Boolean = false
 ) {
     var coverLetter by remember { mutableStateOf("") }
+    var resumeUri by remember { mutableStateOf<Uri?>(null) } // ✅ NEW: Resume state
+    var showError by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    // ✅ NEW: Resume picker
+    val resumePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        resumeUri = uri
+        showError = false
+    }
 
     Scaffold(
         topBar = {
@@ -178,6 +194,7 @@ fun InternshipDetailsScreen(
                     // Application Section
                     SectionTitle("Apply for this Internship")
 
+                    // Cover Letter
                     Text(
                         text = "Cover Letter *",
                         fontSize = 14.sp,
@@ -203,26 +220,119 @@ fun InternshipDetailsScreen(
                         enabled = !isSubmitting
                     )
 
+                    // ✅ NEW: Resume Upload Section
                     Text(
-                        text = "Explain your interest and qualifications for this position",
+                        text = "Resume / CV *",
+                        fontSize = 14.sp,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    OutlinedButton(
+                        onClick = { resumePicker.launch("application/pdf") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = !isSubmitting,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (resumeUri != null) PurpleButton else Color.Gray
+                        )
+                    ) {
+                        Icon(
+                            if (resumeUri != null) Icons.Default.CheckCircle else Icons.Default.UploadFile,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (resumeUri != null) "Resume Selected ✓" else "Upload Resume (PDF)",
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    // Show selected file info
+                    if (resumeUri != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Description,
+                                contentDescription = null,
+                                tint = Color.Red,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = resumeUri?.lastPathSegment ?: "resume.pdf",
+                                fontSize = 13.sp,
+                                color = TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(onClick = { resumeUri = null }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "Supported format: PDF | Maximum size: 500KB",
                         fontSize = 12.sp,
                         color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp)
                     )
+
+                    // Show error if any
+                    if (showError) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = errorMessage,
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Submit Button
                     Button(
                         onClick = {
-                            if (coverLetter.isNotBlank()) {
-                                onSubmitApplication(coverLetter)
+                            when {
+                                coverLetter.isBlank() -> {
+                                    showError = true
+                                    errorMessage = "Please write a cover letter"
+                                }
+                                resumeUri == null -> {
+                                    showError = true
+                                    errorMessage = "Please upload your resume"
+                                }
+                                else -> {
+                                    showError = false
+                                    onSubmitApplication(coverLetter, resumeUri)
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
                         shape = RoundedCornerShape(8.dp),
-                        enabled = coverLetter.isNotBlank() && !isSubmitting
+                        enabled = !isSubmitting
                     ) {
                         if (isSubmitting) {
                             CircularProgressIndicator(

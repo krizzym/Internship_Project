@@ -4,6 +4,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -58,7 +59,10 @@ sealed class Screen(val route: String) {
 fun NavGraph(navController: NavHostController) {
     val authRepository = remember { AuthRepository() }
     val internshipRepository = remember { InternshipRepository() }
-    val applicationRepository = remember { ApplicationRepository() }
+
+    // ✅ UPDATED: Get context and pass to ApplicationRepository
+    val context = LocalContext.current
+    val applicationRepository = remember(context) { ApplicationRepository(context) }
 
     NavHost(
         navController = navController,
@@ -206,6 +210,9 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
+        // ============================================
+        // ✅ UPDATED: INTERNSHIP DETAILS WITH RESUME UPLOAD
+        // ============================================
         composable(
             route = Screen.InternshipDetails.route,
             arguments = listOf(navArgument("internshipId") { type = NavType.StringType })
@@ -263,7 +270,8 @@ fun NavGraph(navController: NavHostController) {
                     internship = internshipData,
                     onBackClick = { navController.popBackStack() },
                     isSubmitting = isSubmitting,
-                    onSubmitApplication = { coverLetter ->
+                    // ✅ UPDATED: Now receives both coverLetter and resumeUri
+                    onSubmitApplication = { coverLetter, resumeUri ->
                         isSubmitting = true
 
                         // Get current user info
@@ -284,13 +292,14 @@ fun NavGraph(navController: NavHostController) {
                                         return@withContext
                                     }
 
-                                    // Submit application
+                                    // ✅ UPDATED: Submit application with resume
                                     val result = applicationRepository.submitApplication(
                                         internshipId = internshipData.id,
                                         internshipTitle = internshipData.title,
                                         companyName = internshipData.companyName,
                                         studentEmail = studentEmail,
-                                        coverLetter = coverLetter
+                                        coverLetter = coverLetter,
+                                        resumeUri = resumeUri  // ✅ NEW: Pass resume URI
                                     )
 
                                     withContext(Dispatchers.Main) {

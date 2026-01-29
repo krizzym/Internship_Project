@@ -1,6 +1,7 @@
 package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.internshipproject.viewmodel.EditInternshipViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,6 +34,10 @@ fun EditInternshipScreen(
     viewModel: EditInternshipViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    // Date picker state
+    val datePickerState = rememberDatePickerState()
+    var showDatePicker by remember { mutableStateOf(false) }
 
     // Load internship data when screen opens
     LaunchedEffect(internshipId) {
@@ -261,13 +269,25 @@ fun EditInternshipScreen(
                                 singleLine = true
                             )
 
-                            // Application Deadline
+                            // Application Deadline with Date Picker
                             OutlinedTextField(
                                 value = state.applicationDeadline,
-                                onValueChange = { viewModel.updateApplicationDeadline(it) },
+                                onValueChange = {},
+                                readOnly = true,
                                 label = { Text("Application Deadline") },
                                 placeholder = { Text("MM/DD/YYYY") },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { showDatePicker = true },
+                                trailingIcon = {
+                                    IconButton(onClick = { showDatePicker = true }) {
+                                        Icon(
+                                            Icons.Default.CalendarToday,
+                                            contentDescription = "Select date",
+                                            tint = Color(0xFF7B68EE)
+                                        )
+                                    }
+                                },
                                 singleLine = true
                             )
                         }
@@ -352,6 +372,41 @@ fun EditInternshipScreen(
                     }
                 }
             }
+        }
+    }
+
+    // Date Picker Dialog
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                            val formattedDate = dateFormat.format(Date(millis))
+                            viewModel.updateApplicationDeadline(formattedDate)
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK", color = Color(0xFF7B68EE))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = Color(0xFF7B68EE),
+                    todayContentColor = Color(0xFF7B68EE),
+                    todayDateBorderColor = Color(0xFF7B68EE)
+                )
+            )
         }
     }
 }

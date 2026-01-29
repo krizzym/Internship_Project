@@ -1,27 +1,40 @@
+// ApplicationRepository.kt - UPDATED with Resume Base64 Support
 package com.example.internshipproject.data.repository
 
+import android.content.Context
+import android.net.Uri
 import android.os.Build
+import android.util.Base64
+import android.util.Log
 import com.example.internshipproject.data.firebase.FirebaseManager
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import java.io.InputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-class ApplicationRepository {
+class ApplicationRepository(
+    private val context: Context? = null
+) {
 
     private val firestore: FirebaseFirestore = FirebaseManager.firestore
 
+    /**
+     * ✅ UPDATED: Submit application with resume (Base64 encoded)
+     */
     suspend fun submitApplication(
         internshipId: String,
         internshipTitle: String,
         companyName: String,
         studentEmail: String,
-        coverLetter: String
+        coverLetter: String,
+        resumeUri: Uri? = null
     ): Result<Application> {
         return try {
+            // Check if already applied
             val existingApp = hasAppliedToInternship(internshipId, studentEmail)
             if (existingApp) {
                 return Result.failure(Exception("You have already applied to this internship"))
@@ -33,6 +46,28 @@ class ApplicationRepository {
                 android.text.format.DateFormat.format("MMM dd, yyyy", System.currentTimeMillis()).toString()
             }
 
+            // ✅ NEW: Process resume if provided
+            var resumeBase64: String? = null
+            var resumeFileName: String? = null
+            var resumeSize: Long? = null
+            var resumeMimeType: String? = null
+
+            if (resumeUri != null && context != null) {
+                try {
+                    val resumeData = encodeResumeToBase64(context, resumeUri)
+                    resumeBase64 = resumeData.base64String
+                    resumeFileName = resumeData.fileName
+                    resumeSize = resumeData.fileSize
+                    resumeMimeType = resumeData.mimeType
+
+                    Log.d("ApplicationRepo", "Resume encoded: $resumeFileName, Size: $resumeSize bytes")
+                } catch (e: Exception) {
+                    Log.e("ApplicationRepo", "Resume encoding failed: ${e.message}")
+                    // Continue without resume rather than failing the application
+                    resumeBase64 = null
+                }
+            }
+
             val applicationData = hashMapOf(
                 "internshipId" to internshipId,
                 "internshipTitle" to internshipTitle,
@@ -42,7 +77,12 @@ class ApplicationRepository {
                 "coverLetter" to coverLetter,
                 "status" to ApplicationStatus.PENDING.name,
                 "appliedDate" to currentDate,
-                "createdAt" to System.currentTimeMillis()
+                "createdAt" to System.currentTimeMillis(),
+                // ✅ NEW: Resume fields
+                "resumeBase64" to (resumeBase64 ?: ""),
+                "resumeFileName" to (resumeFileName ?: ""),
+                "resumeSize" to (resumeSize ?: 0L),
+                "resumeMimeType" to (resumeMimeType ?: "")
             )
 
             val docRef = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -58,20 +98,28 @@ class ApplicationRepository {
                 coverLetter = coverLetter,
                 status = ApplicationStatus.PENDING,
                 appliedDate = currentDate,
-                internship = null
+                internship = null,
+                resumeBase64 = resumeBase64,
+                resumeFileName = resumeFileName,
+                resumeSize = resumeSize,
+                resumeMimeType = resumeMimeType
             )
 
+            Log.d("ApplicationRepo", "Application submitted successfully with resume: ${resumeFileName ?: "No resume"}")
             Result.success(application)
         } catch (e: Exception) {
+            Log.e("ApplicationRepo", "Failed to submit application: ${e.message}")
             Result.failure(Exception("Failed to submit application: ${e.message}"))
         }
     }
 
+    /**
+     * Get applications by student
+     */
     suspend fun getApplicationsByStudent(studentEmail: String): Result<List<Application>> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .whereEqualTo("studentEmail", studentEmail)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
@@ -88,19 +136,38 @@ class ApplicationRepository {
                             doc.getString("status") ?: ApplicationStatus.PENDING.name
                         ),
                         appliedDate = doc.getString("appliedDate") ?: "",
-                        internship = null
+                        internship = null,
+                        // ✅ Load resume fields
+                        resumeBase64 = doc.getString("resumeBase64")?.takeIf { it.isNotEmpty() },
+                        resumeFileName = doc.getString("resumeFileName")?.takeIf { it.isNotEmpty() },
+                        resumeSize = doc.getLong("resumeSize"),
+                        resumeMimeType = doc.getString("resumeMimeType")?.takeIf { it.isNotEmpty() }
                     )
                 } catch (e: Exception) {
+                    Log.e("ApplicationRepo", "Error parsing application: ${e.message}")
                     null
                 }
             }
 
-            Result.success(applications)
+            // Sort by createdAt in memory (newest first)
+            val sortedApps = applications.sortedByDescending {
+                try {
+                    snapshot.documents.find { it.id == it.id }?.getLong("createdAt") ?: 0L
+                } catch (e: Exception) {
+                    0L
+                }
+            }
+
+            Result.success(sortedApps)
         } catch (e: Exception) {
+            Log.e("ApplicationRepo", "Failed to get applications: ${e.message}")
             Result.failure(Exception("Failed to get applications: ${e.message}"))
         }
     }
 
+    /**
+     * Check if student already applied to internship
+     */
     suspend fun hasAppliedToInternship(internshipId: String, studentEmail: String): Boolean {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -116,6 +183,9 @@ class ApplicationRepository {
         }
     }
 
+    /**
+     * Get application statistics
+     */
     suspend fun getApplicationStats(studentEmail: String): Map<ApplicationStatus, Int> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -140,4 +210,55 @@ class ApplicationRepository {
             ApplicationStatus.values().associateWith { 0 }
         }
     }
+
+    /**
+     * ✅ NEW: Encode resume PDF to Base64
+     */
+    private fun encodeResumeToBase64(context: Context, uri: Uri): ResumeData {
+        val inputStream: InputStream = context.contentResolver.openInputStream(uri)
+            ?: throw Exception("Cannot open file")
+
+        val bytes = inputStream.readBytes()
+        inputStream.close()
+
+        // Validate file size (max 500KB to stay under Firestore 1MB document limit)
+        if (bytes.size > 500000) {
+            throw Exception("Resume file too large. Maximum size is 500KB. Your file: ${bytes.size / 1024}KB")
+        }
+
+        val base64String = Base64.encodeToString(bytes, Base64.DEFAULT)
+        val fileName = getFileName(context, uri) ?: "resume.pdf"
+        val mimeType = context.contentResolver.getType(uri) ?: "application/pdf"
+
+        return ResumeData(
+            base64String = base64String,
+            fileName = fileName,
+            fileSize = bytes.size.toLong(),
+            mimeType = mimeType
+        )
+    }
+
+    /**
+     * Helper: Get filename from URI
+     */
+    private fun getFileName(context: Context, uri: Uri): String? {
+        var fileName: String? = null
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            if (cursor.moveToFirst() && nameIndex >= 0) {
+                fileName = cursor.getString(nameIndex)
+            }
+        }
+        return fileName ?: uri.lastPathSegment
+    }
+
+    /**
+     * Data class for resume encoding result
+     */
+    private data class ResumeData(
+        val base64String: String,
+        val fileName: String,
+        val fileSize: Long,
+        val mimeType: String
+    )
 }

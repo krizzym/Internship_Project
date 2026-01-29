@@ -1,3 +1,4 @@
+// CompanyApplicationsViewModel
 package com.example.internshipproject.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -24,13 +25,21 @@ class CompanyApplicationsViewModel(
     private val _state = MutableStateFlow(CompanyApplicationsState())
     val state: StateFlow<CompanyApplicationsState> = _state.asStateFlow()
 
-    fun loadApplications(companyName: String) {
+    // ✅ FIXED: Now accepts companyId instead of companyName
+    fun loadApplications(companyId: String) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            repository.getAllCompanyApplications(companyName).onSuccess { applications ->
+            println("🔍 CompanyApplicationsVM: Loading applications for company: $companyId")
+
+            repository.getAllCompanyApplications(companyId).onSuccess { applications ->
+                println("✅ CompanyApplicationsVM: Loaded ${applications.size} applications")
+                applications.forEachIndexed { i, app ->
+                    println("   [$i] ${app.studentEmail} - ${app.internshipTitle} - ${app.status}")
+                }
                 _state.value = _state.value.copy(applications = applications)
             }.onFailure { error ->
+                println("❌ CompanyApplicationsVM: Error loading applications: ${error.message}")
                 _state.value = _state.value.copy(errorMessage = error.message)
             }
 
@@ -40,15 +49,18 @@ class CompanyApplicationsViewModel(
 
     fun setFilter(filter: String) {
         _state.value = _state.value.copy(selectedFilter = filter)
+        println("🔍 Filter changed to: $filter")
     }
 
     fun getFilteredApplications(): List<Application> {
-        return when (_state.value.selectedFilter) {
+        val filtered = when (_state.value.selectedFilter) {
             "All" -> _state.value.applications
             else -> _state.value.applications.filter {
                 it.status.name == _state.value.selectedFilter
             }
         }
+        println("🔍 Filtered applications: ${filtered.size} (Filter: ${_state.value.selectedFilter})")
+        return filtered
     }
 
     fun getPendingCount() = _state.value.applications.count {

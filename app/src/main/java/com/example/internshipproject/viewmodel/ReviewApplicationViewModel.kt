@@ -1,21 +1,34 @@
+// ReviewApplicationViewModel.kt - COMPLETE with Student Profile Loading
 package com.example.internshipproject.viewmodel
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
+import android.util.Base64
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
+import com.example.internshipproject.data.model.StudentProfile
 import com.example.internshipproject.data.repository.CompanyRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 data class ReviewApplicationState(
     val application: Application? = null,
+    val studentProfile: StudentProfile? = null,  // ✅ NEW: Student profile
     val selectedStatus: String = "Pending",
     val isLoading: Boolean = false,
     val updateSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val successMessage: String? = null
 )
 
 class ReviewApplicationViewModel(
@@ -34,11 +47,27 @@ class ReviewApplicationViewModel(
                     application = application,
                     selectedStatus = application.status.name
                 )
+
+                // ✅ NEW: Load student profile
+                loadStudentProfile(application.studentEmail)
             }.onFailure { error ->
                 _state.value = _state.value.copy(errorMessage = error.message)
             }
 
             _state.value = _state.value.copy(isLoading = false)
+        }
+    }
+
+    // ✅ NEW: Load student profile by email
+    private fun loadStudentProfile(studentEmail: String) {
+        viewModelScope.launch {
+            repository.getStudentProfileByEmail(studentEmail).onSuccess { profile ->
+                _state.value = _state.value.copy(studentProfile = profile)
+                Log.d("ReviewAppVM", "Student profile loaded: ${profile.firstName} ${profile.surname}")
+            }.onFailure { error ->
+                Log.w("ReviewAppVM", "Failed to load student profile: ${error.message}")
+                // Don't show error to user - profile is optional
+            }
         }
     }
 
@@ -50,7 +79,7 @@ class ReviewApplicationViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            val status = ApplicationStatus.valueOf(_state.value.selectedStatus)
+            val status = ApplicationStatus.valueOf(_state.value.selectedStatus.uppercase())
 
             repository.updateApplicationStatus(applicationId, status).onSuccess {
                 _state.value = _state.value.copy(
@@ -69,5 +98,103 @@ class ReviewApplicationViewModel(
 
     fun resetUpdateSuccess() {
         _state.value = _state.value.copy(updateSuccess = false)
+    }
+
+    fun viewResume(context: Context, application: Application) {
+        viewModelScope.launch {
+            try {
+                if (application.resumeBase64 == null || application.resumeBase64.isEmpty()) {
+                    _state.value = _state.value.copy(
+                        errorMessage = "Resume not available"
+                    )
+                    return@launch
+                }
+
+                withContext(Dispatchers.IO) {
+                    val bytes = Base64.decode(application.resumeBase64, Base64.DEFAULT)
+                    val fileName = application.resumeFileName ?: "resume.pdf"
+                    val tempFile = File(context.cacheDir, fileName)
+                    tempFile.writeBytes(bytes)
+
+                    Log.d("ReviewAppVM", "Resume saved to temp: ${tempFile.absolutePath}")
+
+                    withContext(Dispatchers.Main) {
+                        try {
+                            val uri = androidx.core.content.FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.provider",
+                                tempFile
+                            )
+
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, "application/pdf")
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            }
+
+                            context.startActivity(intent)
+                            Log.d("ReviewAppVM", "PDF viewer opened")
+                        } catch (e: Exception) {
+                            Log.e("ReviewAppVM", "Failed to open PDF: ${e.message}")
+                            _state.value = _state.value.copy(
+                                errorMessage = "No PDF viewer found. Please install a PDF reader app."
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ReviewAppVM", "Error viewing resume: ${e.message}")
+                _state.value = _state.value.copy(
+                    errorMessage = "Failed to open resume: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun downloadResume(context: Context, application: Application) {
+        viewModelScope.launch {
+            try {
+                if (application.resumeBase64 == null || application.resumeBase64.isEmpty()) {
+                    _state.value = _state.value.copy(
+                        errorMessage = "Resume not available"
+                    )
+                    return@launch
+                }
+
+                withContext(Dispatchers.IO) {
+                    val bytes = Base64.decode(application.resumeBase64, Base64.DEFAULT)
+                    val downloadsDir = Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS
+                    )
+
+                    val studentName = application.studentEmail.substringBefore("@")
+                    val fileName = "${studentName}_${application.resumeFileName ?: "resume.pdf"}"
+                    val file = File(downloadsDir, fileName)
+
+                    file.writeBytes(bytes)
+
+                    Log.d("ReviewAppVM", "Resume downloaded to: ${file.absolutePath}")
+
+                    withContext(Dispatchers.Main) {
+                        _state.value = _state.value.copy(
+                            successMessage = "Resume downloaded successfully!"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ReviewAppVM", "Error downloading resume: ${e.message}")
+                _state.value = _state.value.copy(
+                    errorMessage = "Failed to download resume: ${e.message}"
+                )
+            }
+        }
+    }
+
+    fun clearSuccessMessage() {
+        _state.value = _state.value.copy(successMessage = null)
+    }
+
+    fun clearErrorMessage() {
+        _state.value = _state.value.copy(errorMessage = null)
     }
 }
