@@ -1,4 +1,3 @@
-// ApplicationRepository.kt - UPDATED with Resume Base64 Support
 package com.example.internshipproject.data.repository
 
 import android.content.Context

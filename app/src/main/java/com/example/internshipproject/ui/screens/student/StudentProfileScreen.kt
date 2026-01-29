@@ -1,4 +1,3 @@
-// StudentProfileScreen.kt - UPDATED: Removed Resume Section + Account Info Note
 package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background

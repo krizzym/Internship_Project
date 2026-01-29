@@ -1,4 +1,3 @@
-// StudentRegistrationViewModel
 package com.example.internshipproject.viewmodel
 
 import android.net.Uri
@@ -115,6 +114,7 @@ class StudentRegistrationViewModel(
     fun updateSkills(value: String) {
         _state.value = _state.value.copy(skills = value)
     }
+
     fun toggleAgreement() {
         _state.value = _state.value.copy(agreedToTerms = !_state.value.agreedToTerms)
         validateField("terms")
@@ -153,9 +153,10 @@ class StudentRegistrationViewModel(
                 }
             }
             "password" -> {
-                val validation = PasswordValidator.validatePassword(currentState.password)
-                if (!validation.first) {
-                    newErrors["password"] = validation.second
+                // ✅ FIXED: Use the new PasswordValidator.validate() method
+                val validationResult = PasswordValidator.validate(currentState.password)
+                if (!validationResult.isValid) {
+                    newErrors["password"] = validationResult.errorMessage ?: "Invalid password"
                 } else {
                     newErrors.remove("password")
                 }

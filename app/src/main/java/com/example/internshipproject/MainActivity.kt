@@ -11,8 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.example.internshipproject.navigation.NavGraph
 import com.example.internshipproject.ui.theme.FirstStepTheme
-
-// ✅ ADD THIS IMPORT
 import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity() {

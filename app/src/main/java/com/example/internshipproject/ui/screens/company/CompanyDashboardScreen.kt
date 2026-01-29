@@ -1,4 +1,3 @@
-// CompanyDashboardScreen.kt - UPDATED: Removed Recent Applications + Fixed Spacing
 package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.background
@@ -92,7 +91,7 @@ fun CompanyDashboardScreen(
                     ) {
                         Column(modifier = Modifier.padding(24.dp)) {
                             Text(
-                                "Welcome, ${state.company?.companyName ?: "Company"}! 👋",
+                                "Welcome, ${state.company?.companyName ?: "Company"}!",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary

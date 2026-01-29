@@ -59,7 +59,6 @@ fun CompanyRegistrationScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🏢", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
                         Column {
                             Text(text = "FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text(text = "Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
@@ -128,6 +127,7 @@ fun CompanyRegistrationScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // ✅ UPDATED: Simplified password field with helper text (matching student registration)
                     PasswordTextField(
                         value = state.password,
                         onValueChange = { viewModel.updatePassword(it) },
@@ -376,10 +376,12 @@ fun CompanyRegistrationScreen(
                         }
                     }
 
+                    // ✅ UPDATED: Button is disabled until form is valid
                     PrimaryButton(
                         text = "Create Company Account",
                         onClick = { viewModel.register() },
-                        isLoading = state.isLoading
+                        isLoading = state.isLoading,
+                        enabled = !state.isLoading && viewModel.isFormValid()
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -403,4 +405,15 @@ fun CompanyRegistrationScreen(
             }
         }
     }
+}
+
+@Composable
+fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+        modifier = Modifier.padding(vertical = 12.dp)
+    )
 }

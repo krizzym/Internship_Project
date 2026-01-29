@@ -1,4 +1,3 @@
-// Application.kt - UPDATED with Resume Support
 package com.example.internshipproject.data.model
 
 data class Application(
