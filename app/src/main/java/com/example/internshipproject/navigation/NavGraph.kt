@@ -6,14 +6,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.internshipproject.data.firebase.FirebaseManager
-import com.example.internshipproject.data.model.Application
-import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.Internship
 import com.example.internshipproject.data.model.StudentProfile
 import com.example.internshipproject.data.repository.ApplicationRepository
@@ -21,8 +20,9 @@ import com.example.internshipproject.data.repository.AuthRepository
 import com.example.internshipproject.data.repository.InternshipRepository
 import com.example.internshipproject.ui.screens.*
 import com.example.internshipproject.ui.screens.student.*
-import com.example.internshipproject.ui.company.CompanyMainScreen
+import com.example.internshipproject.ui.screens.CompanyMainScreen
 import com.example.internshipproject.ui.screens.company.EditInternshipScreen
+import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -134,16 +134,18 @@ fun NavGraph(navController: NavHostController) {
         }
 
         // ============================================
-        // STUDENT ROUTES (WITH REAL-TIME UPDATES)
+        // ✅ UPDATED: STUDENT DASHBOARD WITH VIEWMODEL
         // ============================================
-
         composable(
             route = Screen.StudentDashboard.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
+
+            // ✅ NEW: Create ViewModel instance
+            val viewModel: StudentApplicationsViewModel = viewModel()
+
             var profile by remember { mutableStateOf<StudentProfile?>(null) }
-            var applicationStats by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
             var isLoading by remember { mutableStateOf(true) }
 
             // ✅ Collect real-time internships using Flow
@@ -172,16 +174,6 @@ fun NavGraph(navController: NavHostController) {
                         )
                     }
 
-                    val studentEmail = student?.email ?: ""
-                    if (studentEmail.isNotEmpty()) {
-                        val stats = applicationRepository.getApplicationStats(studentEmail)
-                        applicationStats = mapOf(
-                            "total" to stats.values.sum(),
-                            "pending" to (stats[ApplicationStatus.PENDING] ?: 0),
-                            "accepted" to (stats[ApplicationStatus.ACCEPTED] ?: 0)
-                        )
-                    }
-
                     isLoading = false
                 }
             }
@@ -190,7 +182,7 @@ fun NavGraph(navController: NavHostController) {
                 StudentDashboardScreen(
                     studentProfile = studentProfile,
                     internships = internships, // ✅ Real-time updates
-                    applicationStats = applicationStats,
+                    viewModel = viewModel, // ✅ NEW: Pass ViewModel
                     onInternshipClick = { internshipId ->
                         navController.navigate(Screen.InternshipDetails.createRoute(internshipId))
                     },
@@ -304,7 +296,7 @@ fun NavGraph(navController: NavHostController) {
 
                                     withContext(Dispatchers.Main) {
                                         result.fold(
-                                            onSuccess = {
+                                            onSuccess = { _ ->
                                                 isSubmitting = false
                                                 showSuccessDialog = true
                                             },
@@ -327,30 +319,20 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
+        // ============================================
+        // ✅ UPDATED: MY APPLICATIONS WITH VIEWMODEL
+        // ============================================
         composable(
             route = Screen.MyApplications.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            var applications by remember { mutableStateOf<List<Application>>(emptyList()) }
-            var applicationStats by remember { mutableStateOf<Map<ApplicationStatus, Int>>(emptyMap()) }
 
-            LaunchedEffect(userId) {
-                withContext(Dispatchers.IO) {
-                    val student = authRepository.getStudentProfile(userId)
-                    val studentEmail = student?.email ?: ""
-
-                    if (studentEmail.isNotEmpty()) {
-                        val result = applicationRepository.getApplicationsByStudent(studentEmail)
-                        result.onSuccess { apps -> applications = apps }
-                        applicationStats = applicationRepository.getApplicationStats(studentEmail)
-                    }
-                }
-            }
+            // ✅ NEW: Create ViewModel instance
+            val viewModel: StudentApplicationsViewModel = viewModel()
 
             MyApplicationsScreen(
-                applications = applications,
-                applicationStats = applicationStats,
+                viewModel = viewModel, // ✅ NEW: Pass ViewModel instead of individual states
                 onBackToDashboard = {
                     navController.navigate(Screen.StudentDashboard.createRoute(userId)) {
                         popUpTo(Screen.StudentDashboard.createRoute(userId)) { inclusive = true }
@@ -361,13 +343,19 @@ fun NavGraph(navController: NavHostController) {
                         popUpTo(Screen.StudentDashboard.createRoute(userId)) { inclusive = true }
                     }
                 },
-                onApplicationClick = { },
+                onApplicationClick = { applicationId ->
+                    // ✅ You can add navigation to application details if needed
+                    // navController.navigate(Screen.ApplicationDetail.createRoute(applicationId))
+                },
                 onNavigateToProfile = {
                     navController.navigate(Screen.StudentProfile.createRoute(userId))
                 }
             )
         }
 
+        // ============================================
+        // STUDENT PROFILE (Unchanged)
+        // ============================================
         composable(
             route = Screen.StudentProfile.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
@@ -420,6 +408,9 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
+        // ============================================
+        // COMPANY ROUTES (Unchanged)
+        // ============================================
         composable(
             route = Screen.CompanyMain.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })

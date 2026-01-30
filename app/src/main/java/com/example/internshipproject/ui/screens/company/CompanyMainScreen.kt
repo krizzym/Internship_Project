@@ -1,4 +1,4 @@
-package com.example.internshipproject.ui.company
+package com.example.internshipproject.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -14,6 +14,7 @@ import com.example.internshipproject.ui.screens.company.CompanyApplicationsScree
 import com.example.internshipproject.ui.screens.company.CompanyDashboardScreen
 import com.example.internshipproject.ui.screens.company.CompanyMyPostingsScreen
 import com.example.internshipproject.ui.screens.company.CompanyProfileScreen
+import com.example.internshipproject.ui.screens.company.ViewApplicationsScreen
 import com.example.internshipproject.ui.theme.PurpleButton
 
 @Composable

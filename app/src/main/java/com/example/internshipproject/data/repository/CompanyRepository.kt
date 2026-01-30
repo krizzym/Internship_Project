@@ -449,21 +449,27 @@ class CompanyRepository {
     }
 
     /**
-     * Update application status
+     * ✅ UPDATED: Update application status with optional notes parameter
      */
     suspend fun updateApplicationStatus(
         applicationId: String,
-        status: ApplicationStatus
+        newStatus: ApplicationStatus,
+        notes: String? = null
     ): Result<Unit> {
         return try {
+            val updateData = mutableMapOf<String, Any>(
+                "status" to newStatus.name,
+                "updatedAt" to System.currentTimeMillis()
+            )
+
+            // Add notes if provided
+            if (!notes.isNullOrBlank()) {
+                updateData["reviewerNotes"] = notes
+            }
+
             firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .document(applicationId)
-                .update(
-                    mapOf(
-                        "status" to status.name,
-                        "updatedAt" to System.currentTimeMillis()
-                    )
-                )
+                .update(updateData)
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -557,6 +563,44 @@ class CompanyRepository {
             }
         } catch (e: Exception) {
             Log.e("CompanyRepo", "Error fetching student profile: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    suspend fun getStudentProfile(studentEmail: String): Result<StudentProfile?> {
+        return try {
+            Log.d("CompanyRepo", "Fetching student profile for: $studentEmail")
+
+            val snapshot = firestore.collection(FirebaseManager.Collections.STUDENTS)
+                .whereEqualTo("email", studentEmail)
+                .limit(1)
+                .get()
+                .await()
+
+            if (snapshot.documents.isEmpty()) {
+                Log.w("CompanyRepo", "No student profile found for: $studentEmail")
+                return Result.success(null)
+            }
+
+            val doc = snapshot.documents.first()
+            val profile = StudentProfile(
+                firstName = doc.getString("firstName") ?: "",
+                middleName = doc.getString("middleName"),
+                surname = doc.getString("lastName") ?: "",
+                email = doc.getString("email") ?: "",
+                school = doc.getString("school") ?: "",
+                course = doc.getString("course") ?: "",
+                yearLevel = doc.getString("yearLevel") ?: "",
+                city = doc.getString("city") ?: "",
+                barangay = doc.getString("barangay") ?: "",
+                internshipTypes = (doc.get("internshipTypes") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+                skills = doc.getString("skills") ?: "",
+                resumeUri = doc.getString("resumeUri")
+            )
+
+            Log.d("CompanyRepo", "Student profile found: ${profile.fullName}")
+            Result.success(profile)
+        } catch (e: Exception) {
+            Log.e("CompanyRepo", "Error fetching student profile: ${e.message}", e)
             Result.failure(e)
         }
     }
