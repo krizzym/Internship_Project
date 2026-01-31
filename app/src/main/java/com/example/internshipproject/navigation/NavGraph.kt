@@ -20,7 +20,6 @@ import com.example.internshipproject.data.repository.AuthRepository
 import com.example.internshipproject.data.repository.InternshipRepository
 import com.example.internshipproject.ui.screens.*
 import com.example.internshipproject.ui.screens.student.*
-import com.example.internshipproject.ui.screens.CompanyMainScreen
 import com.example.internshipproject.ui.screens.company.EditInternshipScreen
 import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.Dispatchers

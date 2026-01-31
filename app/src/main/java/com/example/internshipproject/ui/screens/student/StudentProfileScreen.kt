@@ -1,4 +1,5 @@
-package com.example.internshipproject.ui.screens.student
+//StudentProfileScreen.kt
+package com.example.internshipproject.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -6,7 +7,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,11 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.internshipproject.data.model.StudentProfile
+import com.example.internshipproject.ui.components.InputField
 import com.example.internshipproject.ui.components.PrimaryButton
 import com.example.internshipproject.ui.components.SectionTitle
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentProfileViewModel
 
+// ✅ UPDATED: Enhanced StudentProfileScreen with proper feedback mechanism
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentProfileScreen(
@@ -33,8 +38,35 @@ fun StudentProfileScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // ✅ NEW: Snackbar host state for showing messages
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.loadProfile(profile)
+    }
+
+    // ✅ NEW: Show success message in Snackbar
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            // Clear the message after showing
+            viewModel.clearSuccessMessage()
+        }
+    }
+
+    // ✅ NEW: Show error message in Snackbar
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Long
+            )
+            // Clear the message after showing
+            viewModel.clearErrorMessage()
+        }
     }
 
     LaunchedEffect(state.updateSuccess) {
@@ -44,6 +76,25 @@ fun StudentProfileScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            // ✅ NEW: SnackbarHost for displaying feedback messages
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { snackbarData ->
+                    Snackbar(
+                        snackbarData = snackbarData,
+                        containerColor = if (snackbarData.visuals.message.contains("successfully", ignoreCase = true)) {
+                            Color(0xFF4CAF50) // Green for success
+                        } else {
+                            Color(0xFFE53935) // Red for errors
+                        },
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            )
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -200,149 +251,133 @@ fun StudentProfileScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // Surname (READ ONLY)
-                    Text(
-                        text = "Surname *",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    OutlinedTextField(
-                        value = state.surname,
-                        onValueChange = {},
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = false,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledBorderColor = Color.Gray.copy(alpha = 0.3f),
-                            disabledTextColor = TextSecondary
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Surname *",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = state.surname,
+                            onValueChange = {},
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = false,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledBorderColor = Color.Gray.copy(alpha = 0.3f),
+                                disabledTextColor = TextSecondary
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Email Address (READ ONLY)
-                    Text(
-                        text = "Email Address",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    OutlinedTextField(
-                        value = state.email,
-                        onValueChange = {},
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = false,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledBorderColor = Color.Gray.copy(alpha = 0.3f),
-                            disabledTextColor = TextSecondary
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // ✅ NEW: Account Information Note
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFF3CD)
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Default.Info,
-                                contentDescription = null,
-                                tint = Color(0xFF856404),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Account information cannot be changed",
-                                fontSize = 13.sp,
-                                color = Color(0xFF856404)
-                            )
-                        }
+                    // Email (READ ONLY)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Email *",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = state.email,
+                            onValueChange = {},
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = false,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledBorderColor = Color.Gray.copy(alpha = 0.3f),
+                                disabledTextColor = TextSecondary
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     SectionTitle("Educational Information")
 
-                    // School and Course (EDITABLE)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
+                    // School
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "School *",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = state.school,
+                            onValueChange = { viewModel.updateSchool(it) },
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = state.errors.containsKey("school"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PurpleButton,
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        if (state.errors.containsKey("school")) {
                             Text(
-                                text = "School / University *",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = TextPrimary,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            OutlinedTextField(
-                                value = state.school,
-                                onValueChange = { viewModel.updateSchool(it) },
-                                modifier = Modifier.fillMaxWidth(),
-                                isError = state.errors.containsKey("school"),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
-                                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Course / Program *",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = TextPrimary,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            OutlinedTextField(
-                                value = state.course,
-                                onValueChange = { viewModel.updateCourse(it) },
-                                modifier = Modifier.fillMaxWidth(),
-                                isError = state.errors.containsKey("course"),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
-                                    unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
+                                text = state.errors["school"] ?: "",
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Year Level Dropdown
-                    var expandedYearLevel by remember { mutableStateOf(false) }
-                    val yearLevels = listOf("2nd Year", "3rd Year", "4th Year", "5th Year")
+                    // Course
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "Course *",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = state.course,
+                            onValueChange = { viewModel.updateCourse(it) },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("e.g., BS Computer Science", fontSize = 14.sp, color = TextSecondary.copy(alpha = 0.5f)) },
+                            isError = state.errors.containsKey("course"),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PurpleButton,
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        if (state.errors.containsKey("course")) {
+                            Text(
+                                text = state.errors["course"] ?: "",
+                                color = Color.Red,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                            )
+                        }
+                    }
 
-                    Text(
-                        text = "Year Level *",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Year Level
+                    var expandedYearLevel by remember { mutableStateOf(false) }
+                    val yearLevels = listOf("1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year")
+
                     ExposedDropdownMenuBox(
                         expanded = expandedYearLevel,
                         onExpandedChange = { expandedYearLevel = it }
                     ) {
                         OutlinedTextField(
-                            value = state.yearLevel,
+                            value = state.yearLevel.ifEmpty { "Select year level" },
                             onValueChange = {},
                             readOnly = true,
+                            label = { Text("Year Level *") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedYearLevel) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             isError = state.errors.containsKey("yearLevel"),
@@ -489,28 +524,14 @@ fun StudentProfileScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    if (state.updateSuccess) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFE8F5E9)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = "✓ Profile updated successfully!",
-                                color = Color(0xFF2E7D32),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(12.dp)
-                            )
-                        }
-                    }
-
+                    // ✅ UPDATED: Remove inline success card (now using Snackbar)
+                    // Only show the Update Profile button
                     PrimaryButton(
                         text = "Update Profile",
                         onClick = { viewModel.updateProfile() },
-                        isLoading = state.isUpdating
+                        isLoading = state.isUpdating,
+                        // ✅ Disable button while updating to prevent duplicate submissions
+                        enabled = !state.isUpdating
                     )
                 }
             }
