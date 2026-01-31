@@ -1,4 +1,4 @@
-//ViewApplicationsScreen.kt - FIXED VERSION
+//ViewApplicationsScreen.kt - UPDATED WITH REVIEW BUTTON NAVIGATION
 package com.example.internshipproject.ui.screens.company
 
 import android.content.Context
@@ -23,66 +23,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.core.content.FileProvider
+import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
+import com.example.internshipproject.navigation.Screen
+import com.example.internshipproject.ui.company.ImprovedStatCard
+import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.ApplicationWithStudent
-import com.example.internshipproject.viewmodel.ViewApplicationsState
 import com.example.internshipproject.viewmodel.ViewApplicationsViewModel
 import java.io.File
 
-// Color Definitions
-private val BackgroundPurple = Color(0xFFF5F3FF)
-private val PurpleButton = Color(0xFF7C3AED)
-private val CardWhite = Color.White
-private val TextPrimary = Color(0xFF1F2937)
-private val TextSecondary = Color(0xFF6B7280)
-
-// Main Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewApplicationsScreen(
+    navController: NavController,
     postingId: String,
-    onBack: () -> Unit,
-    onReviewApplication: (String) -> Unit = {},
     viewModel: ViewApplicationsViewModel = viewModel()
 ) {
+    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
-    // Load data when screen is first shown
-    LaunchedEffect(Unit) {
-        Log.d("ViewApplicationsScreen", "🎨 Screen composed with postingId: $postingId")
-    }
-
     LaunchedEffect(postingId) {
-        Log.d("ViewApplicationsScreen", "🔄 Loading data for postingId: $postingId")
         viewModel.loadData(postingId)
-    }
-
-    val state by viewModel.state.collectAsState()
-
-    // Debug state changes
-    LaunchedEffect(state) {
-        Log.d("ViewApplicationsScreen", "📊 State: loading=${state.isLoading}, apps=${state.applicationsWithStudents.size}, error=${state.errorMessage}")
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column {
-                            Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                            Text("Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
-                        }
-                    }
-                },
+                title = { Text("Applications") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary)
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF6366F1),
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
         }
     ) { paddingValues ->
@@ -93,31 +73,30 @@ fun ViewApplicationsScreen(
         ) {
             when {
                 state.isLoading -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(color = PurpleButton)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Loading applications...", color = TextSecondary)
-                    }
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
                 state.errorMessage != null -> {
                     ErrorView(
                         message = state.errorMessage ?: "",
-                        onRetry = {
-                            Log.d("ViewApplicationsScreen", "🔄 Retry button clicked")
-                            viewModel.loadData(postingId)
-                        }
+                        onRetry = { viewModel.refreshData(postingId) }
                     )
                 }
                 else -> {
-                    ViewApplicationsContent(
+                    ApplicationsContent(
                         state = state,
                         context = context,
-                        onUpdateStatus = viewModel::updateApplicationStatus,
-                        onReviewApplication = onReviewApplication,
-                        postingId = postingId
+                        postingId = postingId,
+                        onUpdateStatus = { applicationId, newStatus ->
+                            viewModel.updateApplicationStatus(applicationId, newStatus)
+                        },
+                        // ✅ NEW: Navigate to Student Application Details screen
+                        onReviewApplication = { applicationId ->
+                            navController.navigate(
+                                Screen.StudentApplicationDetails.createRoute(applicationId)
+                            )
+                        }
                     )
                 }
             }
@@ -138,23 +117,24 @@ fun ViewApplicationsScreen(
 }
 
 @Composable
-private fun ViewApplicationsContent(
-    state: ViewApplicationsState,
+private fun ApplicationsContent(
+    state: com.example.internshipproject.viewmodel.ViewApplicationsState,
     context: Context,
+    postingId: String,
     onUpdateStatus: (String, ApplicationStatus) -> Unit,
-    onReviewApplication: (String) -> Unit,
-    postingId: String
+    onReviewApplication: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundPurple)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Posting Summary Card
+        // Header
         item {
-            state.posting?.let { post ->
+            Spacer(modifier = Modifier.height(16.dp))
+            state.posting?.let { posting ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -163,57 +143,34 @@ private fun ViewApplicationsContent(
                 ) {
                     Column(modifier = Modifier.padding(24.dp)) {
                         Text(
-                            text = post.title,
+                            text = posting.title,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Applications for this posting",
-                            fontSize = 14.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Company and Location
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column {
-                                Text(
-                                    text = post.companyName,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = post.location,
-                                    fontSize = 14.sp,
-                                    color = TextSecondary
-                                )
-                            }
-
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = if (post.isActive) Color(0xFF10B981) else Color(0xFF9CA3AF)
-                            ) {
-                                Text(
-                                    text = if (post.isActive) "Active" else "Inactive",
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = TextSecondary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = posting.location,
+                                fontSize = 14.sp,
+                                color = TextSecondary
+                            )
                         }
                     }
                 }
             }
         }
 
-        // Status Cards Row 1
+        // Status Overview
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -230,13 +187,12 @@ private fun ViewApplicationsContent(
                     title = "Reviewed",
                     count = state.statusCounts[ApplicationStatus.REVIEWED] ?: 0,
                     color = Color(0xFF3B82F6),
-                    backgroundColor = Color(0xFFDBEAFE),
+                    backgroundColor = Color(0xFFDDD6FE),
                     modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        // Status Cards Row 2
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -348,6 +304,11 @@ private fun ViewApplicationsContent(
                 onUpdateStatus = onUpdateStatus,
                 onReviewApplication = onReviewApplication
             )
+        }
+
+        // Bottom spacing
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -478,7 +439,7 @@ private fun ApplicationCardImproved(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Review Button
+                // ✅ UPDATED: Review Button - Navigate to details screen
                 Button(
                     onClick = { onReviewApplication(application.id) },
                     modifier = Modifier.weight(1f),
@@ -519,42 +480,7 @@ private fun ApplicationCardImproved(
                 }
             }
 
-            // Status Update Dropdown
-            if (application.status != ApplicationStatus.ACCEPTED && application.status != ApplicationStatus.REJECTED) {
-                Spacer(modifier = Modifier.height(12.dp))
-
-                var expanded by remember { mutableStateOf(false) }
-
-                Box {
-                    OutlinedButton(
-                        onClick = { expanded = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = PurpleButton
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Update Status", fontSize = 14.sp)
-                    }
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        ApplicationStatus.values().filter { it != application.status }.forEach { status ->
-                            DropdownMenuItem(
-                                text = { Text(status.name) },
-                                onClick = {
-                                    onUpdateStatus(application.id, status)
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+            // Status Update Dropdown (Removed from here - now in details screen)
         }
     }
 }
@@ -656,41 +582,6 @@ private fun ErrorView(
             colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
         ) {
             Text("Retry")
-        }
-    }
-}
-
-@Composable
-private fun ImprovedStatCard(
-    title: String,
-    count: Int,
-    color: Color,
-    backgroundColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = count.toString(),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = title,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = color.copy(alpha = 0.8f)
-            )
         }
     }
 }

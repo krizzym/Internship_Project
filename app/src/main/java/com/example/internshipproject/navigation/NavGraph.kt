@@ -1,3 +1,4 @@
+//NavGraph.kt - COMPLETE VERSION WITH ALL ORIGINAL SECTIONS
 package com.example.internshipproject.navigation
 
 import androidx.compose.material3.AlertDialog
@@ -20,7 +21,9 @@ import com.example.internshipproject.data.repository.AuthRepository
 import com.example.internshipproject.data.repository.InternshipRepository
 import com.example.internshipproject.ui.screens.*
 import com.example.internshipproject.ui.screens.student.*
+import com.example.internshipproject.ui.screens.company.CompanyMainScreen
 import com.example.internshipproject.ui.screens.company.EditInternshipScreen
+import com.example.internshipproject.ui.screens.company.StudentApplicationDetailsScreen
 import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,6 +54,11 @@ sealed class Screen(val route: String) {
 
     object EditInternship : Screen("edit_internship/{internshipId}") {
         fun createRoute(internshipId: String) = "edit_internship/$internshipId"
+    }
+
+    // ✅ NEW: Student Application Details Route
+    object StudentApplicationDetails : Screen("student_application_details/{applicationId}") {
+        fun createRoute(applicationId: String) = "student_application_details/$applicationId"
     }
 }
 
@@ -435,6 +443,23 @@ fun NavGraph(navController: NavHostController) {
             EditInternshipScreen(
                 navController = navController,
                 internshipId = internshipId
+            )
+        }
+
+        // ============================================
+        // ✅ NEW: STUDENT APPLICATION DETAILS ROUTE
+        // ============================================
+        composable(
+            route = Screen.StudentApplicationDetails.route,
+            arguments = listOf(navArgument("applicationId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
+
+            StudentApplicationDetailsScreen(
+                applicationId = applicationId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
     }

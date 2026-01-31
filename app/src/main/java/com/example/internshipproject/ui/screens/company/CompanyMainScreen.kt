@@ -1,4 +1,4 @@
-package com.example.internshipproject.ui.screens
+package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -105,11 +105,12 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                // ✅ FIXED: Use NavGraph navigation instead of internal state
+                                // ✅ Use NavGraph navigation for editing
                                 navController.navigate(Screen.EditInternship.createRoute(postingId))
                             },
                             onReviewApplication = { applicationId ->
-                                navigationState = NavigationState.ReviewApplication(applicationId)
+                                // ✅ FIXED: Navigate via NavGraph instead of internal state
+                                navController.navigate(Screen.StudentApplicationDetails.createRoute(applicationId))
                             }
                         )
                         1 -> CompanyMyPostingsScreen(
@@ -119,7 +120,7 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                // ✅ FIXED: Use NavGraph navigation instead of internal state
+                                // ✅ Use NavGraph navigation for editing
                                 navController.navigate(Screen.EditInternship.createRoute(postingId))
                             }
                         )
@@ -127,7 +128,8 @@ fun CompanyMainScreen(
                             userId = userId,
                             onLogout = onLogout,
                             onReviewApplication = { applicationId ->
-                                navigationState = NavigationState.ReviewApplication(applicationId)
+                                // ✅ FIXED: Navigate via NavGraph instead of internal state
+                                navController.navigate(Screen.StudentApplicationDetails.createRoute(applicationId))
                             }
                         )
                         3 -> CompanyProfileScreen(userId = userId, onLogout = onLogout)
@@ -135,10 +137,8 @@ fun CompanyMainScreen(
                 }
                 is NavigationState.ViewApplications -> {
                     ViewApplicationsScreen(
-                        postingId = (navigationState as NavigationState.ViewApplications).postingId,
-                        onBack = {
-                            navigationState = NavigationState.Tab(selectedTab)
-                        }
+                        navController = navController,
+                        postingId = (navigationState as NavigationState.ViewApplications).postingId
                     )
                 }
                 is NavigationState.EditPosting -> {
@@ -149,8 +149,8 @@ fun CompanyMainScreen(
                     }
                 }
                 is NavigationState.ReviewApplication -> {
-                    // TODO: Create ReviewApplicationScreen
-                    // For now, just go back
+                    // ✅ NOTE: This state is no longer used since we navigate via NavGraph
+                    // Keeping it here for backward compatibility
                     LaunchedEffect(Unit) {
                         navigationState = NavigationState.Tab(selectedTab)
                     }
@@ -163,6 +163,6 @@ fun CompanyMainScreen(
 sealed class NavigationState {
     data class Tab(val index: Int) : NavigationState()
     data class ViewApplications(val postingId: String) : NavigationState()
-    data class EditPosting(val postingId: String) : NavigationState()  // ✅ Kept for compatibility
+    data class EditPosting(val postingId: String) : NavigationState()
     data class ReviewApplication(val applicationId: String) : NavigationState()
 }
