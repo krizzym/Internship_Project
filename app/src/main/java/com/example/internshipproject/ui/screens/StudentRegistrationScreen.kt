@@ -18,6 +18,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,6 +27,7 @@ import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentRegistrationViewModel
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.filled.Info
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,6 +158,20 @@ fun StudentRegistrationScreen(
                         keyboardType = KeyboardType.Email,
                         isError = state.errors.containsKey("email"),
                         errorMessage = state.errors["email"] ?: ""
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // ✅ FIXED: Removed the incorrect Row wrapper and weight modifier
+                    InputField(
+                        value = state.contactNumber,
+                        onValueChange = { viewModel.updateContactNumber(it) },
+                        label = "Contact Number *",
+                        hint = "Please enter your valid contact number",
+                        keyboardType = KeyboardType.Phone,
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = state.errors.containsKey("contactNumber"),
+                        errorMessage = state.errors["contactNumber"] ?: ""
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -370,7 +386,7 @@ fun StudentRegistrationScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Terms & Conditions Checkbox
+                    // ✅ UPDATED: Terms & Conditions Checkbox with underlined text
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top
@@ -385,7 +401,13 @@ fun StudentRegistrationScreen(
                             append("I agree to the ")
 
                             pushStringAnnotation(tag = "TERMS", annotation = "terms")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline  // ✅ Added underline
+                                )
+                            ) {
                                 append("Terms & Conditions")
                             }
                             pop()
@@ -393,7 +415,13 @@ fun StudentRegistrationScreen(
                             append(" and ")
 
                             pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline  // ✅ Added underline
+                                )
+                            ) {
                                 append("Privacy Policy")
                             }
                             pop()

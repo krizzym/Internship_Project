@@ -1,4 +1,3 @@
-//CompanyRegistrationScreen.kt
 package com.example.internshipproject.ui.screens
 
 import android.net.Uri
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -39,7 +39,7 @@ fun CompanyRegistrationScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    // ✅ ADD THESE: Dialog state variables for Terms and Privacy dialogs
+    // ✅ FIX: Add state variables for the dialogs
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
 
@@ -64,7 +64,6 @@ fun CompanyRegistrationScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🏢", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
                         Column {
                             Text(text = "FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text(text = "Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
@@ -123,7 +122,7 @@ fun CompanyRegistrationScreen(
                             value = state.contactNumber,
                             onValueChange = { viewModel.updateContactNumber(it) },
                             label = "Contact Number *",
-                            hint = "Include country code (e.g., +63 for Philippines)",
+                            hint = "Please enter your valid contact number",
                             keyboardType = KeyboardType.Phone,
                             modifier = Modifier.weight(1f),
                             isError = state.errors.containsKey("contactNumber"),
@@ -183,15 +182,8 @@ fun CompanyRegistrationScreen(
 
                     var expandedIndustry by remember { mutableStateOf(false) }
                     val industries = listOf(
-                        "Information Technology",
-                        "Finance & Accounting",
-                        "Healthcare",
-                        "Education",
-                        "Retail",
-                        "Manufacturing",
-                        "Consulting",
-                        "Marketing & Advertising",
-                        "Others"
+                        "Technology", "Healthcare", "Finance", "Education",
+                        "Manufacturing", "Retail", "Hospitality", "Other"
                     )
 
                     ExposedDropdownMenuBox(
@@ -315,7 +307,7 @@ fun CompanyRegistrationScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // ✅ UPDATED: Terms & Conditions Checkbox with working dialog triggers
+                    // Terms & Conditions Checkbox
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top
@@ -330,7 +322,13 @@ fun CompanyRegistrationScreen(
                             append("I agree to the ")
 
                             pushStringAnnotation(tag = "TERMS", annotation = "terms")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline  // ✅ Added underline
+                                )
+                            ) {
                                 append("Terms & Conditions")
                             }
                             pop()
@@ -338,7 +336,13 @@ fun CompanyRegistrationScreen(
                             append(" and ")
 
                             pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline  // ✅ Added underline
+                                )
+                            ) {
                                 append("Privacy Policy")
                             }
                             pop()
@@ -351,6 +355,7 @@ fun CompanyRegistrationScreen(
                                 color = TextSecondary
                             ),
                             onClick = { offset ->
+                                // ✅ FIX: Actually show the dialogs instead of TODO comments
                                 annotatedText.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
                                     .firstOrNull()?.let {
                                         showTermsDialog = true
@@ -364,7 +369,7 @@ fun CompanyRegistrationScreen(
                         )
                     }
 
-                    // ✅ ADD THESE: Dialog components (same as student registration)
+                    // ✅ FIX: Add the actual dialog components
                     if (showTermsDialog) {
                         TermsAndConditionsDialog(onDismiss = { showTermsDialog = false })
                     }
@@ -427,4 +432,15 @@ fun CompanyRegistrationScreen(
             }
         }
     }
+}
+
+@Composable
+fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        color = TextPrimary,
+        modifier = Modifier.padding(vertical = 12.dp)
+    )
 }

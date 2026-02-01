@@ -1,24 +1,22 @@
+//StudentApplicationsViewModel.kt
 package com.example.internshipproject.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.internshipproject.data.firebase.FirebaseManager
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.repository.ApplicationRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for managing student applications
- * Provides real-time updates and statistics
- */
-class StudentApplicationsViewModel(
-    private val applicationRepository: ApplicationRepository = ApplicationRepository()
-) : ViewModel() {
+class StudentApplicationsViewModel : ViewModel() {
+
+    private val applicationRepository = ApplicationRepository()
+    private val auth = FirebaseAuth.getInstance()
 
     private val _applications = MutableStateFlow<List<Application>>(emptyList())
     val applications: StateFlow<List<Application>> = _applications.asStateFlow()
@@ -30,86 +28,56 @@ class StudentApplicationsViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     /**
-     * Load applications for the current user
-     */
-    fun loadApplications() {
-        val studentId = FirebaseManager.getCurrentUserId()
-        if (studentId == null) {
-            _error.value = "User not logged in"
-            return
-        }
-
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            try {
-                Log.d("StudentAppVM", "Loading applications for student: $studentId")
-                val apps = applicationRepository.getApplicationsByStudentId(studentId)
-                _applications.value = apps
-                Log.d("StudentAppVM", "Loaded ${apps.size} applications")
-            } catch (e: Exception) {
-                Log.e("StudentAppVM", "Error loading applications: ${e.message}")
-                _error.value = "Failed to load applications: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    /**
-     * ✅ NEW: Set up real-time listener for applications
-     * This will automatically update when company changes status
+     * Observe applications in real-time for the current student
      */
     fun observeApplications() {
-        val studentId = FirebaseManager.getCurrentUserId()
-        if (studentId == null) {
-            _error.value = "User not logged in"
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            _error.value = "User not authenticated"
             return
         }
 
+        _isLoading.value = true
         viewModelScope.launch {
-            _isLoading.value = true
-
             try {
-                Log.d("StudentAppVM", "Setting up real-time observer for student: $studentId")
+                // Get student's email
+                val studentEmail = currentUser.email ?: ""
 
-                applicationRepository.observeApplicationsByStudentId(studentId)
-                    .collect { apps ->
-                        _applications.value = apps
-                        _isLoading.value = false
-                        Log.d("StudentAppVM", "Real-time update: ${apps.size} applications")
-                    }
+                Log.d("StudentApplicationsVM", "Loading applications for: $studentEmail")
+
+                // Fetch applications for this student
+                val apps = applicationRepository.getApplicationsByStudent(studentEmail)
+
+                Log.d("StudentApplicationsVM", "Loaded ${apps.size} applications")
+
+                _applications.value = apps
+                _isLoading.value = false
             } catch (e: Exception) {
-                Log.e("StudentAppVM", "Error observing applications: ${e.message}")
-                _error.value = "Failed to observe applications: ${e.message}"
+                Log.e("StudentApplicationsVM", "Error loading applications: ${e.message}", e)
+                _error.value = "Failed to load applications: ${e.message}"
                 _isLoading.value = false
             }
         }
     }
 
     /**
-     * ✅ Calculate statistics from current applications
-     * This is computed dynamically from the loaded data
+     * Refresh applications
      */
-    fun getApplicationStats(): Map<ApplicationStatus, Int> {
-        val stats = mutableMapOf<ApplicationStatus, Int>()
-        ApplicationStatus.values().forEach { status ->
-            stats[status] = _applications.value.count { it.status == status }
-        }
-        return stats
+    fun refresh() {
+        observeApplications()
     }
 
     /**
-     * ✅ Get dashboard statistics
-     * Returns total, pending, and accepted counts
+     * Get application statistics
      */
-    fun getDashboardStats(): Map<String, Int> {
-        val apps = _applications.value
+    fun getApplicationStats(): Map<ApplicationStatus, Int> {
+        val currentApps = _applications.value
         return mapOf(
-            "total" to apps.size,
-            "pending" to apps.count { it.status == ApplicationStatus.PENDING },
-            "accepted" to apps.count { it.status == ApplicationStatus.ACCEPTED }
+            ApplicationStatus.PENDING to currentApps.count { it.status == ApplicationStatus.PENDING },
+            ApplicationStatus.REVIEWED to currentApps.count { it.status == ApplicationStatus.REVIEWED },
+            ApplicationStatus.SHORTLISTED to currentApps.count { it.status == ApplicationStatus.SHORTLISTED },
+            ApplicationStatus.ACCEPTED to currentApps.count { it.status == ApplicationStatus.ACCEPTED },
+            ApplicationStatus.REJECTED to currentApps.count { it.status == ApplicationStatus.REJECTED }
         )
     }
 
@@ -120,10 +88,8 @@ class StudentApplicationsViewModel(
         _error.value = null
     }
 
-    /**
-     * Refresh applications manually
-     */
-    fun refresh() {
-        loadApplications()
+    override fun onCleared() {
+        super.onCleared()
+        Log.d("StudentApplicationsVM", "ViewModel cleared")
     }
 }
