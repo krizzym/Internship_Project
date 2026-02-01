@@ -1,3 +1,4 @@
+//CompanyProfileScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import android.net.Uri
@@ -9,7 +10,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.internshipproject.ui.components.PrimaryButton
@@ -27,6 +32,7 @@ import com.example.internshipproject.ui.components.SectionTitle
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.CompanyProfileViewModel
 import kotlinx.coroutines.launch
+import android.content.Intent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,15 +45,58 @@ fun CompanyProfileScreen(
     val scope = rememberCoroutineScope()
     var showLogoDialog by remember { mutableStateOf(false) }
 
+    // ✅ NEW: Get context for taking persistent permissions
+    val context = LocalContext.current
+
+    // ✅ NEW: Snackbar host state for showing messages
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val logoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        viewModel.updateNewLogoUri(uri)
+        uri?.let {
+            try {
+                // ✅ FIXED: Take persistent read permission to prevent "Object does not exist" error
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                viewModel.updateNewLogoUri(it)
+            } catch (e: SecurityException) {
+                // If persistent permission fails, still try to use the URI
+                // (it might work for immediate upload)
+                viewModel.updateNewLogoUri(it)
+            }
+        }
     }
 
     LaunchedEffect(userId) {
         scope.launch {
             viewModel.loadProfile(userId)
+        }
+    }
+
+    // ✅ NEW: Show success message in Snackbar
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            // Clear the message after showing
+            viewModel.clearSuccessMessage()
+        }
+    }
+
+    // ✅ NEW: Show error message in Snackbar
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Long
+            )
+            // Clear the message after showing
+            viewModel.clearErrorMessage()
         }
     }
 
@@ -58,6 +107,25 @@ fun CompanyProfileScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            // ✅ NEW: SnackbarHost for displaying feedback messages
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { snackbarData ->
+                    Snackbar(
+                        snackbarData = snackbarData,
+                        containerColor = if (snackbarData.visuals.message.contains("successfully", ignoreCase = true)) {
+                            Color(0xFF4CAF50) // Green for success
+                        } else {
+                            Color(0xFFE53935) // Red for errors
+                        },
+                        contentColor = Color.White,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            )
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -129,7 +197,7 @@ fun CompanyProfileScreen(
                 }
             }
 
-            // Success Message
+            // Success Message (existing verification status card - kept for compatibility)
             if (state.updateSuccess) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -193,8 +261,18 @@ fun CompanyProfileScreen(
                         color = TextSecondary,
                         modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                     )
+                }
+            }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+            // Company Information
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = CardWhite),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    SectionTitle("Company Information")
 
                     Text(
                         text = "Contact Number *",
@@ -207,6 +285,7 @@ fun CompanyProfileScreen(
                         value = state.contactNumber,
                         onValueChange = { viewModel.updateContactNumber(it) },
                         modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                         isError = state.errors.containsKey("contactNumber"),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PurpleButton,
@@ -214,26 +293,8 @@ fun CompanyProfileScreen(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     )
-                    if (state.errors.containsKey("contactNumber")) {
-                        Text(
-                            text = state.errors["contactNumber"] ?: "",
-                            color = Color.Red,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                        )
-                    }
-                }
-            }
 
-            // Company Details
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = CardWhite),
-                elevation = CardDefaults.cardElevation(2.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    SectionTitle("Company Details")
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = "Company Name *",
@@ -246,6 +307,7 @@ fun CompanyProfileScreen(
                         value = state.companyName,
                         onValueChange = { viewModel.updateCompanyName(it) },
                         modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                         isError = state.errors.containsKey("companyName"),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PurpleButton,
@@ -267,6 +329,7 @@ fun CompanyProfileScreen(
                         value = state.contactPerson,
                         onValueChange = { viewModel.updateContactPerson(it) },
                         modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                         isError = state.errors.containsKey("contactPerson"),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PurpleButton,
@@ -277,12 +340,6 @@ fun CompanyProfileScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    var expandedIndustry by remember { mutableStateOf(false) }
-                    val industries = listOf(
-                        "Technology", "Healthcare", "Finance", "Education",
-                        "Manufacturing", "Retail", "Hospitality", "Other"
-                    )
-
                     Text(
                         text = "Industry Type *",
                         fontSize = 14.sp,
@@ -290,39 +347,18 @@ fun CompanyProfileScreen(
                         color = TextPrimary,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    ExposedDropdownMenuBox(
-                        expanded = expandedIndustry,
-                        onExpandedChange = { expandedIndustry = it }
-                    ) {
-                        OutlinedTextField(
-                            value = state.industryType.ifEmpty { "Select industry" },
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedIndustry) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor(),
-                            isError = state.errors.containsKey("industryType"),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PurpleButton,
-                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = expandedIndustry,
-                            onDismissRequest = { expandedIndustry = false }
-                        ) {
-                            industries.forEach { industry ->
-                                DropdownMenuItem(
-                                    text = { Text(industry) },
-                                    onClick = {
-                                        viewModel.updateIndustryType(industry)
-                                        expandedIndustry = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                    OutlinedTextField(
+                        value = state.industryType,
+                        onValueChange = { viewModel.updateIndustryType(it) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        isError = state.errors.containsKey("industryType"),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PurpleButton,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -534,28 +570,31 @@ fun CompanyProfileScreen(
                             .fillMaxWidth()
                             .height(300.dp),
                         shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        AsyncImage(
-                            model = state.logoUri,
-                            contentDescription = "Company Logo",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
+                        colors = CardDefaults.cardColors(
+                            containerColor = BackgroundPurple.copy(alpha = 0.1f)
                         )
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = state.logoUri,
+                                contentDescription = "Company Logo",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Button(
-                        onClick = { showLogoDialog = false },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PurpleButton
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Close", fontSize = 14.sp)
-                    }
+                    PrimaryButton(
+                        text = "Close",
+                        onClick = { showLogoDialog = false }
+                    )
                 }
             }
         }

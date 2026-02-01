@@ -1,4 +1,3 @@
-// FirebaseAuthRepository
 package com.example.internshipproject.data.repository
 
 import android.net.Uri

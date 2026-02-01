@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.internshipproject.data.model.Company
 import com.example.internshipproject.data.repository.AuthRepository
+import com.example.internshipproject.ui.components.PasswordValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +49,10 @@ class CompanyRegistrationViewModel(
     fun updatePassword(value: String) {
         _state.value = _state.value.copy(password = value)
         validateField("password")
+        // Also revalidate confirm password if it has a value
+        if (_state.value.confirmPassword.isNotEmpty()) {
+            validateField("confirmPassword")
+        }
     }
 
     fun updateConfirmPassword(value: String) {
@@ -112,8 +117,10 @@ class CompanyRegistrationViewModel(
                 }
             }
             "password" -> {
-                if (currentState.password.length < 12) {
-                    newErrors["password"] = "Password must be at least 12 characters long"
+                // ✅ UPDATED: Use PasswordValidator for comprehensive validation
+                val validationResult = PasswordValidator.validate(currentState.password)
+                if (!validationResult.isValid) {
+                    newErrors["password"] = validationResult.errorMessage ?: "Invalid password"
                 } else {
                     newErrors.remove("password")
                 }
@@ -179,16 +186,39 @@ class CompanyRegistrationViewModel(
         _state.value = currentState.copy(errors = newErrors)
     }
 
+    // ✅ NEW: Helper function to check if form is valid (for enabling/disabling submit button)
+    fun isFormValid(): Boolean {
+        val currentState = _state.value
+        return currentState.companyEmail.isNotBlank() &&
+                currentState.contactNumber.isNotBlank() &&
+                PasswordValidator.isValid(currentState.password) &&
+                currentState.confirmPassword == currentState.password &&
+                currentState.companyName.isNotBlank() &&
+                currentState.contactPerson.isNotBlank() &&
+                currentState.industryType.isNotBlank() &&
+                currentState.industryType != "Select industry" &&
+                currentState.companyAddress.isNotBlank() &&
+                currentState.companyDescription.length >= 50 &&
+                currentState.logoUri != null &&
+                currentState.agreedToTerms &&
+                currentState.errors.isEmpty()
+    }
+
     fun register() {
         val currentState = _state.value
 
+        // Validate all fields
         listOf(
             "companyEmail", "contactNumber", "password", "confirmPassword",
             "companyName", "contactPerson", "industryType", "companyAddress",
             "companyDescription", "logo", "terms"
         ).forEach { validateField(it) }
 
+        // ✅ CRITICAL: Stop if there are validation errors (before calling Firebase)
         if (_state.value.errors.isNotEmpty()) {
+            _state.value = _state.value.copy(
+                errorMessage = "Please fix all errors before submitting"
+            )
             return
         }
 

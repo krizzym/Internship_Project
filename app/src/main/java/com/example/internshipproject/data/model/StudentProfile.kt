@@ -1,4 +1,3 @@
-// StudentProfile
 package com.example.internshipproject.data.model
 
 data class StudentProfile(
@@ -22,3 +21,4 @@ data class StudentProfile(
             "$firstName $middleName $surname"
         }
 }
+

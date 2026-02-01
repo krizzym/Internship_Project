@@ -58,23 +58,3 @@ fun PasswordTextField(
         )
     }
 }
-object PasswordValidator {
-    private const val MIN_LENGTH = 8
-    private val SPECIAL_CHARACTERS = "!@#\$%^&*()_+-=[]{}|;:,.<>?"
-
-    fun validatePassword(password: String): Pair<Boolean, String> {
-        if (password.length < MIN_LENGTH) {
-            return Pair(false, "Password must be at least $MIN_LENGTH characters")
-        }
-        if (!password.any { it.isUpperCase() }) {
-            return Pair(false, "Must contain uppercase letter")
-        }
-        if (!password.any { it.isLowerCase() }) {
-            return Pair(false, "Must contain lowercase letter")
-        }
-        if (!password.any { SPECIAL_CHARACTERS.contains(it) }) {
-            return Pair(false, "Must contain special character (!@#$%^&*)")
-        }
-        return Pair(true, "")
-    }
-}

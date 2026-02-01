@@ -1,22 +1,31 @@
+//ViewApplicationsViewModel.kt - FIXED VERSION
 package com.example.internshipproject.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.Internship
+import com.example.internshipproject.data.model.StudentProfile
 import com.example.internshipproject.data.repository.CompanyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class ApplicationWithStudent(
+    val application: Application,
+    val studentProfile: StudentProfile?
+)
+
 data class ViewApplicationsState(
     val posting: Internship? = null,
-    val applications: List<Application> = emptyList(),
+    val applicationsWithStudents: List<ApplicationWithStudent> = emptyList(),
     val statusCounts: Map<ApplicationStatus, Int> = emptyMap(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val successMessage: String? = null
 )
 
 class ViewApplicationsViewModel(
@@ -31,47 +40,47 @@ class ViewApplicationsViewModel(
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
             try {
-                // ✅ DEBUG: Log what we're loading
-                println("🔍 ViewApplicationsViewModel: Loading data for posting: $postingId")
+                Log.d("ViewApplicationsVM", "🔍 Loading data for posting: $postingId")
 
                 // Load posting details
                 repository.getInternshipById(postingId).onSuccess { posting ->
-                    println("✅ Posting loaded: ${posting?.title}")
+                    Log.d("ViewApplicationsVM", "✅ Posting loaded: ${posting?.title}")
                     _state.value = _state.value.copy(posting = posting)
                 }.onFailure { e ->
-                    println("❌ Failed to load posting: ${e.message}")
+                    Log.e("ViewApplicationsVM", "❌ Failed to load posting: ${e.message}")
                 }
 
                 // Load applications
                 repository.getApplicationsByPosting(postingId).onSuccess { applications ->
-                    println("✅ Applications loaded: ${applications.size} applications")
-                    applications.forEachIndexed { index, app ->
-                        println("   [$index] ${app.studentEmail} - ${app.status}")
+                    Log.d("ViewApplicationsVM", "✅ Applications loaded: ${applications.size} applications")
+
+                    // Fetch student profiles for each application
+                    val applicationsWithStudents = applications.map { application ->
+                        val studentProfile = repository.getStudentProfile(application.studentEmail).getOrNull()
+                        Log.d("ViewApplicationsVM", "   - ${application.studentEmail}: ${studentProfile?.fullName ?: "profile not found"}")
+                        ApplicationWithStudent(application, studentProfile)
                     }
-                    _state.value = _state.value.copy(applications = applications)
+
+                    _state.value = _state.value.copy(applicationsWithStudents = applicationsWithStudents)
+
                 }.onFailure { e ->
-                    println("❌ Failed to load applications: ${e.message}")
+                    Log.e("ViewApplicationsVM", "❌ Failed to load applications: ${e.message}")
                     _state.value = _state.value.copy(errorMessage = "Failed to load applications: ${e.message}")
                 }
 
                 // Load status counts
                 val statusCounts = repository.getApplicationStatusCounts(postingId)
-                println("✅ Status counts loaded: $statusCounts")
+                Log.d("ViewApplicationsVM", "✅ Status counts loaded: $statusCounts")
 
                 _state.value = _state.value.copy(
                     statusCounts = statusCounts,
                     isLoading = false
                 )
 
-                // ✅ DEBUG: Final state check
-                println("🎯 Final state:")
-                println("   Posting: ${_state.value.posting?.title}")
-                println("   Applications: ${_state.value.applications.size}")
-                println("   Status counts: ${_state.value.statusCounts}")
+                Log.d("ViewApplicationsVM", "🎯 Final state: ${_state.value.applicationsWithStudents.size} applications with student data")
 
             } catch (e: Exception) {
-                println("❌ EXCEPTION in loadData: ${e.message}")
-                e.printStackTrace()
+                Log.e("ViewApplicationsVM", "❌ EXCEPTION in loadData: ${e.message}", e)
                 _state.value = _state.value.copy(
                     isLoading = false,
                     errorMessage = "Error loading data: ${e.message}"
@@ -80,7 +89,61 @@ class ViewApplicationsViewModel(
         }
     }
 
+    fun updateApplicationStatus(applicationId: String, newStatus: ApplicationStatus) {
+        viewModelScope.launch {
+            try {
+                Log.d("ViewApplicationsVM", "🔄 Updating application $applicationId to $newStatus")
+
+                repository.updateApplicationStatus(applicationId, newStatus).onSuccess {
+                    Log.d("ViewApplicationsVM", "✅ Status updated successfully")
+
+                    // Update local state
+                    val updatedList = _state.value.applicationsWithStudents.map { appWithStudent ->
+                        if (appWithStudent.application.id == applicationId) {
+                            appWithStudent.copy(
+                                application = appWithStudent.application.copy(status = newStatus)
+                            )
+                        } else {
+                            appWithStudent
+                        }
+                    }
+
+                    _state.value = _state.value.copy(
+                        applicationsWithStudents = updatedList,
+                        successMessage = "Application status updated to ${newStatus.name}"
+                    )
+
+                    // Reload status counts
+                    _state.value.posting?.let { posting ->
+                        val statusCounts = repository.getApplicationStatusCounts(posting.id)
+                        _state.value = _state.value.copy(statusCounts = statusCounts)
+                    }
+
+                }.onFailure { e ->
+                    Log.e("ViewApplicationsVM", "❌ Failed to update status: ${e.message}")
+                    _state.value = _state.value.copy(
+                        errorMessage = "Failed to update status: ${e.message}"
+                    )
+                }
+
+                // Clear success message after 3 seconds
+                kotlinx.coroutines.delay(3000)
+                _state.value = _state.value.copy(successMessage = null)
+
+            } catch (e: Exception) {
+                Log.e("ViewApplicationsVM", "❌ Error updating status: ${e.message}", e)
+                _state.value = _state.value.copy(
+                    errorMessage = "Error updating status: ${e.message}"
+                )
+            }
+        }
+    }
+
     fun refreshData(postingId: String) {
         loadData(postingId)
+    }
+
+    fun clearMessages() {
+        _state.value = _state.value.copy(successMessage = null, errorMessage = null)
     }
 }

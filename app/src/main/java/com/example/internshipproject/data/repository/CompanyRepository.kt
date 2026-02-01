@@ -66,14 +66,53 @@ class CompanyRepository {
         }
     }
 
+    // ✅ IMPROVED: Enhanced uploadCompanyLogo with better error handling and logging
     suspend fun uploadCompanyLogo(companyId: String, uri: Uri): Result<String> {
         return try {
-            val ref = storage.reference.child("${FirebaseManager.StoragePaths.COMPANY_LOGOS}/$companyId.jpg")
-            ref.putFile(uri).await()
+            // Validate URI
+            if (uri.toString().isEmpty()) {
+                Log.e("CompanyRepository", "Invalid URI: empty")
+                return Result.failure(Exception("Invalid file selected. Please try again."))
+            }
+
+            Log.d("CompanyRepository", "Starting logo upload for company: $companyId")
+            Log.d("CompanyRepository", "URI: $uri")
+            Log.d("CompanyRepository", "URI Scheme: ${uri.scheme}")
+
+            // Create storage reference with timestamp to ensure uniqueness
+            val timestamp = System.currentTimeMillis()
+            val fileName = "${companyId}_${timestamp}.jpg"
+            val ref = storage.reference.child("${FirebaseManager.StoragePaths.COMPANY_LOGOS}/$fileName")
+
+            Log.d("CompanyRepository", "Storage path: ${FirebaseManager.StoragePaths.COMPANY_LOGOS}/$fileName")
+
+            // Upload file
+            val uploadTask = ref.putFile(uri).await()
+            Log.d("CompanyRepository", "Upload completed. Bytes transferred: ${uploadTask.bytesTransferred}")
+
+            // Get download URL
             val url = ref.downloadUrl.await().toString()
+            Log.d("CompanyRepository", "Download URL obtained: $url")
+
             Result.success(url)
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e("CompanyRepository", "Logo upload failed", e)
+            Log.e("CompanyRepository", "Error message: ${e.message}")
+            Log.e("CompanyRepository", "Error type: ${e.javaClass.simpleName}")
+
+            // Provide user-friendly error message
+            val errorMessage = when {
+                e.message?.contains("Object does not exist") == true ->
+                    "File not found. Please select the image again."
+                e.message?.contains("permission", ignoreCase = true) == true ->
+                    "Permission denied. Please check storage permissions."
+                e.message?.contains("network", ignoreCase = true) == true ->
+                    "Network error. Please check your internet connection."
+                else ->
+                    "Upload failed: ${e.message ?: "Unknown error"}"
+            }
+
+            Result.failure(Exception(errorMessage))
         }
     }
 
@@ -449,21 +488,27 @@ class CompanyRepository {
     }
 
     /**
-     * Update application status
+     * ✅ UPDATED: Update application status with optional notes parameter
      */
     suspend fun updateApplicationStatus(
         applicationId: String,
-        status: ApplicationStatus
+        newStatus: ApplicationStatus,
+        notes: String? = null
     ): Result<Unit> {
         return try {
+            val updateData = mutableMapOf<String, Any>(
+                "status" to newStatus.name,
+                "updatedAt" to System.currentTimeMillis()
+            )
+
+            // Add notes if provided
+            if (!notes.isNullOrBlank()) {
+                updateData["reviewerNotes"] = notes
+            }
+
             firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .document(applicationId)
-                .update(
-                    mapOf(
-                        "status" to status.name,
-                        "updatedAt" to System.currentTimeMillis()
-                    )
-                )
+                .update(updateData)
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -557,6 +602,44 @@ class CompanyRepository {
             }
         } catch (e: Exception) {
             Log.e("CompanyRepo", "Error fetching student profile: ${e.message}")
+            Result.failure(e)
+        }
+    }
+    suspend fun getStudentProfile(studentEmail: String): Result<StudentProfile?> {
+        return try {
+            Log.d("CompanyRepo", "Fetching student profile for: $studentEmail")
+
+            val snapshot = firestore.collection(FirebaseManager.Collections.STUDENTS)
+                .whereEqualTo("email", studentEmail)
+                .limit(1)
+                .get()
+                .await()
+
+            if (snapshot.documents.isEmpty()) {
+                Log.w("CompanyRepo", "No student profile found for: $studentEmail")
+                return Result.success(null)
+            }
+
+            val doc = snapshot.documents.first()
+            val profile = StudentProfile(
+                firstName = doc.getString("firstName") ?: "",
+                middleName = doc.getString("middleName"),
+                surname = doc.getString("lastName") ?: "",
+                email = doc.getString("email") ?: "",
+                school = doc.getString("school") ?: "",
+                course = doc.getString("course") ?: "",
+                yearLevel = doc.getString("yearLevel") ?: "",
+                city = doc.getString("city") ?: "",
+                barangay = doc.getString("barangay") ?: "",
+                internshipTypes = (doc.get("internshipTypes") as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
+                skills = doc.getString("skills") ?: "",
+                resumeUri = doc.getString("resumeUri")
+            )
+
+            Log.d("CompanyRepo", "Student profile found: ${profile.fullName}")
+            Result.success(profile)
+        } catch (e: Exception) {
+            Log.e("CompanyRepo", "Error fetching student profile: ${e.message}", e)
             Result.failure(e)
         }
     }

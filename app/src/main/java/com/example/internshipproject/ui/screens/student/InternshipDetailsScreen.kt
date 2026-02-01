@@ -1,5 +1,4 @@
-// InternshipDetailsScreen.kt - UPDATED with Resume Upload
-package com.example.internshipproject.ui.screens.student
+package com.example.internshipproject.ui.screens
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -28,15 +27,14 @@ import com.example.internshipproject.ui.theme.*
 fun InternshipDetailsScreen(
     internship: Internship,
     onBackClick: () -> Unit,
-    onSubmitApplication: (String, Uri?) -> Unit, // ✅ UPDATED: Now includes resume URI
+    onSubmitApplication: (String, Uri?) -> Unit,
     isSubmitting: Boolean = false
 ) {
     var coverLetter by remember { mutableStateOf("") }
-    var resumeUri by remember { mutableStateOf<Uri?>(null) } // ✅ NEW: Resume state
+    var resumeUri by remember { mutableStateOf<Uri?>(null) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
-    // ✅ NEW: Resume picker
     val resumePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -70,129 +68,158 @@ fun InternshipDetailsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
-        }
+        },
+        containerColor = BackgroundPurple
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
                 .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
         ) {
+            // Header Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardWhite),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                        .padding(24.dp)
-                ) {
-                    // Back to Dashboard Link
-                    TextButton(
-                        onClick = onBackClick,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    ) {
-                        Text(
-                            "← Back to Dashboard",
-                            color = PurpleButton,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    // Job Title
+                Column(modifier = Modifier.padding(20.dp)) {
                     Text(
                         text = internship.title,
-                        fontSize = 28.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Company
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🏢", fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = internship.companyName,
-                            fontSize = 18.sp,
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Text(
+                        text = internship.companyName,
+                        fontSize = 18.sp,
+                        color = PurpleButton,
+                        fontWeight = FontWeight.Medium
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Quick Info Chips
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        InfoChip("📍", internship.location)
-                        InfoChip("💼", internship.workType)
-                        InfoChip("⏱", internship.duration)
+                        InfoChip(
+                            icon = Icons.Default.LocationOn,
+                            text = internship.location
+                        )
+                        InfoChip(
+                            icon = Icons.Default.Work,
+                            text = internship.workType
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        InfoChip("💰", internship.salaryRange)
-                        InfoChip("👥", "${internship.availableSlots} slots")
-                        InfoChip("📅", internship.applicationDeadline)
+                        InfoChip(
+                            icon = Icons.Default.Schedule,
+                            text = internship.duration
+                        )
+                        InfoChip(
+                            icon = Icons.Default.Money,
+                            text = internship.salaryRange
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        InfoChip(
+                            icon = Icons.Default.People,
+                            text = "${internship.availableSlots} slots"
+                        )
+                        InfoChip(
+                            icon = Icons.Default.Event,
+                            text = "Apply by ${internship.applicationDeadline}"
+                        )
+                    }
+                }
+            }
+
+            // Details Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    DetailSection(
+                        title = "Job Description",
+                        content = internship.description
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    DetailSection(
+                        title = "Requirements",
+                        content = internship.requirements
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    DetailSection(
+                        title = "About the Company",
+                        content = internship.aboutCompany
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = PurpleButton,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = internship.companyAddress,
+                            fontSize = 14.sp,
+                            color = TextSecondary
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
                     HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Job Description
-                    SectionTitle("Job Description")
-                    Text(
-                        text = internship.description,
-                        fontSize = 14.sp,
-                        color = TextSecondary,
-                        lineHeight = 20.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Requirements
-                    SectionTitle("Requirements")
-                    Text(
-                        text = internship.requirements,
-                        fontSize = 14.sp,
-                        color = TextSecondary,
-                        lineHeight = 20.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // About Company
-                    SectionTitle("About ${internship.companyName}")
-                    Text(
-                        text = internship.aboutCompany,
-                        fontSize = 14.sp,
-                        color = TextSecondary,
-                        lineHeight = 20.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
-                    Spacer(modifier = Modifier.height(24.dp))
-
                     // Application Section
-                    SectionTitle("Apply for this Internship")
+                    Text(
+                        text = "Apply for this Internship",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Cover Letter
                     Text(
@@ -203,6 +230,7 @@ fun InternshipDetailsScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
+                    // ✅ FIXED: Cover letter TextField with improved placeholder styling
                     OutlinedTextField(
                         value = coverLetter,
                         onValueChange = { coverLetter = it },
@@ -210,17 +238,26 @@ fun InternshipDetailsScreen(
                             .fillMaxWidth()
                             .height(200.dp),
                         placeholder = {
-                            Text("Tell the company why you're interested in this internship and why you'd be a great fit...")
+                            Text(
+                                text = "Tell the company why you're interested in this internship and why you'd be a great fit...",
+                                fontSize = 13.sp,  // ✅ FIXED: Reduced from default (16sp) to 13sp
+                                color = TextSecondary.copy(alpha = 0.6f)  // ✅ FIXED: Lighter color with alpha
+                            )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PurpleButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp),
-                        enabled = !isSubmitting
+                        enabled = !isSubmitting,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp  // ✅ ADDED: Consistent text size when typing
+                        )
                     )
 
-                    // ✅ NEW: Resume Upload Section
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Resume Upload Section
                     Text(
                         text = "Resume / CV *",
                         fontSize = 14.sp,
@@ -250,7 +287,6 @@ fun InternshipDetailsScreen(
                         )
                     }
 
-                    // Show selected file info
                     if (resumeUri != null) {
                         Row(
                             modifier = Modifier
@@ -282,36 +318,17 @@ fun InternshipDetailsScreen(
                         }
                     }
 
-                    Text(
-                        text = "Supported format: PDF | Maximum size: 500KB",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    // Show error if any
                     if (showError) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            ),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text(
-                                text = errorMessage,
-                                color = MaterialTheme.colorScheme.error,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(12.dp)
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            fontSize = 13.sp
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Submit Button
                     Button(
                         onClick = {
                             when {
@@ -329,64 +346,77 @@ fun InternshipDetailsScreen(
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PurpleButton
+                        ),
                         shape = RoundedCornerShape(8.dp),
                         enabled = !isSubmitting
                     ) {
                         if (isSubmitting) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Submitting...",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White
                             )
                         } else {
                             Text(
-                                "Submit Application",
+                                text = "Submit Application",
                                 fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-fun InfoChip(icon: String, text: String) {
+fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 4.dp)
+        modifier = Modifier
+            .background(
+                color = PurpleButton.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
-        Text(text = icon, fontSize = 14.sp)
-        Spacer(modifier = Modifier.width(4.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = PurpleButton,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = text,
-            fontSize = 12.sp,
-            color = TextSecondary
+            fontSize = 13.sp,
+            color = TextPrimary
         )
     }
 }
 
 @Composable
-fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        color = TextPrimary,
-        modifier = Modifier.padding(bottom = 12.dp)
-    )
+fun DetailSection(title: String, content: String) {
+    Column {
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = content,
+            fontSize = 14.sp,
+            color = TextSecondary,
+            lineHeight = 22.sp
+        )
+    }
 }

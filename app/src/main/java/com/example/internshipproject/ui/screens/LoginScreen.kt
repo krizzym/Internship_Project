@@ -50,7 +50,6 @@ fun LoginScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🎓", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
                         Column {
                             Text(text = "FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text(text = "Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)

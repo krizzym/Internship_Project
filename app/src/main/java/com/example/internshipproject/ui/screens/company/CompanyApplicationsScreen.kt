@@ -1,4 +1,3 @@
-// CompanyApplicationsScreen
 package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.background
@@ -462,3 +461,4 @@ fun ApplicationDetailsCard(
         }
     }
 }
+

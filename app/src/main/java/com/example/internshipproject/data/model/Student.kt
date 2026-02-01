@@ -1,4 +1,3 @@
-//Student
 package com.example.internshipproject.data.model
 
 data class Student(

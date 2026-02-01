@@ -1,4 +1,4 @@
-// StudentProfileViewModel
+//StudentProfileViewModel.kt
 package com.example.internshipproject.viewmodel
 
 import android.net.Uri
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+// ✅ UPDATED: Enhanced state with proper feedback mechanism
 data class StudentProfileState(
     val profile: StudentProfile? = null,
     val firstName: String = "",
@@ -33,6 +34,7 @@ data class StudentProfileState(
     val isUpdating: Boolean = false,
     val updateSuccess: Boolean = false,
     val errorMessage: String? = null,
+    val successMessage: String? = null,  // ✅ NEW: Success message for user feedback
     val errors: Map<String, String> = emptyMap()
 )
 
@@ -121,7 +123,7 @@ class StudentProfileViewModel(
         _state.value = _state.value.copy(skills = value)
     }
 
-    fun updateNewResumeUri(uri: Uri?) {
+    fun updateResumeUri(uri: Uri?) {
         _state.value = _state.value.copy(newResumeUri = uri)
     }
 
@@ -146,14 +148,14 @@ class StudentProfileViewModel(
             }
             "school" -> {
                 if (currentState.school.isBlank()) {
-                    newErrors["school"] = "School/University is required"
+                    newErrors["school"] = "School is required"
                 } else {
                     newErrors.remove("school")
                 }
             }
             "course" -> {
                 if (currentState.course.isBlank()) {
-                    newErrors["course"] = "Course/Program is required"
+                    newErrors["course"] = "Course is required"
                 } else {
                     newErrors.remove("course")
                 }
@@ -191,74 +193,107 @@ class StudentProfileViewModel(
         _state.value = currentState.copy(errors = newErrors)
     }
 
+    // ✅ UPDATED: Enhanced updateProfile with proper feedback mechanism
     fun updateProfile() {
+        // Clear previous messages
+        _state.value = _state.value.copy(
+            successMessage = null,
+            errorMessage = null
+        )
+
         // Validate all fields
         listOf(
             "firstName", "surname", "school", "course",
             "yearLevel", "city", "barangay", "internshipTypes"
         ).forEach { validateField(it) }
 
+        // If there are validation errors, stop and show error
         if (_state.value.errors.isNotEmpty()) {
+            _state.value = _state.value.copy(
+                errorMessage = "Please fix all errors before updating"
+            )
             return
         }
 
+        // ✅ Set loading state to prevent duplicate submissions
         _state.value = _state.value.copy(isUpdating = true, errorMessage = null)
 
         viewModelScope.launch {
-            val currentState = _state.value
-            val userId = FirebaseManager.getCurrentUserId() ?: return@launch
+            try {
+                val currentState = _state.value
+                val userId = FirebaseManager.getCurrentUserId()
 
-            val internshipTypes = buildList {
-                if (currentState.onsite) add("On-site")
-                if (currentState.remote) add("Remote")
-                if (currentState.hybrid) add("Hybrid")
-            }
-
-            val updates = mapOf(
-                "firstName" to currentState.firstName,
-                "middleName" to (currentState.middleName.ifBlank { null } ?: ""),
-                "lastName" to currentState.surname,
-                "school" to currentState.school,
-                "course" to currentState.course,
-                "yearLevel" to currentState.yearLevel,
-                "city" to currentState.city,
-                "barangay" to currentState.barangay,
-                "internshipTypes" to internshipTypes,
-                "skills" to currentState.skills
-            )
-
-            val result = repository.updateStudentProfile(userId, updates)
-
-            result.fold(
-                onSuccess = {
-                    val updatedProfile = StudentProfile(
-                        firstName = currentState.firstName,
-                        middleName = currentState.middleName.ifBlank { null },
-                        surname = currentState.surname,
-                        email = currentState.email,
-                        school = currentState.school,
-                        course = currentState.course,
-                        yearLevel = currentState.yearLevel,
-                        city = currentState.city,
-                        barangay = currentState.barangay,
-                        internshipTypes = internshipTypes,
-                        skills = currentState.skills,
-                        resumeUri = (currentState.newResumeUri ?: currentState.resumeUri)?.toString()
-                    )
-
-                    _state.value = _state.value.copy(
-                        profile = updatedProfile,
-                        isUpdating = false,
-                        updateSuccess = true
-                    )
-                },
-                onFailure = { error ->
+                if (userId == null) {
                     _state.value = _state.value.copy(
                         isUpdating = false,
-                        errorMessage = error.message ?: "Update failed"
+                        errorMessage = "User not logged in. Please log in again."
                     )
+                    return@launch
                 }
-            )
+
+                val internshipTypes = buildList {
+                    if (currentState.onsite) add("On-site")
+                    if (currentState.remote) add("Remote")
+                    if (currentState.hybrid) add("Hybrid")
+                }
+
+                val updates = mapOf(
+                    "firstName" to currentState.firstName,
+                    "middleName" to (currentState.middleName.ifBlank { null } ?: ""),
+                    "lastName" to currentState.surname,
+                    "school" to currentState.school,
+                    "course" to currentState.course,
+                    "yearLevel" to currentState.yearLevel,
+                    "city" to currentState.city,
+                    "barangay" to currentState.barangay,
+                    "internshipTypes" to internshipTypes,
+                    "skills" to currentState.skills
+                )
+
+                // ✅ Execute Firebase update asynchronously
+                val result = repository.updateStudentProfile(userId, updates)
+
+                result.fold(
+                    onSuccess = {
+                        // ✅ Update successful - create updated profile
+                        val updatedProfile = StudentProfile(
+                            firstName = currentState.firstName,
+                            middleName = currentState.middleName.ifBlank { null },
+                            surname = currentState.surname,
+                            email = currentState.email,
+                            school = currentState.school,
+                            course = currentState.course,
+                            yearLevel = currentState.yearLevel,
+                            city = currentState.city,
+                            barangay = currentState.barangay,
+                            internshipTypes = internshipTypes,
+                            skills = currentState.skills,
+                            resumeUri = (currentState.newResumeUri ?: currentState.resumeUri)?.toString()
+                        )
+
+                        // ✅ Set success state with message
+                        _state.value = _state.value.copy(
+                            profile = updatedProfile,
+                            isUpdating = false,
+                            updateSuccess = true,
+                            successMessage = "Profile updated successfully!"
+                        )
+                    },
+                    onFailure = { error ->
+                        // ✅ Update failed - show error message
+                        _state.value = _state.value.copy(
+                            isUpdating = false,
+                            errorMessage = error.message ?: "Failed to update profile. Please try again."
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                // ✅ Handle unexpected errors
+                _state.value = _state.value.copy(
+                    isUpdating = false,
+                    errorMessage = "An unexpected error occurred: ${e.message}"
+                )
+            }
         }
     }
 
@@ -274,27 +309,53 @@ class StudentProfileViewModel(
         _state.value = _state.value.copy(isUpdating = true, errorMessage = null)
 
         viewModelScope.launch {
-            val userId = FirebaseManager.getCurrentUserId() ?: return@launch
+            try {
+                val userId = FirebaseManager.getCurrentUserId()
 
-            val result = repository.uploadResume(userId, newResumeUri)
-
-            result.fold(
-                onSuccess = { downloadUrl ->
-                    _state.value = _state.value.copy(
-                        resumeUri = Uri.parse(downloadUrl),
-                        newResumeUri = null,
-                        isUpdating = false,
-                        updateSuccess = true
-                    )
-                },
-                onFailure = { error ->
+                if (userId == null) {
                     _state.value = _state.value.copy(
                         isUpdating = false,
-                        errorMessage = error.message ?: "Upload failed"
+                        errorMessage = "User not logged in. Please log in again."
                     )
+                    return@launch
                 }
-            )
+
+                val result = repository.uploadResume(userId, newResumeUri)
+
+                result.fold(
+                    onSuccess = { downloadUrl ->
+                        _state.value = _state.value.copy(
+                            resumeUri = Uri.parse(downloadUrl),
+                            newResumeUri = null,
+                            isUpdating = false,
+                            updateSuccess = true,
+                            successMessage = "Resume uploaded successfully!"
+                        )
+                    },
+                    onFailure = { error ->
+                        _state.value = _state.value.copy(
+                            isUpdating = false,
+                            errorMessage = error.message ?: "Failed to upload resume. Please try again."
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    isUpdating = false,
+                    errorMessage = "An unexpected error occurred: ${e.message}"
+                )
+            }
         }
+    }
+
+    // ✅ NEW: Clear success message after displaying
+    fun clearSuccessMessage() {
+        _state.value = _state.value.copy(successMessage = null)
+    }
+
+    // ✅ NEW: Clear error message after displaying
+    fun clearErrorMessage() {
+        _state.value = _state.value.copy(errorMessage = null)
     }
 
     fun resetUpdateSuccess() {

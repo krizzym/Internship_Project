@@ -1,9 +1,9 @@
+//MyApplicationsScreen.kt - UPDATED VERSION
 package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,21 +15,48 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.ui.theme.*
+import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 
+/**
+ * ✅ UPDATED: MyApplicationsScreen now uses ViewModel for real-time updates
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApplicationsScreen(
-    applications: List<Application>,
-    applicationStats: Map<ApplicationStatus, Int>,
     onBackToDashboard: () -> Unit,
     onBrowseInternships: () -> Unit,
     onApplicationClick: (String) -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    viewModel: StudentApplicationsViewModel = viewModel()
 ) {
     var selectedTab by remember { mutableStateOf(1) }
+
+    // ✅ Observe applications from ViewModel
+    val applications by viewModel.applications.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    // ✅ Calculate stats dynamically from applications
+    val applicationStats = remember(applications) {
+        viewModel.getApplicationStats()
+    }
+
+    // ✅ Set up real-time listener when screen is first displayed
+    LaunchedEffect(Unit) {
+        viewModel.observeApplications()
+    }
+
+    // ✅ Error handling
+    error?.let { errorMessage ->
+        LaunchedEffect(errorMessage) {
+            // You could show a snackbar here
+            viewModel.clearError()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -40,6 +67,15 @@ fun MyApplicationsScreen(
                             Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text("Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
                         }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.refresh() }) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                            tint = if (isLoading) PurpleButton else TextSecondary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -127,7 +163,7 @@ fun MyApplicationsScreen(
                 }
             }
 
-            // Status Cards
+            // ✅ Status Cards - using computed stats
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -139,6 +175,20 @@ fun MyApplicationsScreen(
                         StatusRow("Reviewed", applicationStats[ApplicationStatus.REVIEWED] ?: 0)
                         StatusRow("Shortlisted", applicationStats[ApplicationStatus.SHORTLISTED] ?: 0)
                         StatusRow("Accepted", applicationStats[ApplicationStatus.ACCEPTED] ?: 0)
+                    }
+                }
+            }
+
+            // ✅ Loading indicator
+            if (isLoading && applications.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = PurpleButton)
                     }
                 }
             }
@@ -160,7 +210,7 @@ fun MyApplicationsScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        if (applications.isEmpty()) {
+                        if (applications.isEmpty() && !isLoading) {
                             // Empty State
                             Column(
                                 modifier = Modifier
