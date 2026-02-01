@@ -1,4 +1,4 @@
-//MyApplicationsScreen.kt - UPDATED VERSION
+//MyApplicationsScreen.kt - FINAL VERSION with Dialog
 package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background
@@ -18,11 +18,12 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
+import com.example.internshipproject.ui.components.ApplicationDetailsDialog
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 
 /**
- * ✅ UPDATED: MyApplicationsScreen now uses ViewModel for real-time updates
+ * ✅ FINAL VERSION: MyApplicationsScreen with ViewModel + Working Dialog
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +35,9 @@ fun MyApplicationsScreen(
     viewModel: StudentApplicationsViewModel = viewModel()
 ) {
     var selectedTab by remember { mutableStateOf(1) }
+
+    // ✅ NEW: State to show application details dialog
+    var selectedApplication by remember { mutableStateOf<Application?>(null) }
 
     // ✅ Observe applications from ViewModel
     val applications by viewModel.applications.collectAsState()
@@ -47,7 +51,7 @@ fun MyApplicationsScreen(
 
     // ✅ Set up real-time listener when screen is first displayed
     LaunchedEffect(Unit) {
-        viewModel.observeApplications()
+        viewModel.observeApplications()  // This matches your ViewModel's method
     }
 
     // ✅ Error handling
@@ -58,13 +62,21 @@ fun MyApplicationsScreen(
         }
     }
 
+    // ✅ NEW: Show dialog when an application is selected
+    selectedApplication?.let { application ->
+        ApplicationDetailsDialog(
+            application = application,
+            onDismiss = { selectedApplication = null }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column {
-                            Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                             Text("Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
                         }
                     }
@@ -170,7 +182,14 @@ fun MyApplicationsScreen(
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = CardWhite)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            "Application Status",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
                         StatusRow("Pending", applicationStats[ApplicationStatus.PENDING] ?: 0)
                         StatusRow("Reviewed", applicationStats[ApplicationStatus.REVIEWED] ?: 0)
                         StatusRow("Shortlisted", applicationStats[ApplicationStatus.SHORTLISTED] ?: 0)
@@ -236,7 +255,8 @@ fun MyApplicationsScreen(
                             applications.forEach { application ->
                                 ApplicationCard(
                                     application = application,
-                                    onClick = { onApplicationClick(application.id) }
+                                    // ✅ FIXED: Opens dialog instead of using empty callback
+                                    onClick = { selectedApplication = application }
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                             }

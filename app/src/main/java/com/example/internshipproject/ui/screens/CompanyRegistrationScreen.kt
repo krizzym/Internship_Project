@@ -20,6 +20,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,6 +38,10 @@ fun CompanyRegistrationScreen(
     viewModel: CompanyRegistrationViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    // ✅ FIX: Add state variables for the dialogs
+    var showTermsDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
 
     val logoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -117,7 +122,7 @@ fun CompanyRegistrationScreen(
                             value = state.contactNumber,
                             onValueChange = { viewModel.updateContactNumber(it) },
                             label = "Contact Number *",
-                            hint = "Include country code (e.g., +63 for Philippines)",
+                            hint = "Please enter your valid contact number",
                             keyboardType = KeyboardType.Phone,
                             modifier = Modifier.weight(1f),
                             isError = state.errors.containsKey("contactNumber"),
@@ -317,7 +322,13 @@ fun CompanyRegistrationScreen(
                             append("I agree to the ")
 
                             pushStringAnnotation(tag = "TERMS", annotation = "terms")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline  // ✅ Added underline
+                                )
+                            ) {
                                 append("Terms & Conditions")
                             }
                             pop()
@@ -325,7 +336,13 @@ fun CompanyRegistrationScreen(
                             append(" and ")
 
                             pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline  // ✅ Added underline
+                                )
+                            ) {
                                 append("Privacy Policy")
                             }
                             pop()
@@ -338,17 +355,27 @@ fun CompanyRegistrationScreen(
                                 color = TextSecondary
                             ),
                             onClick = { offset ->
+                                // ✅ FIX: Actually show the dialogs instead of TODO comments
                                 annotatedText.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
                                     .firstOrNull()?.let {
-                                        // TODO: Open Terms & Conditions
+                                        showTermsDialog = true
                                     }
 
                                 annotatedText.getStringAnnotations(tag = "PRIVACY", start = offset, end = offset)
                                     .firstOrNull()?.let {
-                                        // TODO: Open Privacy Policy
+                                        showPrivacyDialog = true
                                     }
                             }
                         )
+                    }
+
+                    // ✅ FIX: Add the actual dialog components
+                    if (showTermsDialog) {
+                        TermsAndConditionsDialog(onDismiss = { showTermsDialog = false })
+                    }
+
+                    if (showPrivacyDialog) {
+                        PrivacyPolicyDialog(onDismiss = { showPrivacyDialog = false })
                     }
 
                     if (state.errors.containsKey("terms")) {

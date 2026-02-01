@@ -1,4 +1,4 @@
-//StudentDashboardScreen.kt - UPDATED VERSION
+//StudentDashboardScreen.kt - FIXED VERSION
 package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background
@@ -27,7 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * ✅ UPDATED: StudentDashboardScreen now uses ViewModel for application statistics
+ * ✅ FIXED: StudentDashboardScreen with proper type handling
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,9 +49,13 @@ fun StudentDashboardScreen(
     // ✅ Observe applications for statistics
     val applications by viewModel.applications.collectAsState()
 
-    // ✅ Calculate dashboard stats dynamically
-    val dashboardStats = remember(applications) {
-        viewModel.getDashboardStats()
+    // ✅ FIXED: Calculate dashboard stats with explicit types
+    val totalApplications = remember(applications) { applications.size }
+    val pendingCount = remember(applications) {
+        applications.count { it.status == com.example.internshipproject.data.model.ApplicationStatus.PENDING }
+    }
+    val acceptedCount = remember(applications) {
+        applications.count { it.status == com.example.internshipproject.data.model.ApplicationStatus.ACCEPTED }
     }
 
     // ✅ Set up real-time listener for applications
@@ -206,7 +210,7 @@ fun StudentDashboardScreen(
                 }
             }
 
-            // ✅ UPDATED: Stats Cards using ViewModel data
+            // ✅ FIXED: Stats Cards with explicit Int values
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -214,17 +218,17 @@ fun StudentDashboardScreen(
                 ) {
                     StatCard(
                         title = "Total Applications",
-                        count = dashboardStats["total"] ?: 0,
+                        count = totalApplications,  // ✅ Now directly Int
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Pending Review",
-                        count = dashboardStats["pending"] ?: 0,
+                        count = pendingCount,  // ✅ Now directly Int
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Accepted Applications",
-                        count = dashboardStats["accepted"] ?: 0,
+                        count = acceptedCount,  // ✅ Now directly Int
                         modifier = Modifier.weight(1f)
                     )
                 }
