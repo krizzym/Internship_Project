@@ -47,7 +47,6 @@ fun InternshipDetailsScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "🎓", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
                         Column {
                             Text(
                                 text = "FirstStep",
