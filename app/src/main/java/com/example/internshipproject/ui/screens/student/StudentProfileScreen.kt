@@ -1,4 +1,3 @@
-//StudentProfileScreen.kt
 package com.example.internshipproject.ui.screens
 
 import androidx.compose.foundation.background
@@ -10,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -201,37 +199,6 @@ fun StudentProfileScreen(
                 Column(modifier = Modifier.padding(20.dp)) {
                     SectionTitle("Account Information")
 
-                    // ✅ NEW: Info banner explaining read-only fields
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF3F4F6) // Light gray background
-                        ),
-                        elevation = CardDefaults.cardElevation(0.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "Info",
-                                tint = Color(0xFF6B7280), // Gray color
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "Name and email cannot be changed. Contact support if you need to update these details.",
-                                fontSize = 13.sp,
-                                color = Color(0xFF4B5563), // Darker gray for text
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
-
                     // First Name and Middle Name (READ ONLY)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -285,7 +252,7 @@ fun StudentProfileScreen(
                     // Surname (READ ONLY)
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            text = "Lastname *",
+                            text = "Surname *",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = TextPrimary,
@@ -399,7 +366,7 @@ fun StudentProfileScreen(
 
                     // Year Level
                     var expandedYearLevel by remember { mutableStateOf(false) }
-                    val yearLevels = listOf("4th Year", "5th Year")
+                    val yearLevels = listOf("1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year")
 
                     ExposedDropdownMenuBox(
                         expanded = expandedYearLevel,

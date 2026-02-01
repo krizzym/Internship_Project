@@ -16,7 +16,6 @@ data class StudentRegistrationState(
     val middleName: String = "",
     val lastName: String = "",
     val email: String = "",
-    val contactNumber: String = "",  // ✅ ADDED: Contact number field
     val password: String = "",
     val confirmPassword: String = "",
     val school: String = "",
@@ -60,12 +59,6 @@ class StudentRegistrationViewModel(
     fun updateEmail(value: String) {
         _state.value = _state.value.copy(email = value)
         validateField("email")
-    }
-
-    // ✅ ADDED: Contact number update function
-    fun updateContactNumber(value: String) {
-        _state.value = _state.value.copy(contactNumber = value)
-        validateField("contactNumber")
     }
 
     fun updatePassword(value: String) {
@@ -159,14 +152,6 @@ class StudentRegistrationViewModel(
                     newErrors.remove("email")
                 }
             }
-            // ✅ FIXED: Changed from "contact number" to "contactNumber" for consistency
-            "contactNumber" -> {
-                if (currentState.contactNumber.isBlank()) {
-                    newErrors["contactNumber"] = "Contact number is required"
-                } else {
-                    newErrors.remove("contactNumber")
-                }
-            }
             "password" -> {
                 // ✅ FIXED: Use the new PasswordValidator.validate() method
                 val validationResult = PasswordValidator.validate(currentState.password)
@@ -244,7 +229,6 @@ class StudentRegistrationViewModel(
         validateField("firstName")
         validateField("lastName")
         validateField("email")
-        validateField("contactNumber")  // ✅ ADDED: Validate contact number
         validateField("password")
         validateField("confirmPassword")
         validateField("school")

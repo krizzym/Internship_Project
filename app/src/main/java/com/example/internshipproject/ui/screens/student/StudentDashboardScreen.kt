@@ -1,4 +1,3 @@
-//StudentDashboardScreen.kt - FIXED VERSION
 package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background
@@ -27,7 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * ✅ FIXED: StudentDashboardScreen with proper type handling
+ * ✅ UPDATED: StudentDashboardScreen now uses ViewModel for application statistics
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,13 +48,9 @@ fun StudentDashboardScreen(
     // ✅ Observe applications for statistics
     val applications by viewModel.applications.collectAsState()
 
-    // ✅ FIXED: Calculate dashboard stats with explicit types
-    val totalApplications = remember(applications) { applications.size }
-    val pendingCount = remember(applications) {
-        applications.count { it.status == com.example.internshipproject.data.model.ApplicationStatus.PENDING }
-    }
-    val acceptedCount = remember(applications) {
-        applications.count { it.status == com.example.internshipproject.data.model.ApplicationStatus.ACCEPTED }
+    // ✅ Calculate dashboard stats dynamically
+    val dashboardStats = remember(applications) {
+        viewModel.getDashboardStats()
     }
 
     // ✅ Set up real-time listener for applications
@@ -195,7 +190,7 @@ fun StudentDashboardScreen(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "Welcome, ${studentProfile.firstName}!",
+                            text = "Welcome, ${studentProfile.firstName}! 👋",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
@@ -210,7 +205,7 @@ fun StudentDashboardScreen(
                 }
             }
 
-            // ✅ FIXED: Stats Cards with explicit Int values
+            // ✅ UPDATED: Stats Cards using ViewModel data
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -218,17 +213,17 @@ fun StudentDashboardScreen(
                 ) {
                     StatCard(
                         title = "Total Applications",
-                        count = totalApplications,  // ✅ Now directly Int
+                        count = dashboardStats["total"] ?: 0,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Pending Review",
-                        count = pendingCount,  // ✅ Now directly Int
+                        count = dashboardStats["pending"] ?: 0,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Accepted Applications",
-                        count = acceptedCount,  // ✅ Now directly Int
+                        count = dashboardStats["accepted"] ?: 0,
                         modifier = Modifier.weight(1f)
                     )
                 }

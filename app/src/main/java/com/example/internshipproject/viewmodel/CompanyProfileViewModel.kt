@@ -1,4 +1,3 @@
-//CompanyProfileViewModel.kt
 package com.example.internshipproject.viewmodel
 
 import android.net.Uri

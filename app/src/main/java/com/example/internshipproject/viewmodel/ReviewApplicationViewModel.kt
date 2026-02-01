@@ -1,4 +1,3 @@
-// ReviewApplicationViewModel.kt - COMPLETE with Student Profile Loading
 package com.example.internshipproject.viewmodel
 
 import android.content.Context

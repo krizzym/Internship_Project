@@ -1,4 +1,3 @@
-// CompanyApplicationsViewModel
 package com.example.internshipproject.viewmodel
 
 import androidx.lifecycle.ViewModel

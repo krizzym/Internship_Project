@@ -1,4 +1,3 @@
-//CompanyProfileScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import android.net.Uri

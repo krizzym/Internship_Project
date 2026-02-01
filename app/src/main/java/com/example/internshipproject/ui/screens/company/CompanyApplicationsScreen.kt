@@ -461,4 +461,3 @@ fun ApplicationDetailsCard(
         }
     }
 }
-

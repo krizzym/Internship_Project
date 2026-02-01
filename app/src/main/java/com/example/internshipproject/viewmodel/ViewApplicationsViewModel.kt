@@ -1,4 +1,3 @@
-//ViewApplicationsViewModel.kt - FIXED VERSION
 package com.example.internshipproject.viewmodel
 
 import android.util.Log

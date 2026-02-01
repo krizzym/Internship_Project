@@ -1,6 +1,3 @@
-// EditInternshipViewModel.kt - UPDATED VERSION
-// This version uses getInternshipByIdForEdit to avoid conflicts
-
 package com.example.internshipproject.viewmodel
 
 import androidx.lifecycle.ViewModel
