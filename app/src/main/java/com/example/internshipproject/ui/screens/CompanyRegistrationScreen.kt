@@ -1,3 +1,4 @@
+//CompanyRegistrationScreen.kt
 package com.example.internshipproject.ui.screens
 
 import android.net.Uri
@@ -38,6 +39,10 @@ fun CompanyRegistrationScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    // ✅ ADD THESE: Dialog state variables for Terms and Privacy dialogs
+    var showTermsDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
+
     val logoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -59,6 +64,7 @@ fun CompanyRegistrationScreen(
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "🏢", fontSize = 24.sp, modifier = Modifier.padding(end = 8.dp))
                         Column {
                             Text(text = "FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text(text = "Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
@@ -177,8 +183,15 @@ fun CompanyRegistrationScreen(
 
                     var expandedIndustry by remember { mutableStateOf(false) }
                     val industries = listOf(
-                        "Technology", "Healthcare", "Finance", "Education",
-                        "Manufacturing", "Retail", "Hospitality", "Other"
+                        "Information Technology",
+                        "Finance & Accounting",
+                        "Healthcare",
+                        "Education",
+                        "Retail",
+                        "Manufacturing",
+                        "Consulting",
+                        "Marketing & Advertising",
+                        "Others"
                     )
 
                     ExposedDropdownMenuBox(
@@ -302,7 +315,7 @@ fun CompanyRegistrationScreen(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Terms & Conditions Checkbox
+                    // ✅ UPDATED: Terms & Conditions Checkbox with working dialog triggers
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Top
@@ -340,15 +353,24 @@ fun CompanyRegistrationScreen(
                             onClick = { offset ->
                                 annotatedText.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
                                     .firstOrNull()?.let {
-                                        // TODO: Open Terms & Conditions
+                                        showTermsDialog = true
                                     }
 
                                 annotatedText.getStringAnnotations(tag = "PRIVACY", start = offset, end = offset)
                                     .firstOrNull()?.let {
-                                        // TODO: Open Privacy Policy
+                                        showPrivacyDialog = true
                                     }
                             }
                         )
+                    }
+
+                    // ✅ ADD THESE: Dialog components (same as student registration)
+                    if (showTermsDialog) {
+                        TermsAndConditionsDialog(onDismiss = { showTermsDialog = false })
+                    }
+
+                    if (showPrivacyDialog) {
+                        PrivacyPolicyDialog(onDismiss = { showPrivacyDialog = false })
                     }
 
                     if (state.errors.containsKey("terms")) {
@@ -405,15 +427,4 @@ fun CompanyRegistrationScreen(
             }
         }
     }
-}
-
-@Composable
-fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        color = TextPrimary,
-        modifier = Modifier.padding(vertical = 12.dp)
-    )
 }

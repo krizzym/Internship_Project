@@ -1,4 +1,3 @@
-//NavGraph.kt - COMPLETE VERSION WITH ALL ORIGINAL SECTIONS
 package com.example.internshipproject.navigation
 
 import androidx.compose.material3.AlertDialog
@@ -351,8 +350,8 @@ fun NavGraph(navController: NavHostController) {
                     }
                 },
                 onApplicationClick = { applicationId ->
-                    // ✅ You can add navigation to application details if needed
-                    // navController.navigate(Screen.ApplicationDetail.createRoute(applicationId))
+                    // ✅ FIXED: Navigate to student view of application details
+                    navController.navigate(Screen.StudentApplicationDetails.createRoute(applicationId))
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.StudentProfile.createRoute(userId))
@@ -447,7 +446,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         // ============================================
-        // ✅ NEW: STUDENT APPLICATION DETAILS ROUTE
+        // ✅ UPDATED: STUDENT APPLICATION DETAILS (Student View - Read Only)
         // ============================================
         composable(
             route = Screen.StudentApplicationDetails.route,
@@ -455,10 +454,10 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
 
-            // ✅ FIXED: Now passing navController directly instead of callback
-            StudentApplicationDetailsScreen(
+            // ✅ FIXED: Use StudentViewApplicationScreen for students to view their own applications (read-only)
+            StudentViewApplicationScreen(
                 applicationId = applicationId,
-                navController = navController  // Pass NavController for proper navigation
+                navController = navController
             )
         }
     }

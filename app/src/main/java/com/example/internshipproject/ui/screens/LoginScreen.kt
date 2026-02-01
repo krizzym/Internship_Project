@@ -181,7 +181,7 @@ fun LoginScreen(
                             Text(text = "Don't have an account? ", fontSize = 14.sp, color = TextSecondary)
                             TextButton(onClick = onRegisterClick) {
                                 Text(
-                                    text = "Register now",
+                                    text = "Register",
                                     fontSize = 14.sp,
                                     color = PurpleButton,
                                     fontWeight = FontWeight.SemiBold
