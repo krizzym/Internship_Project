@@ -455,11 +455,10 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
 
+            // ✅ FIXED: Now passing navController directly instead of callback
             StudentApplicationDetailsScreen(
                 applicationId = applicationId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                navController = navController  // Pass NavController for proper navigation
             )
         }
     }

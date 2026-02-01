@@ -1,4 +1,3 @@
-// StudentApplicationDetailsScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import android.content.ContentValues
@@ -30,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.internshipproject.data.firebase.FirebaseManager
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.StudentProfile
@@ -45,7 +45,7 @@ import java.util.*
 @Composable
 fun StudentApplicationDetailsScreen(
     applicationId: String,
-    onNavigateBack: () -> Unit
+    navController: NavController
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -170,8 +170,14 @@ fun StudentApplicationDetailsScreen(
             TopAppBar(
                 title = { Text("Application Details") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = {
+                        navController.popBackStack()
+                    }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -207,7 +213,9 @@ fun StudentApplicationDetailsScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = onNavigateBack) {
+                        Button(onClick = {
+                            navController.popBackStack()
+                        }) {
                             Text("Go Back")
                         }
                     }
@@ -283,52 +291,46 @@ fun StudentApplicationDetailsScreen(
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            InfoRow(label = "Skills", value = skills.ifBlank { "Not specified" })
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Skills
-                        SectionCard(title = "Skills") {
-                            Text(
-                                text = skills.ifBlank { "No skills listed" },
-                                fontSize = 14.sp
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Cover Letter
+                        // ✅ MOVED: Cover Letter Section (now before Resume)
                         SectionCard(title = "Cover Letter") {
                             Text(
                                 text = coverLetter.ifBlank { "No cover letter provided" },
                                 fontSize = 14.sp,
-                                lineHeight = 20.sp
+                                color = if (coverLetter.isBlank()) Color.Gray else Color.Black
                             )
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Resume Section (View Resume Button)
+                        // Resume Section (now after Cover Letter)
                         SectionCard(title = "Resume") {
-                            if (!resumeBase64.isNullOrEmpty()) {
+                            if (resumeBase64 != null) {
                                 Button(
                                     onClick = {
-                                        scope.launch {
-                                            downloadResume(
+                                        resumeBase64?.let { base64 ->
+                                            openResumeFromBase64(
                                                 context = context,
-                                                base64String = resumeBase64!!,
+                                                base64Data = base64,
                                                 fileName = resumeFileName ?: "resume.pdf",
                                                 mimeType = resumeMimeType ?: "application/pdf"
                                             )
                                         }
                                     },
+                                    modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = Color(0xFF6366F1)
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
+                                    )
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Description,
+                                        Icons.Default.Description,
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -337,9 +339,10 @@ fun StudentApplicationDetailsScreen(
                                 }
                             } else {
                                 Text(
-                                    text = "No resume uploaded",
+                                    text = "No resume attached",
                                     fontSize = 14.sp,
-                                    color = Color.Gray
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(8.dp)
                                 )
                             }
                         }
@@ -355,137 +358,159 @@ fun StudentApplicationDetailsScreen(
 
                         // Update Application Status
                         SectionCard(title = "Update Application Status") {
-                            Text(
-                                text = "Status *",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-
-                            ExposedDropdownMenuBox(
-                                expanded = showStatusDropdown,
-                                onExpandedChange = { showStatusDropdown = !showStatusDropdown }
-                            ) {
-                                OutlinedTextField(
-                                    value = formatStatusForDisplay(selectedStatus),
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown)
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .menuAnchor(),
-                                    colors = OutlinedTextFieldDefaults.colors()
+                            Column {
+                                Text(
+                                    text = "Status *",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
 
-                                ExposedDropdownMenu(
+                                // Status Dropdown
+                                ExposedDropdownMenuBox(
                                     expanded = showStatusDropdown,
-                                    onDismissRequest = { showStatusDropdown = false }
+                                    onExpandedChange = { showStatusDropdown = !showStatusDropdown }
                                 ) {
-                                    ApplicationStatus.values().forEach { status ->
-                                        DropdownMenuItem(
-                                            text = { Text(formatStatusForDisplay(status)) },
-                                            onClick = {
-                                                selectedStatus = status
-                                                showStatusDropdown = false
-                                            }
+                                    OutlinedTextField(
+                                        value = formatStatusText(selectedStatus),
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusDropdown) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .menuAnchor(),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = Color(0xFF6366F1),
+                                            unfocusedBorderColor = Color.Gray
                                         )
+                                    )
+
+                                    ExposedDropdownMenu(
+                                        expanded = showStatusDropdown,
+                                        onDismissRequest = { showStatusDropdown = false }
+                                    ) {
+                                        ApplicationStatus.values().forEach { status ->
+                                            DropdownMenuItem(
+                                                text = { Text(formatStatusText(status)) },
+                                                onClick = {
+                                                    selectedStatus = status
+                                                    showStatusDropdown = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Notes for Applicant
+                                Text(
+                                    text = "Notes for Applicant",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+
+                                OutlinedTextField(
+                                    value = notesForApplicant,
+                                    onValueChange = { notesForApplicant = it },
+                                    placeholder = { Text("Add feedback or notes for the applicant...") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(120.dp),
+                                    maxLines = 5,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFF6366F1),
+                                        unfocusedBorderColor = Color.Gray
+                                    )
+                                )
+
+                                Text(
+                                    text = "These notes will be visible to the student",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Action Buttons
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            navController.popBackStack()
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = Color(0xFF6366F1)
+                                        )
+                                    ) {
+                                        Text("Back")
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            scope.launch {
+                                                isUpdating = true
+                                                try {
+                                                    FirebaseManager.firestore
+                                                        .collection(FirebaseManager.Collections.APPLICATIONS)
+                                                        .document(applicationId)
+                                                        .update(
+                                                            mapOf(
+                                                                "status" to selectedStatus.name,
+                                                                "notesForApplicant" to notesForApplicant,
+                                                                "lastUpdated" to FieldValue.serverTimestamp()
+                                                            )
+                                                        )
+                                                        .await()
+
+                                                    currentStatus = selectedStatus
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Application status updated successfully",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+
+                                                    navController.popBackStack()
+                                                } catch (e: Exception) {
+                                                    Log.e("StudentAppDetails", "Error updating: ${e.message}", e)
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Failed to update: ${e.message}",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                } finally {
+                                                    isUpdating = false
+                                                }
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        enabled = !isUpdating,
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color(0xFF6366F1)
+                                        )
+                                    ) {
+                                        if (isUpdating) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(20.dp),
+                                                color = Color.White,
+                                                strokeWidth = 2.dp
+                                            )
+                                        } else {
+                                            Text("Update Status")
+                                        }
                                     }
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        // Notes for Applicant
-                        SectionCard(title = "Notes for Applicant") {
-                            OutlinedTextField(
-                                value = notesForApplicant,
-                                onValueChange = { notesForApplicant = it },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .heightIn(min = 100.dp),
-                                placeholder = { Text("Add feedback or notes for the applicant...") },
-                                minLines = 4,
-                                maxLines = 8
-                            )
-                            Text(
-                                text = "These notes will be visible to the student",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Action Buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = onNavigateBack,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Back")
-                            }
-
-                            Button(
-                                onClick = {
-                                    scope.launch {
-                                        isUpdating = true
-                                        try {
-                                            FirebaseManager.firestore
-                                                .collection(FirebaseManager.Collections.APPLICATIONS)
-                                                .document(applicationId)
-                                                .update(
-                                                    mapOf(
-                                                        "status" to selectedStatus.name,
-                                                        "notesForApplicant" to notesForApplicant,
-                                                        "lastUpdated" to FieldValue.serverTimestamp()
-                                                    )
-                                                )
-                                                .await()
-
-                                            currentStatus = selectedStatus
-                                            Toast.makeText(
-                                                context,
-                                                "Application status updated successfully",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        } catch (e: Exception) {
-                                            Log.e("StudentAppDetails", "Error updating status: ${e.message}", e)
-                                            Toast.makeText(
-                                                context,
-                                                "Failed to update status: ${e.message}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        } finally {
-                                            isUpdating = false
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                enabled = !isUpdating,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF6366F1)
-                                )
-                            ) {
-                                if (isUpdating) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = Color.White,
-                                        strokeWidth = 2.dp
-                                    )
-                                } else {
-                                    Text("Update Status")
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
             }
@@ -493,41 +518,15 @@ fun StudentApplicationDetailsScreen(
     }
 }
 
+// Helper composables
 @Composable
-fun StatusBadge(status: ApplicationStatus) {
-    val (backgroundColor, textColor) = when (status) {
-        ApplicationStatus.PENDING -> Color(0xFFFEF3C7) to Color(0xFFA16207)
-        ApplicationStatus.REVIEWED -> Color(0xFFDDD6FE) to Color(0xFF6B21A8)
-        ApplicationStatus.SHORTLISTED -> Color(0xFFBFDBFE) to Color(0xFF1E40AF)
-        ApplicationStatus.ACCEPTED -> Color(0xFFBBF7D0) to Color(0xFF166534)
-        ApplicationStatus.REJECTED -> Color(0xFFFECDD3) to Color(0xFF9F1239)
-    }
-
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = backgroundColor,
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Text(
-            text = formatStatusForDisplay(status),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = textColor
-        )
-    }
-}
-
-@Composable
-fun SectionCard(
+private fun SectionCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -535,8 +534,9 @@ fun SectionCard(
         ) {
             Text(
                 text = title,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                color = Color(0xFF6366F1),
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             content()
@@ -545,44 +545,70 @@ fun SectionCard(
 }
 
 @Composable
-fun InfoRow(label: String, value: String) {
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+private fun InfoRow(label: String, value: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
         Text(
-            text = "$label:",
+            text = label,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
             color = Color.Gray
         )
         Text(
-            text = value.ifBlank { "Not specified" },
-            fontSize = 14.sp,
-            modifier = Modifier.padding(top = 2.dp)
+            text = value,
+            fontSize = 16.sp,
+            color = Color.Black
         )
     }
 }
 
-fun formatStatusForDisplay(status: ApplicationStatus): String {
-    return when (status) {
-        ApplicationStatus.PENDING -> "Pending - Awaiting review"
-        ApplicationStatus.REVIEWED -> "Reviewed - Applicant has been reviewed"
-        ApplicationStatus.SHORTLISTED -> "Shortlisted - Candidate is shortlisted"
-        ApplicationStatus.ACCEPTED -> "Accepted - Offer extended"
-        ApplicationStatus.REJECTED -> "Rejected - Not moving forward"
+@Composable
+private fun StatusBadge(status: ApplicationStatus) {
+    val (backgroundColor, textColor) = when (status) {
+        ApplicationStatus.PENDING -> Color(0xFFFEF3C7) to Color(0xFFF59E0B)
+        ApplicationStatus.REVIEWED -> Color(0xFFDDD6FE) to Color(0xFF3B82F6)
+        ApplicationStatus.SHORTLISTED -> Color(0xFFEDE9FE) to Color(0xFF8B5CF6)
+        ApplicationStatus.ACCEPTED -> Color(0xFFD1FAE5) to Color(0xFF10B981)
+        ApplicationStatus.REJECTED -> Color(0xFFFFEBEE) to Color(0xFFE53935)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor
+    ) {
+        Text(
+            text = formatStatusText(status),
+            color = textColor,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
     }
 }
 
-suspend fun downloadResume(
+private fun formatStatusText(status: ApplicationStatus): String {
+    return when (status) {
+        ApplicationStatus.PENDING -> "Pending - Application submitted"
+        ApplicationStatus.REVIEWED -> "Reviewed - Applicant has been reviewed"
+        ApplicationStatus.SHORTLISTED -> "Shortlisted - Applicant has been shortlisted"
+        ApplicationStatus.ACCEPTED -> "Accepted - Applicant has been accepted"
+        ApplicationStatus.REJECTED -> "Rejected - Application rejected"
+    }
+}
+
+private fun openResumeFromBase64(
     context: Context,
-    base64String: String,
+    base64Data: String,
     fileName: String,
     mimeType: String
 ) {
     try {
-        // Decode Base64 string to byte array
-        val pdfBytes = Base64.decode(base64String, Base64.DEFAULT)
+        val decodedBytes = Base64.decode(base64Data, Base64.DEFAULT)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Android 10+ (Scoped Storage)
             val contentValues = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                 put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
@@ -596,37 +622,36 @@ suspend fun downloadResume(
 
             uri?.let {
                 context.contentResolver.openOutputStream(it)?.use { outputStream ->
-                    outputStream.write(pdfBytes)
+                    outputStream.write(decodedBytes)
                 }
-                Toast.makeText(
-                    context,
-                    "Resume downloaded to Downloads folder",
-                    Toast.LENGTH_LONG
-                ).show()
+
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, mimeType)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(android.content.Intent.createChooser(intent, "Open Resume"))
             }
         } else {
-            // Android 9 and below
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                fileName
             )
-            val file = File(downloadsDir, fileName)
+            FileOutputStream(file).use { it.write(decodedBytes) }
 
-            FileOutputStream(file).use { outputStream ->
-                outputStream.write(pdfBytes)
-            }
-
-            Toast.makeText(
+            val uri = androidx.core.content.FileProvider.getUriForFile(
                 context,
-                "Resume downloaded to ${file.absolutePath}",
-                Toast.LENGTH_LONG
-            ).show()
+                "${context.packageName}.provider",
+                file
+            )
+
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, mimeType)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, "Open Resume"))
         }
     } catch (e: Exception) {
-        Log.e("DownloadResume", "Error downloading resume: ${e.message}", e)
-        Toast.makeText(
-            context,
-            "Failed to download resume: ${e.message}",
-            Toast.LENGTH_LONG
-        ).show()
+        Log.e("OpenResume", "Error opening resume: ${e.message}", e)
+        Toast.makeText(context, "Failed to open resume: ${e.message}", Toast.LENGTH_SHORT).show()
     }
 }

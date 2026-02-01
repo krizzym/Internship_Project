@@ -1,3 +1,4 @@
+//CompanyProfileViewModel.kt
 package com.example.internshipproject.viewmodel
 
 import android.net.Uri
@@ -25,6 +26,7 @@ data class CompanyProfileState(
     val isUpdating: Boolean = false,
     val updateSuccess: Boolean = false,
     val errorMessage: String? = null,
+    val successMessage: String? = null,  // ✅ NEW: Success message for user feedback
     val errors: Map<String, String> = emptyMap()
 )
 
@@ -145,13 +147,25 @@ class CompanyProfileViewModel(
         _state.value = currentState.copy(errors = newErrors)
     }
 
+    // ✅ UPDATED: Enhanced updateProfile with proper success feedback
     fun updateProfile(userId: String) {
+        // Clear previous messages
+        _state.value = _state.value.copy(
+            successMessage = null,
+            errorMessage = null
+        )
+
+        // Validate all required fields
         listOf(
             "contactNumber", "companyName", "contactPerson",
             "industryType", "companyAddress", "companyDescription"
         ).forEach { validateField(it) }
 
+        // If there are validation errors, stop and show error
         if (_state.value.errors.isNotEmpty()) {
+            _state.value = _state.value.copy(
+                errorMessage = "Please fix all errors before updating"
+            )
             return
         }
 
@@ -168,20 +182,30 @@ class CompanyProfileViewModel(
             )
 
             repository.updateCompanyProfile(userId, updates).onSuccess {
+                // ✅ Set success state with message
                 _state.value = _state.value.copy(
                     isUpdating = false,
-                    updateSuccess = true
+                    updateSuccess = true,
+                    successMessage = "Profile updated successfully!"  // ✅ NEW: Success message
                 )
             }.onFailure { error ->
+                // ✅ Update failed - show error message
                 _state.value = _state.value.copy(
                     isUpdating = false,
-                    errorMessage = error.message
+                    errorMessage = error.message ?: "Failed to update profile. Please try again."
                 )
             }
         }
     }
 
+    // ✅ UPDATED: Enhanced uploadLogo with proper success feedback
     fun uploadLogo(userId: String) {
+        // Clear previous messages
+        _state.value = _state.value.copy(
+            successMessage = null,
+            errorMessage = null
+        )
+
         val newLogoUri = _state.value.newLogoUri
 
         if (newLogoUri == null) {
@@ -196,20 +220,39 @@ class CompanyProfileViewModel(
                 // Update logo URL in profile
                 val updates = mapOf("logoUri" to downloadUrl)
                 repository.updateCompanyProfile(userId, updates).onSuccess {
+                    // ✅ Set success state with message
                     _state.value = _state.value.copy(
                         logoUri = downloadUrl,
                         newLogoUri = null,
                         isUpdating = false,
-                        updateSuccess = true
+                        updateSuccess = true,
+                        successMessage = "Logo uploaded successfully!"  // ✅ NEW: Success message
+                    )
+                }.onFailure { error ->
+                    // Failed to update profile with logo URL
+                    _state.value = _state.value.copy(
+                        isUpdating = false,
+                        errorMessage = error.message ?: "Failed to update logo. Please try again."
                     )
                 }
             }.onFailure { error ->
+                // Failed to upload logo
                 _state.value = _state.value.copy(
                     isUpdating = false,
-                    errorMessage = error.message
+                    errorMessage = error.message ?: "Failed to upload logo. Please try again."
                 )
             }
         }
+    }
+
+    // ✅ NEW: Clear success message after displaying
+    fun clearSuccessMessage() {
+        _state.value = _state.value.copy(successMessage = null)
+    }
+
+    // ✅ NEW: Clear error message after displaying
+    fun clearErrorMessage() {
+        _state.value = _state.value.copy(errorMessage = null)
     }
 
     fun resetUpdateSuccess() {

@@ -1,4 +1,3 @@
-//StudentApplicationsViewModel.kt - NEW FILE
 package com.example.internshipproject.viewmodel
 
 import android.util.Log

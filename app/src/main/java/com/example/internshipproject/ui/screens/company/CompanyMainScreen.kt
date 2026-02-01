@@ -138,7 +138,12 @@ fun CompanyMainScreen(
                 is NavigationState.ViewApplications -> {
                     ViewApplicationsScreen(
                         navController = navController,
-                        postingId = (navigationState as NavigationState.ViewApplications).postingId
+                        postingId = (navigationState as NavigationState.ViewApplications).postingId,
+                        // ✅ FIXED: Add callback to navigate back to My Postings tab
+                        onNavigateBack = {
+                            selectedTab = 1  // Go back to My Postings tab
+                            navigationState = NavigationState.Tab(1)
+                        }
                     )
                 }
                 is NavigationState.EditPosting -> {
