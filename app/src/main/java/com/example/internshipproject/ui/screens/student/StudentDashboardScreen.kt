@@ -110,7 +110,22 @@ fun StudentDashboardScreen(
                         )
                     }
                     TextButton(onClick = onLogout) {
-                        Text("Logout", color = Color.Red, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "Logout",
+                                tint = Color.Red,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                "Logout",
+                                color = Color.Red,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -190,7 +205,7 @@ fun StudentDashboardScreen(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "Welcome, ${studentProfile.firstName}! 👋",
+                            text = "Welcome, ${studentProfile.firstName}!",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
