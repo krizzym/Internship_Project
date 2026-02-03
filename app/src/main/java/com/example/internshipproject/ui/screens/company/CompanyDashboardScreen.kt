@@ -167,7 +167,6 @@ fun CompanyDashboardScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             if (viewModel.getRecentPostings().isEmpty()) {
-                                // Empty State
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -204,8 +203,6 @@ fun CompanyDashboardScreen(
                         }
                     }
                 }
-
-                // ✅ REMOVED: Recent Applications Section
 
                 // Bottom padding for better scrolling (reduced from 16dp)
                 item { Spacer(modifier = Modifier.height(8.dp)) }

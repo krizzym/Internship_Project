@@ -1,8 +1,8 @@
 package com.example.internshipproject.ui.components
 
-/**
- * Utility object for validating password strength and requirements
- */
+
+ // Utility object for validating password strength and requirements
+
 object PasswordValidator {
 
     private const val MIN_LENGTH = 12
@@ -11,10 +11,10 @@ object PasswordValidator {
     private val DIGIT_REGEX = Regex("\\d")
     private val SPECIAL_CHAR_REGEX = Regex("[!@#\$%^&*(),.?\":{}|<>]")
 
-    /**
-     * Validates password against all requirements
-     * @return ValidationResult containing success status and error message if failed
-     */
+
+      //  Validates password against all requirements and returns a ValidationResult
+      //  @return ValidationResult containing success status and error message if failed
+
     fun validate(password: String): ValidationResult {
         return when {
             password.length < MIN_LENGTH ->
@@ -36,11 +36,8 @@ object PasswordValidator {
         }
     }
 
-    /**
-     * Gets a list of all password requirements with their current status
-     * @return List of PasswordRequirement objects showing which requirements are met
-     */
-
+      // Gets a list of all password requirements with their current status
+     // @return List of PasswordRequirement objects showing which requirements are met
 
     fun getRequirements(password: String): List<PasswordRequirement> {
         return listOf(
@@ -67,9 +64,7 @@ object PasswordValidator {
         )
     }
 
-    /**
-     * Checks if all password requirements are met
-     */
+    // Checks if all password requirements are met
     fun isValid(password: String): Boolean {
         return validate(password).isValid
     }

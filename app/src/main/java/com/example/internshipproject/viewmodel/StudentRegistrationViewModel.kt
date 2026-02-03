@@ -153,7 +153,6 @@ class StudentRegistrationViewModel(
                 }
             }
             "password" -> {
-                // ✅ FIXED: Use the new PasswordValidator.validate() method
                 val validationResult = PasswordValidator.validate(currentState.password)
                 if (!validationResult.isValid) {
                     newErrors["password"] = validationResult.errorMessage ?: "Invalid password"

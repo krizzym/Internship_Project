@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// ✅ UPDATED: Enhanced state with proper feedback mechanism
 data class StudentProfileState(
     val profile: StudentProfile? = null,
     val firstName: String = "",
@@ -33,7 +32,7 @@ data class StudentProfileState(
     val isUpdating: Boolean = false,
     val updateSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val successMessage: String? = null,  // ✅ NEW: Success message for user feedback
+    val successMessage: String? = null,
     val errors: Map<String, String> = emptyMap()
 )
 
@@ -192,7 +191,6 @@ class StudentProfileViewModel(
         _state.value = currentState.copy(errors = newErrors)
     }
 
-    // ✅ UPDATED: Enhanced updateProfile with proper feedback mechanism
     fun updateProfile() {
         // Clear previous messages
         _state.value = _state.value.copy(
@@ -214,7 +212,7 @@ class StudentProfileViewModel(
             return
         }
 
-        // ✅ Set loading state to prevent duplicate submissions
+        // Set loading state to prevent duplicate submissions
         _state.value = _state.value.copy(isUpdating = true, errorMessage = null)
 
         viewModelScope.launch {
@@ -249,12 +247,12 @@ class StudentProfileViewModel(
                     "skills" to currentState.skills
                 )
 
-                // ✅ Execute Firebase update asynchronously
+                // Execute Firebase update asynchronously
                 val result = repository.updateStudentProfile(userId, updates)
 
                 result.fold(
                     onSuccess = {
-                        // ✅ Update successful - create updated profile
+                        // Update successful - create updated profile
                         val updatedProfile = StudentProfile(
                             firstName = currentState.firstName,
                             middleName = currentState.middleName.ifBlank { null },
@@ -270,7 +268,7 @@ class StudentProfileViewModel(
                             resumeUri = (currentState.newResumeUri ?: currentState.resumeUri)?.toString()
                         )
 
-                        // ✅ Set success state with message
+                        // Set success state with message
                         _state.value = _state.value.copy(
                             profile = updatedProfile,
                             isUpdating = false,
@@ -279,7 +277,7 @@ class StudentProfileViewModel(
                         )
                     },
                     onFailure = { error ->
-                        // ✅ Update failed - show error message
+                        // Update failed - show error message
                         _state.value = _state.value.copy(
                             isUpdating = false,
                             errorMessage = error.message ?: "Failed to update profile. Please try again."
@@ -287,7 +285,7 @@ class StudentProfileViewModel(
                     }
                 )
             } catch (e: Exception) {
-                // ✅ Handle unexpected errors
+                // Handle unexpected errors
                 _state.value = _state.value.copy(
                     isUpdating = false,
                     errorMessage = "An unexpected error occurred: ${e.message}"
@@ -347,12 +345,12 @@ class StudentProfileViewModel(
         }
     }
 
-    // ✅ NEW: Clear success message after displaying
+    // Clear success message after displaying
     fun clearSuccessMessage() {
         _state.value = _state.value.copy(successMessage = null)
     }
 
-    // ✅ NEW: Clear error message after displaying
+    // Clear error message after displaying
     fun clearErrorMessage() {
         _state.value = _state.value.copy(errorMessage = null)
     }

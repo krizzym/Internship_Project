@@ -14,9 +14,6 @@ class InternshipRepository {
 
     private val firestore: FirebaseFirestore = FirebaseManager.firestore
 
-    /**
-     * Get internship by ID
-     */
     suspend fun getInternshipById(internshipId: String): Internship? {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -51,9 +48,6 @@ class InternshipRepository {
         }
     }
 
-    /**
-     * Get all active internships
-     */
     suspend fun getAllInternships(): List<Internship> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -92,16 +86,10 @@ class InternshipRepository {
         }
     }
 
-    /**
-     * Get active internships (alias for getAllInternships)
-     */
     suspend fun getActiveInternships(): List<Internship> {
         return getAllInternships()
     }
 
-    /**
-     * Get active internships as Flow for real-time updates
-     */
     fun getActiveInternshipsFlow(): Flow<List<Internship>> = callbackFlow {
         val listener = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
             .whereEqualTo("isActive", true)
@@ -144,9 +132,6 @@ class InternshipRepository {
         awaitClose { listener.remove() }
     }
 
-    /**
-     * Get internships by company
-     */
     suspend fun getInternshipsByCompany(companyName: String): List<Internship> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -185,9 +170,6 @@ class InternshipRepository {
         }
     }
 
-    /**
-     * Create new internship posting
-     */
     suspend fun createInternship(internship: Internship): Result<String> {
         return try {
             val internshipData = hashMapOf(
@@ -220,9 +202,6 @@ class InternshipRepository {
         }
     }
 
-    /**
-     * Update internship
-     */
     suspend fun updateInternship(internshipId: String, updates: Map<String, Any>): Result<Unit> {
         return try {
             firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -237,9 +216,7 @@ class InternshipRepository {
         }
     }
 
-    /**
-     * Delete/deactivate internship
-     */
+
     suspend fun deactivateInternship(internshipId: String): Result<Unit> {
         return try {
             firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -259,9 +236,6 @@ class InternshipRepository {
         }
     }
 
-    /**
-     * Search internships
-     */
     suspend fun searchInternships(query: String): List<Internship> {
         return try {
             val allInternships = getAllInternships()

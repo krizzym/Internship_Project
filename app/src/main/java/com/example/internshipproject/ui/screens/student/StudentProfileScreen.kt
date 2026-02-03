@@ -26,7 +26,6 @@ import com.example.internshipproject.ui.components.SectionTitle
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentProfileViewModel
 
-// ✅ UPDATED: Enhanced StudentProfileScreen with proper feedback mechanism
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentProfileScreen(
@@ -38,14 +37,14 @@ fun StudentProfileScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    // ✅ NEW: Snackbar host state for showing messages
+    // Snackbar host state for showing messages
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.loadProfile(profile)
     }
 
-    // ✅ NEW: Show success message in Snackbar
+    // Show success message in Snackbar
     LaunchedEffect(state.successMessage) {
         state.successMessage?.let { message ->
             snackbarHostState.showSnackbar(
@@ -57,7 +56,7 @@ fun StudentProfileScreen(
         }
     }
 
-    // ✅ NEW: Show error message in Snackbar
+    // Show error message in Snackbar
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(
@@ -77,7 +76,7 @@ fun StudentProfileScreen(
 
     Scaffold(
         snackbarHost = {
-            // ✅ NEW: SnackbarHost for displaying feedback messages
+            // SnackbarHost for displaying feedback messages
             SnackbarHost(
                 hostState = snackbarHostState,
                 snackbar = { snackbarData ->
@@ -539,13 +538,10 @@ fun StudentProfileScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // ✅ UPDATED: Remove inline success card (now using Snackbar)
-                    // Only show the Update Profile button
                     PrimaryButton(
                         text = "Update Profile",
                         onClick = { viewModel.updateProfile() },
                         isLoading = state.isUpdating,
-                        // ✅ Disable button while updating to prevent duplicate submissions
                         enabled = !state.isUpdating
                     )
                 }

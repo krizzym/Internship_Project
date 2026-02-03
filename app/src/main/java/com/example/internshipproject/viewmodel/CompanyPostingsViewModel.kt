@@ -27,7 +27,7 @@ class CompanyPostingsViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            // ✅ REAL-TIME: Collect company internships
+            // REAL-TIME: Collect company internships
             repository.getCompanyInternshipsFlow(userId).collect { postings ->
                 _state.value = _state.value.copy(
                     postings = postings,

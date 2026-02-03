@@ -202,26 +202,10 @@ fun CompanyApplicationDetailsScreen(
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Resume-open helper  –  called from the "View Resume" button
-// ────────────────────────────────────────────────────────────────────────────
-/**
- * Opens the student's resume using the best available source:
- *
- * 1. **resumeUrl** (Firebase Storage HTTPS download link) – fires ACTION_VIEW
- *    with an https:// Uri.  The OS system chooser surfaces Google Drive,
- *    Chrome, and any installed PDF viewer.  No package is forced.
- *
- * 2. **resumeBase64** (inline Base64 string) – decodes to a temp file,
- *    wraps it in a FileProvider Uri, and fires ACTION_VIEW.  Used only when
- *    no HTTPS URL is available.
- *
- * Each failure path shows a distinct, user-friendly Toast.
- */
 private fun openResume(
     context: Context,
-    resumeUrl: String?,           // Firebase Storage download URL (preferred)
-    resumeBase64: String?,        // Base64 fallback
+    resumeUrl: String?,
+    resumeBase64: String?,
     resumeFileName: String
 ) {
     // ── Strategy 1: HTTPS URL (Google Drive / browser / PDF viewer) ────────
@@ -252,7 +236,7 @@ private fun openResume(
         }
     }
 
-    // ── Strategy 2: Base64 → temp file → FileProvider ───────────────────────
+    // ── Strategy 2: Base64 → temp file → FileProvider
     if (!resumeBase64.isNullOrBlank()) {
         try {
             val pdfBytes = Base64.decode(resumeBase64, Base64.DEFAULT)
@@ -291,14 +275,12 @@ private fun openResume(
         return
     }
 
-    // ── Neither source available ─────────────────────────────────────────────
+    // ── Neither source available
     Toast.makeText(context, "No resume available for this applicant", Toast.LENGTH_SHORT).show()
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Main content composable
-// ────────────────────────────────────────────────────────────────────────────
 
+// Main content composable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CompanyApplicationDetailsContent(
@@ -631,10 +613,8 @@ private fun CompanyApplicationDetailsContent(
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Status Timeline
-// ────────────────────────────────────────────────────────────────────────────
 
+// Status Timeline
 @Composable
 private fun ApplicationStatusTimelineCard(currentStatus: ApplicationStatus) {
     Card(
@@ -786,10 +766,8 @@ private fun TimelineItem(
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Student information
-// ────────────────────────────────────────────────────────────────────────────
 
+// Student information
 @Composable
 private fun StudentInformationCard(application: com.example.internshipproject.data.model.Application) {
     InfoCard(
@@ -806,10 +784,8 @@ private fun StudentInformationCard(application: com.example.internshipproject.da
     )
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Resume card
-// ────────────────────────────────────────────────────────────────────────────
 
+// Resume card
 @Composable
 private fun ResumeCard(
     fileName: String,
@@ -889,10 +865,8 @@ private fun ResumeCard(
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Generic info card / row
-// ────────────────────────────────────────────────────────────────────────────
 
+// Generic info card / row
 @Composable
 private fun InfoCard(
     title: String,
@@ -939,10 +913,8 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Utility / extension helpers
-// ────────────────────────────────────────────────────────────────────────────
 
+// Utility / extension helpers
 private fun ApplicationStatus.getDisplayName(): String {
     return when (this) {
         ApplicationStatus.PENDING    -> "Pending"

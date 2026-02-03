@@ -44,10 +44,10 @@ fun CompanyProfileScreen(
     val scope = rememberCoroutineScope()
     var showLogoDialog by remember { mutableStateOf(false) }
 
-    // ✅ NEW: Get context for taking persistent permissions
+    // Get context for taking persistent permissions
     val context = LocalContext.current
 
-    // ✅ NEW: Snackbar host state for showing messages
+    // Snackbar host state for showing messages
     val snackbarHostState = remember { SnackbarHostState() }
 
     val logoPicker = rememberLauncherForActivityResult(
@@ -55,15 +55,13 @@ fun CompanyProfileScreen(
     ) { uri: Uri? ->
         uri?.let {
             try {
-                // ✅ FIXED: Take persistent read permission to prevent "Object does not exist" error
+                // Take persistent read permission to prevent "Object does not exist" error
                 context.contentResolver.takePersistableUriPermission(
                     it,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
                 viewModel.updateNewLogoUri(it)
             } catch (e: SecurityException) {
-                // If persistent permission fails, still try to use the URI
-                // (it might work for immediate upload)
                 viewModel.updateNewLogoUri(it)
             }
         }
@@ -75,7 +73,7 @@ fun CompanyProfileScreen(
         }
     }
 
-    // ✅ NEW: Show success message in Snackbar
+    // Show success message in Snackbar
     LaunchedEffect(state.successMessage) {
         state.successMessage?.let { message ->
             snackbarHostState.showSnackbar(
@@ -87,7 +85,7 @@ fun CompanyProfileScreen(
         }
     }
 
-    // ✅ NEW: Show error message in Snackbar
+    // Show error message in Snackbar
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(
@@ -107,7 +105,7 @@ fun CompanyProfileScreen(
 
     Scaffold(
         snackbarHost = {
-            // ✅ NEW: SnackbarHost for displaying feedback messages
+            // SnackbarHost for displaying feedback messages
             SnackbarHost(
                 hostState = snackbarHostState,
                 snackbar = { snackbarData ->
@@ -461,7 +459,7 @@ fun CompanyProfileScreen(
                             }
                         }
 
-                        // NEW: View Logo Button
+                        // View Logo Button
                         OutlinedButton(
                             onClick = { showLogoDialog = true },
                             modifier = Modifier
@@ -527,7 +525,7 @@ fun CompanyProfileScreen(
         }
     }
 
-    // NEW: Logo Preview Dialog
+    // Logo Preview Dialog
     if (showLogoDialog && state.logoUri != null) {
         Dialog(onDismissRequest = { showLogoDialog = false }) {
             Card(

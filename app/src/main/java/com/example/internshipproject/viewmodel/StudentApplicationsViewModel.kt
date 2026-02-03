@@ -13,9 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * ✅ UPDATED: Better handling of delete operations
- */
+
 class StudentApplicationsViewModel(
     private val applicationRepository: ApplicationRepository = ApplicationRepository()
 ) : ViewModel() {
@@ -29,9 +27,8 @@ class StudentApplicationsViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    /**
-     * Load applications for the current user
-     */
+
+    // Load applications for the current user
     fun loadApplications() {
         val studentId = FirebaseManager.getCurrentUserId()
         if (studentId == null) {
@@ -57,9 +54,7 @@ class StudentApplicationsViewModel(
         }
     }
 
-    /**
-     * ✅ Set up real-time listener for applications
-     */
+    // Set up real-time listener for applications
     fun observeApplications() {
         val studentId = FirebaseManager.getCurrentUserId()
         if (studentId == null) {
@@ -87,9 +82,7 @@ class StudentApplicationsViewModel(
         }
     }
 
-    /**
-     * ✅ Calculate statistics from current applications
-     */
+      // Calculate statistics from current applications
     fun getApplicationStats(): Map<ApplicationStatus, Int> {
         val stats = mutableMapOf<ApplicationStatus, Int>()
         ApplicationStatus.values().forEach { status ->
@@ -98,9 +91,7 @@ class StudentApplicationsViewModel(
         return stats
     }
 
-    /**
-     * ✅ Get dashboard statistics
-     */
+    // Get dashboard statistics
     fun getDashboardStats(): Map<String, Int> {
         val apps = _applications.value
         return mapOf(
@@ -110,16 +101,12 @@ class StudentApplicationsViewModel(
         )
     }
 
-    /**
-     * Clear error message
-     */
+    // Clear error message
     fun clearError() {
         _error.value = null
     }
 
-    /**
-     * ✅ UPDATED: Refresh without clearing existing data
-     */
+    // Refresh without clearing existing data
     fun refresh() {
         val studentId = FirebaseManager.getCurrentUserId()
         if (studentId == null) {
@@ -128,7 +115,6 @@ class StudentApplicationsViewModel(
         }
 
         viewModelScope.launch {
-            // ✅ Don't set loading to true - keeps UI stable
             try {
                 Log.d("StudentAppVM", "Manual refresh triggered")
                 val apps = applicationRepository.getApplicationsByStudentId(studentId)
@@ -136,24 +122,20 @@ class StudentApplicationsViewModel(
                 Log.d("StudentAppVM", "Refreshed: ${apps.size} applications")
             } catch (e: Exception) {
                 Log.e("StudentAppVM", "Refresh error: ${e.message}")
-                // Don't update error state for refresh failures - real-time listener will handle it
             }
         }
     }
 
-    /**
-     * ✅ UPDATED: Delete with better state management
-     */
     fun deleteApplication(applicationId: String, onComplete: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            // ✅ DON'T set isLoading - prevents UI from clearing
+            // DON'T set isLoading - prevents UI from clearing
             try {
                 Log.d("StudentAppVM", "Deleting application: $applicationId")
 
                 applicationRepository.deleteApplication(applicationId)
                     .onSuccess {
                         Log.d("StudentAppVM", "Successfully deleted application")
-                        // ✅ Real-time listener will automatically update the list
+                        // Real-time listener will automatically update the list
                         // No need to manually refresh
                         onComplete(true, "Application deleted successfully")
                     }

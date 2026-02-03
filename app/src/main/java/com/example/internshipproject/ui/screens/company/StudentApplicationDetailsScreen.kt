@@ -299,7 +299,7 @@ fun StudentApplicationDetailsScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // ✅ MOVED: Cover Letter Section (now before Resume)
+                        // Cover Letter Section (now before Resume)
                         SectionCard(title = "Cover Letter") {
                             Text(
                                 text = coverLetter.ifBlank { "No cover letter provided" },

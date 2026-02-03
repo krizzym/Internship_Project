@@ -229,7 +229,7 @@ fun InternshipDetailsScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // ✅ FIXED: Cover letter TextField with improved placeholder styling
+                    // Cover letter TextField with improved placeholder styling
                     OutlinedTextField(
                         value = coverLetter,
                         onValueChange = { coverLetter = it },
@@ -239,8 +239,8 @@ fun InternshipDetailsScreen(
                         placeholder = {
                             Text(
                                 text = "Tell the company why you're interested in this internship and why you'd be a great fit...",
-                                fontSize = 13.sp,  // ✅ FIXED: Reduced from default (16sp) to 13sp
-                                color = TextSecondary.copy(alpha = 0.6f)  // ✅ FIXED: Lighter color with alpha
+                                fontSize = 13.sp,
+                                color = TextSecondary.copy(alpha = 0.6f)
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
@@ -250,7 +250,7 @@ fun InternshipDetailsScreen(
                         shape = RoundedCornerShape(8.dp),
                         enabled = !isSubmitting,
                         textStyle = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp  // ✅ ADDED: Consistent text size when typing
+                            fontSize = 14.sp
                         )
                     )
 

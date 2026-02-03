@@ -39,7 +39,7 @@ fun CompanyRegistrationScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    // ✅ FIX: Add state variables for the dialogs
+    // Add state variables for the dialogs
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
 
@@ -132,7 +132,7 @@ fun CompanyRegistrationScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // ✅ UPDATED: Simplified password field with helper text (matching student registration)
+                    // Simplified password field with helper text (matching student registration)
                     PasswordTextField(
                         value = state.password,
                         onValueChange = { viewModel.updatePassword(it) },
@@ -355,7 +355,6 @@ fun CompanyRegistrationScreen(
                                 color = TextSecondary
                             ),
                             onClick = { offset ->
-                                // ✅ FIX: Actually show the dialogs instead of TODO comments
                                 annotatedText.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
                                     .firstOrNull()?.let {
                                         showTermsDialog = true
@@ -369,7 +368,7 @@ fun CompanyRegistrationScreen(
                         )
                     }
 
-                    // ✅ FIX: Add the actual dialog components
+                    // Add the actual dialog components
                     if (showTermsDialog) {
                         TermsAndConditionsDialog(onDismiss = { showTermsDialog = false })
                     }
@@ -403,7 +402,7 @@ fun CompanyRegistrationScreen(
                         }
                     }
 
-                    // ✅ UPDATED: Button is disabled until form is valid
+                    // Button is disabled until form is valid
                     PrimaryButton(
                         text = "Create Company Account",
                         onClick = { viewModel.register() },

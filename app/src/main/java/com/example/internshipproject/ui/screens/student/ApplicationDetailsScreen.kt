@@ -35,7 +35,6 @@ import com.example.internshipproject.data.repository.ApplicationRepository
 import com.example.internshipproject.data.repository.InternshipRepository
 import kotlinx.coroutines.launch
 
-// ViewModel
 class ApplicationDetailViewModel : ViewModel() {
     private val applicationRepository = ApplicationRepository()
     private val internshipRepository = InternshipRepository()

@@ -35,7 +35,7 @@ class CompanyDashboardViewModel(
             repository.getCompanyProfile(userId).onSuccess { company ->
                 _state.value = _state.value.copy(company = company)
 
-                // ✅ REAL-TIME: Collect company internships
+                // REAL-TIME: Collect company internships
                 launch {
                     repository.getCompanyInternshipsFlow(userId).collect { postings ->
                         _state.value = _state.value.copy(postings = postings)

@@ -1,4 +1,4 @@
-//MyApplicationsScreen.kt - FINAL FIX: Data persists during delete/refresh
+
 package com.example.internshipproject.ui.screens.student
 
 import android.util.Log
@@ -23,9 +23,7 @@ import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.launch
 
-/**
- * ✅ FINAL FIX: Applications persist during delete and refresh operations
- */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyApplicationsScreen(
@@ -38,26 +36,26 @@ fun MyApplicationsScreen(
     var selectedTab by remember { mutableStateOf(1) }
     val scope = rememberCoroutineScope()
 
-    // ✅ Observe applications from ViewModel
+    // Observe applications from ViewModel
     val applications by viewModel.applications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    // ✅ Snackbar state for feedback messages
+    // Snackbar state for feedback messages
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ✅ Calculate stats dynamically from applications
+    // Calculate stats dynamically from applications
     val applicationStats = remember(applications) {
         viewModel.getApplicationStats()
     }
 
-    // ✅ Set up real-time listener when screen is first displayed
+    // Set up real-time listener when screen is first displayed
     LaunchedEffect(Unit) {
         Log.d("MyApplicationsScreen", "Setting up observer")
         viewModel.observeApplications()
     }
 
-    // ✅ Error handling
+    // Error handling
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             snackbarHostState.showSnackbar(
@@ -68,7 +66,7 @@ fun MyApplicationsScreen(
         }
     }
 
-    // ✅ FIXED: Delete handler that doesn't clear all data
+    // Delete handler that doesn't clear all data
     fun handleDelete(applicationId: String) {
         Log.d("MyApplicationsScreen", "Deleting application: $applicationId")
         viewModel.deleteApplication(applicationId) { success, message ->
@@ -87,12 +85,10 @@ fun MyApplicationsScreen(
         }
     }
 
-    // ✅ FIXED: Refresh handler that doesn't clear data
+    // Refresh handler that doesn't clear data
     fun handleRefresh() {
         Log.d("MyApplicationsScreen", "Manual refresh triggered")
         scope.launch {
-            // ✅ Don't show "refreshing" message to avoid confusion
-            // The real-time listener will update automatically
             viewModel.refresh()
         }
     }
@@ -238,7 +234,7 @@ fun MyApplicationsScreen(
                 }
             }
 
-            // ✅ Small loading indicator that doesn't hide content
+            // Small loading indicator that doesn't hide content
             if (isLoading && applications.isEmpty()) {
                 item {
                     Box(
@@ -283,7 +279,7 @@ fun MyApplicationsScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // ✅ Always show current applications, even during operations
+                        // Always show current applications, even during operations
                         if (applications.isEmpty() && !isLoading) {
                             // Empty State
                             Column(
@@ -306,7 +302,7 @@ fun MyApplicationsScreen(
                                 }
                             }
                         } else {
-                            // ✅ Application Cards - always visible
+                            // Application Cards - always visible
                             applications.forEach { application ->
                                 ApplicationCard(
                                     application = application,
@@ -343,9 +339,6 @@ fun StatusRow(label: String, count: Int) {
     }
 }
 
-/**
- * ✅ UPDATED: Allow delete for ALL statuses (not just PENDING)
- */
 @Composable
 fun ApplicationCard(
     application: Application,
@@ -381,7 +374,7 @@ fun ApplicationCard(
                     )
                 }
 
-                // ✅ CHANGED: Delete button now available for ALL applications
+                // Delete button now available for ALL applications
                 IconButton(
                     onClick = { showDeleteDialog = true },
                     modifier = Modifier.size(32.dp)
@@ -434,7 +427,7 @@ fun ApplicationCard(
         }
     }
 
-    // ✅ UPDATED: Delete confirmation with status-based message
+    // Delete confirmation with status-based message
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },

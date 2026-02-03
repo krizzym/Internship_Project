@@ -22,10 +22,7 @@ class CompanyRepository {
 
     fun getCurrentCompanyId(): String? = auth.currentUser?.uid
 
-    // ============================================
-    // COMPANY PROFILE
-    // ============================================
-
+// Company Profile
     suspend fun getCompanyProfile(companyId: String): Result<Company> {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.COMPANIES)
@@ -66,7 +63,6 @@ class CompanyRepository {
         }
     }
 
-    // ✅ IMPROVED: Enhanced uploadCompanyLogo with better error handling and logging
     suspend fun uploadCompanyLogo(companyId: String, uri: Uri): Result<String> {
         return try {
             // Validate URI
@@ -116,10 +112,7 @@ class CompanyRepository {
         }
     }
 
-    // ============================================
-    // INTERNSHIP POSTINGS
-    // ============================================
-
+    // Internship Posting
     suspend fun createInternship(userId: String, internship: Internship): Result<String> {
         return try {
             val internshipData = hashMapOf(
@@ -153,9 +146,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Update internship - Accepts Internship object
-     */
     suspend fun updateInternship(postingId: String, internship: Internship): Result<Unit> {
         return try {
             val updates = hashMapOf(
@@ -187,9 +177,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Update internship - Accepts Map for flexible updates
-     */
     suspend fun updateInternship(internshipId: String, updateData: Map<String, Any>): Result<Unit> {
         return try {
             firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -220,9 +207,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Get company internships with real-time updates (Flow)
-     */
     fun getCompanyInternshipsFlow(companyId: String): Flow<List<Internship>> = callbackFlow {
         val listener = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
             .whereEqualTo("companyId", companyId)
@@ -267,9 +251,6 @@ class CompanyRepository {
         awaitClose { listener.remove() }
     }
 
-    /**
-     * Get company internships (suspend function version)
-     */
     suspend fun getCompanyInternships(companyId: String): Result<List<Internship>> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -307,9 +288,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Get internship by ID
-     */
     suspend fun getInternshipById(postingId: String): Result<Internship> {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -344,13 +322,6 @@ class CompanyRepository {
         }
     }
 
-    // ============================================
-    // APPLICATIONS
-    // ============================================
-
-    /**
-     * Get applications for a posting
-     */
     suspend fun getApplicationsByPosting(postingId: String): Result<List<Application>> {
         return try {
             Log.d("CompanyRepo", "Querying applications for posting: $postingId")
@@ -396,9 +367,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Get all applications for all of a company's postings
-     */
     suspend fun getAllCompanyApplications(companyId: String): Result<List<Application>> {
         return try {
             val internshipsSnapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
@@ -451,9 +419,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Get application by ID
-     */
     suspend fun getApplicationById(applicationId: String): Result<Application> {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -487,9 +452,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * ✅ UPDATED: Update application status with optional notes parameter
-     */
     suspend fun updateApplicationStatus(
         applicationId: String,
         newStatus: ApplicationStatus,
@@ -516,9 +478,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Get application count for a posting
-     */
     suspend fun getApplicationCountForPosting(postingId: String): Result<Int> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -531,9 +490,6 @@ class CompanyRepository {
         }
     }
 
-    /**
-     * Get application status counts for a posting
-     */
     suspend fun getApplicationStatusCounts(postingId: String): Map<ApplicationStatus, Int> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -561,13 +517,6 @@ class CompanyRepository {
         }
     }
 
-    // ============================================
-    // STUDENT PROFILE - NEW
-    // ============================================
-
-    /**
-     * Get student profile by email
-     */
     suspend fun getStudentProfileByEmail(email: String): Result<StudentProfile> {
         return try {
             Log.d("CompanyRepo", "Fetching student profile for: $email")

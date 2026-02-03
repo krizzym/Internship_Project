@@ -35,11 +35,6 @@ class EditInternshipViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            // ✅ OPTION 1: If you renamed the method to avoid conflicts
-            // Uncomment this line and comment out the next one:
-            // repository.getInternshipByIdForEdit(internshipId).fold(
-
-            // ✅ OPTION 2: If you're using the original method name
             repository.getInternshipById(internshipId).fold(
                 onSuccess = { internship ->
                     _state.value = _state.value.copy(

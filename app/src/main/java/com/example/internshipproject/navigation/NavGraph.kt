@@ -22,8 +22,7 @@ import com.example.internshipproject.ui.screens.*
 import com.example.internshipproject.ui.screens.student.*
 import com.example.internshipproject.ui.screens.company.CompanyMainScreen
 import com.example.internshipproject.ui.screens.company.EditInternshipScreen
-import com.example.internshipproject.ui.screens.company.StudentApplicationDetailsScreen
-import com.example.internshipproject.ui.screens.company.CompanyApplicationDetailsScreen  // ✅ NEW IMPORT
+import com.example.internshipproject.ui.screens.company.CompanyApplicationDetailsScreen
 import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -61,7 +60,7 @@ sealed class Screen(val route: String) {
         fun createRoute(applicationId: String) = "student_application_details/$applicationId"
     }
 
-    // ✅ NEW: Company Application Details Route (Editable)
+    // Company Application Details Route (Editable)
     object CompanyApplicationDetails : Screen("company_application_details/{applicationId}") {
         fun createRoute(applicationId: String) = "company_application_details/$applicationId"
     }
@@ -72,7 +71,7 @@ fun NavGraph(navController: NavHostController) {
     val authRepository = remember { AuthRepository() }
     val internshipRepository = remember { InternshipRepository() }
 
-    // ✅ UPDATED: Get context and pass to ApplicationRepository
+    // Get context and pass to ApplicationRepository
     val context = LocalContext.current
     val applicationRepository = remember(context) { ApplicationRepository(context) }
 
@@ -80,9 +79,6 @@ fun NavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = Screen.Join.route
     ) {
-        // ============================================
-        // AUTH SCREENS
-        // ============================================
 
         composable(Screen.Join.route) {
             JoinScreen(
@@ -145,22 +141,20 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // ============================================
-        // ✅ UPDATED: STUDENT DASHBOARD WITH VIEWMODEL
-        // ============================================
+      // Student Dashboard and ViewModel
         composable(
             route = Screen.StudentDashboard.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
 
-            // ✅ NEW: Create ViewModel instance
+            // Create ViewModel instance
             val viewModel: StudentApplicationsViewModel = viewModel()
 
             var profile by remember { mutableStateOf<StudentProfile?>(null) }
             var isLoading by remember { mutableStateOf(true) }
 
-            // ✅ Collect real-time internships using Flow
+            // Collect real-time internships using Flow
             val internships by internshipRepository.getActiveInternshipsFlow()
                 .collectAsState(initial = emptyList())
 
@@ -193,8 +187,8 @@ fun NavGraph(navController: NavHostController) {
             profile?.let { studentProfile ->
                 StudentDashboardScreen(
                     studentProfile = studentProfile,
-                    internships = internships, // ✅ Real-time updates
-                    viewModel = viewModel, // ✅ NEW: Pass ViewModel
+                    internships = internships, // Real-time updates
+                    viewModel = viewModel, // Pass ViewModel
                     onInternshipClick = { internshipId ->
                         navController.navigate(Screen.InternshipDetails.createRoute(internshipId))
                     },
@@ -214,9 +208,7 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
-        // ============================================
-        // ✅ UPDATED: INTERNSHIP DETAILS WITH RESUME UPLOAD
-        // ============================================
+        // Internship details with Resume upload
         composable(
             route = Screen.InternshipDetails.route,
             arguments = listOf(navArgument("internshipId") { type = NavType.StringType })
@@ -274,7 +266,6 @@ fun NavGraph(navController: NavHostController) {
                     internship = internshipData,
                     onBackClick = { navController.popBackStack() },
                     isSubmitting = isSubmitting,
-                    // ✅ UPDATED: Now receives both coverLetter and resumeUri
                     onSubmitApplication = { coverLetter, resumeUri ->
                         isSubmitting = true
 
@@ -296,14 +287,14 @@ fun NavGraph(navController: NavHostController) {
                                         return@withContext
                                     }
 
-                                    // ✅ UPDATED: Submit application with resume
+                                    // Submit application with resume
                                     val result = applicationRepository.submitApplication(
                                         internshipId = internshipData.id,
                                         internshipTitle = internshipData.title,
                                         companyName = internshipData.companyName,
                                         studentEmail = studentEmail,
                                         coverLetter = coverLetter,
-                                        resumeUri = resumeUri  // ✅ NEW: Pass resume URI
+                                        resumeUri = resumeUri
                                     )
 
                                     withContext(Dispatchers.Main) {
@@ -331,20 +322,18 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
-        // ============================================
-        // ✅ UPDATED: MY APPLICATIONS WITH VIEWMODEL
-        // ============================================
+        // UPDATED: MY APPLICATIONS WITH VIEWMODEL
         composable(
             route = Screen.MyApplications.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
 
-            // ✅ NEW: Create ViewModel instance
+            // Create ViewModel instance
             val viewModel: StudentApplicationsViewModel = viewModel()
 
             MyApplicationsScreen(
-                viewModel = viewModel, // ✅ NEW: Pass ViewModel instead of individual states
+                viewModel = viewModel, // Pass ViewModel instead of individual states
                 onBackToDashboard = {
                     navController.navigate(Screen.StudentDashboard.createRoute(userId)) {
                         popUpTo(Screen.StudentDashboard.createRoute(userId)) { inclusive = true }
@@ -356,7 +345,7 @@ fun NavGraph(navController: NavHostController) {
                     }
                 },
                 onApplicationClick = { applicationId ->
-                    // ✅ FIXED: Navigate to student view of application details
+                    // Navigate to student view of application details
                     navController.navigate(Screen.StudentApplicationDetails.createRoute(applicationId))
                 },
                 onNavigateToProfile = {
@@ -365,9 +354,7 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // ============================================
-        // STUDENT PROFILE (Unchanged)
-        // ============================================
+     // Student Profile
         composable(
             route = Screen.StudentProfile.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
@@ -420,9 +407,7 @@ fun NavGraph(navController: NavHostController) {
             }
         }
 
-        // ============================================
-        // COMPANY ROUTES (Unchanged)
-        // ============================================
+        // COMPANY ROUTES
         composable(
             route = Screen.CompanyMain.route,
             arguments = listOf(navArgument("userId") { type = NavType.StringType })
@@ -451,32 +436,28 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        // ============================================
-        // ✅ STUDENT APPLICATION DETAILS (Student View - Read Only)
-        // ============================================
+        // STUDENT APPLICATION DETAILS (Student View - Read Only)
         composable(
             route = Screen.StudentApplicationDetails.route,
             arguments = listOf(navArgument("applicationId") { type = NavType.StringType })
         ) { backStackEntry ->
             val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
 
-            // ✅ Use StudentViewApplicationScreen for students to view their own applications (read-only)
+            // Use StudentViewApplicationScreen for students to view their own applications (read-only)
             StudentViewApplicationScreen(
                 applicationId = applicationId,
                 navController = navController
             )
         }
 
-        // ============================================
-        // ✅ NEW: COMPANY APPLICATION DETAILS (Company View - Editable)
-        // ============================================
+        // COMPANY APPLICATION DETAILS (Company View - Editable)
         composable(
             route = Screen.CompanyApplicationDetails.route,
             arguments = listOf(navArgument("applicationId") { type = NavType.StringType })
         ) { backStackEntry ->
             val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
 
-            // ✅ NEW: Use CompanyApplicationDetailsScreen for companies to review and update applications
+            // Use CompanyApplicationDetailsScreen for companies to review and update applications
             CompanyApplicationDetailsScreen(
                 navController = navController,
                 applicationId = applicationId

@@ -22,7 +22,7 @@ import java.io.File
 
 data class ReviewApplicationState(
     val application: Application? = null,
-    val studentProfile: StudentProfile? = null,  // ✅ NEW: Student profile
+    val studentProfile: StudentProfile? = null,
     val selectedStatus: String = "Pending",
     val isLoading: Boolean = false,
     val updateSuccess: Boolean = false,
@@ -47,7 +47,7 @@ class ReviewApplicationViewModel(
                     selectedStatus = application.status.name
                 )
 
-                // ✅ NEW: Load student profile
+                // Load student profile
                 loadStudentProfile(application.studentEmail)
             }.onFailure { error ->
                 _state.value = _state.value.copy(errorMessage = error.message)
@@ -57,7 +57,7 @@ class ReviewApplicationViewModel(
         }
     }
 
-    // ✅ NEW: Load student profile by email
+    // Load student profile by email
     private fun loadStudentProfile(studentEmail: String) {
         viewModelScope.launch {
             repository.getStudentProfileByEmail(studentEmail).onSuccess { profile ->
@@ -65,7 +65,7 @@ class ReviewApplicationViewModel(
                 Log.d("ReviewAppVM", "Student profile loaded: ${profile.firstName} ${profile.surname}")
             }.onFailure { error ->
                 Log.w("ReviewAppVM", "Failed to load student profile: ${error.message}")
-                // Don't show error to user - profile is optional
+
             }
         }
     }

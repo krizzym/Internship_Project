@@ -15,7 +15,7 @@ data class Application(
     val resumeFileName: String? = null,
     val resumeSize: Long? = null,
     val resumeMimeType: String? = null,
-    // ✅ NEW: Company notes field
+    // Company notes field
     val companyNotes: String? = null,
     // Student profile data (fetched separately, not stored in application doc)
     val studentProfile: StudentProfile? = null

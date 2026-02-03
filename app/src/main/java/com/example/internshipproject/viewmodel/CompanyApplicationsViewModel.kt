@@ -25,14 +25,14 @@ data class CompanyApplicationsState(
     val errorMessage: String? = null
 )
 
-// ✅ NEW: State for individual application details view
+// State for individual application details view
 data class ApplicationDetailsState(
     val application: Application? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
-// ✅ NEW: State for update operations (status/notes)
+// State for update operations (status/notes)
 sealed class UpdateState {
     object Idle : UpdateState()
     object Updating : UpdateState()
@@ -46,23 +46,19 @@ class CompanyApplicationsViewModel(
     private val studentRepository: StudentRepository = StudentRepository()
 ) : ViewModel() {
 
-    // ── cached companyId so refresh() can re-use it without a parameter ────
+    // cached companyId so refresh() can re-use it without a parameter
     private var _currentCompanyId: String = ""
 
-    // ── raw state (full list + selected filter) ────────────────────────────
+    // raw state (full list + selected filter)
     private val _state = MutableStateFlow(CompanyApplicationsState())
     val state: StateFlow<CompanyApplicationsState> = _state.asStateFlow()
 
-    // ── FIX: derived StateFlow that recomputes whenever applications or
-    //         selectedFilter changes.  The UI collects THIS, so it recomposes
-    //         automatically on every filter change.
     val filteredApplications: StateFlow<List<Application>> = combine(
         _state.map { it.applications },
         _state.map { it.selectedFilter }
     ) { applications, filter ->
         when (filter) {
-            // "All" shows everything; every other value is the enum name
-            // (UPPERCASE) that the dropdown passes in.
+
             "All"        -> applications
             else         -> {
                 // Safe: if the string doesn't match any enum constant the
@@ -78,17 +74,14 @@ class CompanyApplicationsViewModel(
         initialValue = emptyList()
     )
 
-    // ✅ NEW: State for application details
+    // State for application details
     private val _detailsState = MutableStateFlow(ApplicationDetailsState())
     val detailsState: StateFlow<ApplicationDetailsState> = _detailsState.asStateFlow()
 
-    // ✅ NEW: State for update operations
+    // State for update operations
     private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val updateState: StateFlow<UpdateState> = _updateState.asStateFlow()
 
-    /**
-     * Load all applications for a specific company
-     */
     fun loadApplicationsForCompany(companyId: String) {
         _currentCompanyId = companyId          // cache for refresh()
         viewModelScope.launch {
@@ -138,9 +131,7 @@ class CompanyApplicationsViewModel(
         }
     }
 
-    /**
-     * ✅ NEW: Load details for a specific application
-     */
+    // Load details for a specific application
     fun loadApplicationDetails(applicationId: String) {
         viewModelScope.launch {
             _detailsState.value = ApplicationDetailsState(isLoading = true)
@@ -182,9 +173,7 @@ class CompanyApplicationsViewModel(
         }
     }
 
-    /**
-     * ✅ NEW: Update application status
-     */
+   // Update application status
     fun updateApplicationStatus(applicationId: String, newStatus: ApplicationStatus) {
         viewModelScope.launch {
             _updateState.value = UpdateState.Updating
@@ -222,9 +211,7 @@ class CompanyApplicationsViewModel(
         }
     }
 
-    /**
-     * ✅ NEW: Update company notes
-     */
+   //Update company notes
     fun updateCompanyNotes(applicationId: String, notes: String) {
         viewModelScope.launch {
             _updateState.value = UpdateState.Updating
@@ -262,60 +249,49 @@ class CompanyApplicationsViewModel(
         }
     }
 
-    /**
-     * Filter applications by status.
-     * Accepts "All" or any ApplicationStatus.name (e.g. "PENDING").
-     */
+      // Filter applications by status.
+     // Accepts "All" or any ApplicationStatus.name (e.g. "PENDING").
     fun filterApplications(filter: String) {
         _state.value = _state.value.copy(selectedFilter = filter)
         // filteredApplications recomputes automatically — nothing else needed.
     }
 
-    /**
-     * Manual refresh – re-fetches the full application list from Firestore
-     * and replaces the current UI state.  The Screen can call this when the
-     * user taps the refresh button without needing to know the companyId again.
-     */
+
+     // Manual refresh – re-fetches the full application list from Firestore
+      // and replaces the current UI state.  The Screen can call this when the
+      // user taps the refresh button without needing to know the companyId again.
     fun refresh() {
         if (_currentCompanyId.isNotEmpty()) {
             loadApplicationsForCompany(_currentCompanyId)
         }
     }
 
-    /**
-     * Get count of applications by status (uses the FULL list, not the
-     * filtered one, so the stat cards always show true totals).
-     */
+     // Get count of applications by status (uses the FULL list, not the
+     // filtered one, so the stat cards always show true totals).
     fun getApplicationCountByStatus(status: ApplicationStatus): Int {
         return _state.value.applications.count { it.status == status }
     }
 
-    /**
-     * ✅ NEW: Clear details state (when leaving details screen)
-     */
+  // Clear details state (when leaving details screen)
     fun clearDetailsState() {
         _detailsState.value = ApplicationDetailsState()
     }
 
-    /**
-     * ✅ NEW: Reset update state
-     */
+   // Reset update state
     fun resetUpdateState() {
         _updateState.value = UpdateState.Idle
     }
 
-    /**
-     * Clear error message
-     */
+    // Clear error message
+
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
     }
 }
 
-/**
- * Extension function to handle updateCompanyNotes on ApplicationRepository
- * This matches the extension function defined in ApplicationRepository
- */
+
+ // Extension function to handle updateCompanyNotes on ApplicationRepository
+ // This matches the extension function defined in ApplicationRepository
 private suspend fun ApplicationRepository.updateCompanyNotes(
     applicationId: String,
     notes: String

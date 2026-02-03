@@ -1,4 +1,3 @@
-//StudentDashboardScreen.kt - Stats cards removed
 package com.example.internshipproject.ui.screens.student
 
 import android.util.Log
@@ -27,9 +26,7 @@ import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * ✅ UPDATED: Removed stats cards, cleaner dashboard
- */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentDashboardScreen(
@@ -47,15 +44,15 @@ fun StudentDashboardScreen(
     val scope = rememberCoroutineScope()
     val repository = remember { InternshipRepository() }
 
-    // ✅ Observe applications
+    // Observe applications
     val applications by viewModel.applications.collectAsState()
 
-    // ✅ Set up real-time listener
+    // Set up real-time listener
     LaunchedEffect(Unit) {
         viewModel.observeApplications()
     }
 
-    // ✅ Manual refresh function
+    // Manual refresh function
     fun refreshInternships() {
         if (isRefreshing) return
 

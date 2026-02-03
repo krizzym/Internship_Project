@@ -1,4 +1,3 @@
-//ViewApplicationsScreen.kt 
 package com.example.internshipproject.ui.screens.company
 
 import android.content.Context
@@ -40,7 +39,7 @@ import java.io.File
 fun ViewApplicationsScreen(
     navController: NavController,
     postingId: String,
-    onNavigateBack: () -> Unit,  // ✅ NEW: Callback to navigate back to CompanyMainScreen tabs
+    onNavigateBack: () -> Unit, // Callback to navigate back to CompanyMainScreen tabs
     viewModel: ViewApplicationsViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -55,7 +54,7 @@ fun ViewApplicationsScreen(
             TopAppBar(
                 title = { Text("Applications") },
                 navigationIcon = {
-                    // ✅ FIXED: Use callback instead of navController.popBackStack()
+                    // Use callback instead of navController.popBackStack()
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
                     }
@@ -93,7 +92,7 @@ fun ViewApplicationsScreen(
                         onUpdateStatus = { applicationId, newStatus ->
                             viewModel.updateApplicationStatus(applicationId, newStatus)
                         },
-                        // ✅ Navigate to Student Application Details screen
+                        // Navigate to Student Application Details screen
                         onReviewApplication = { applicationId ->
                             navController.navigate(
                                 Screen.CompanyApplicationDetails.createRoute(applicationId)

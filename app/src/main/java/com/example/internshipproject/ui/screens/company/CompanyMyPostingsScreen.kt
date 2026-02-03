@@ -166,7 +166,7 @@ fun CompanyMyPostingsScreen(
                                         }
                                     },
                                     onReopen = {
-                                        // ✅ NEW: Reopen callback
+                                        // Reopen callback
                                         viewModel.reopenPosting(posting.id) {
                                             viewModel.loadPostings(userId)
                                         }
@@ -195,15 +195,15 @@ fun CompanyPostingCard(
     onViewApplications: () -> Unit,
     onEdit: () -> Unit,
     onClose: () -> Unit,
-    onReopen: () -> Unit,  // ✅ NEW: Reopen parameter
+    onReopen: () -> Unit,
     onDelete: () -> Unit
 ) {
-    // ✅ NEW: State for confirmation dialogs
+    // State for confirmation dialogs
     var showCloseDialog by remember { mutableStateOf(false) }
     var showReopenDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // ✅ NEW: Close Confirmation Dialog
+    // Close Confirmation Dialog
     if (showCloseDialog) {
         ConfirmationDialog(
             title = "Close Posting",
@@ -218,7 +218,7 @@ fun CompanyPostingCard(
         )
     }
 
-    // ✅ NEW: Reopen Confirmation Dialog
+    // Reopen Confirmation Dialog
     if (showReopenDialog) {
         ConfirmationDialog(
             title = "Reopen Posting",
@@ -233,7 +233,7 @@ fun CompanyPostingCard(
         )
     }
 
-    // ✅ NEW: Delete Confirmation Dialog
+    // Delete Confirmation Dialog
     if (showDeleteDialog) {
         ConfirmationDialog(
             title = "Delete Posting",
@@ -498,11 +498,11 @@ fun CompanyPostingCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // ✅ UPDATED: Dynamic Close/Reopen Button
+                // Dynamic Close/Reopen Button
                 if (posting.isActive) {
                     // Close Button (when active)
                     OutlinedButton(
-                        onClick = { showCloseDialog = true },  // ✅ Show dialog instead of direct action
+                        onClick = { showCloseDialog = true },  // Show dialog instead of direct action
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -524,7 +524,7 @@ fun CompanyPostingCard(
                         )
                     }
                 } else {
-                    // ✅ NEW: Reopen Button (when closed)
+                    // Reopen Button (when closed)
                     OutlinedButton(
                         onClick = { showReopenDialog = true },
                         modifier = Modifier.weight(1f),
@@ -551,7 +551,7 @@ fun CompanyPostingCard(
 
                 // Delete Button
                 OutlinedButton(
-                    onClick = { showDeleteDialog = true },  // ✅ Show dialog instead of direct action
+                    onClick = { showDeleteDialog = true },  // Show dialog instead of direct action
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -577,7 +577,7 @@ fun CompanyPostingCard(
     }
 }
 
-// ✅ NEW: Reusable Confirmation Dialog Component
+// Reusable Confirmation Dialog Component
 @Composable
 fun ConfirmationDialog(
     title: String,

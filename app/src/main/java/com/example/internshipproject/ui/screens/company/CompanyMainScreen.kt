@@ -105,11 +105,11 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                // ✅ Use NavGraph navigation for editing
+                                // Use NavGraph navigation for editing
                                 navController.navigate(Screen.EditInternship.createRoute(postingId))
                             },
                             onReviewApplication = { applicationId ->
-                                // ✅ FIXED: Navigate via NavGraph instead of internal state
+                                // Navigate via NavGraph instead of internal state
                                 navController.navigate(Screen.CompanyApplicationDetails.createRoute(applicationId))
                             }
                         )
@@ -120,7 +120,7 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                // ✅ Use NavGraph navigation for editing
+                                // Use NavGraph navigation for editing
                                 navController.navigate(Screen.EditInternship.createRoute(postingId))
                             }
                         )
@@ -128,7 +128,7 @@ fun CompanyMainScreen(
                             userId = userId,
                             onLogout = onLogout,
                             onReviewApplication = { applicationId ->
-                                // ✅ FIXED: Navigate via NavGraph instead of internal state
+                                // Navigate via NavGraph instead of internal state
                                 navController.navigate(Screen.CompanyApplicationDetails.createRoute(applicationId))
                             }
                         )
@@ -139,7 +139,7 @@ fun CompanyMainScreen(
                     ViewApplicationsScreen(
                         navController = navController,
                         postingId = (navigationState as NavigationState.ViewApplications).postingId,
-                        // ✅ FIXED: Add callback to navigate back to My Postings tab
+                        // Add callback to navigate back to My Postings tab
                         onNavigateBack = {
                             selectedTab = 1  // Go back to My Postings tab
                             navigationState = NavigationState.Tab(1)
@@ -147,15 +147,11 @@ fun CompanyMainScreen(
                     )
                 }
                 is NavigationState.EditPosting -> {
-                    // ✅ NOTE: This state is no longer used since we navigate via NavGraph
-                    // Keeping it here for backward compatibility
                     LaunchedEffect(Unit) {
                         navigationState = NavigationState.Tab(selectedTab)
                     }
                 }
                 is NavigationState.ReviewApplication -> {
-                    // ✅ NOTE: This state is no longer used since we navigate via NavGraph
-                    // Keeping it here for backward compatibility
                     LaunchedEffect(Unit) {
                         navigationState = NavigationState.Tab(selectedTab)
                     }

@@ -13,9 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * Shared stat card component used across company screens
- */
+
+ // Shared stat card component used across company screens
 @Composable
 fun ImprovedStatCard(
     title: String,

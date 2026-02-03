@@ -186,7 +186,7 @@ class CompanyRegistrationViewModel(
         _state.value = currentState.copy(errors = newErrors)
     }
 
-    // ✅ NEW: Helper function to check if form is valid (for enabling/disabling submit button)
+    // Helper function to check if form is valid (for enabling/disabling submit button)
     fun isFormValid(): Boolean {
         val currentState = _state.value
         return currentState.companyEmail.isNotBlank() &&
@@ -214,7 +214,7 @@ class CompanyRegistrationViewModel(
             "companyDescription", "logo", "terms"
         ).forEach { validateField(it) }
 
-        // ✅ CRITICAL: Stop if there are validation errors (before calling Firebase)
+        // CRITICAL: Stop if there are validation errors (before calling Firebase)
         if (_state.value.errors.isNotEmpty()) {
             _state.value = _state.value.copy(
                 errorMessage = "Please fix all errors before submitting"

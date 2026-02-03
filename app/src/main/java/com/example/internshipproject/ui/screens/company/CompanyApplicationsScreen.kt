@@ -30,8 +30,6 @@ fun CompanyApplicationsScreen(
     viewModel: CompanyApplicationsViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-
-    // FIX: collect the derived StateFlow so the UI recomposes on every filter change
     val filteredApplications by viewModel.filteredApplications.collectAsState()
 
     var expanded by remember { mutableStateOf(false) }
@@ -59,7 +57,7 @@ fun CompanyApplicationsScreen(
                     actions = {
                         IconButton(
                             onClick = { viewModel.refresh() },
-                            enabled = !state.isLoading          // disable while already loading
+                            enabled = !state.isLoading
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
@@ -202,9 +200,6 @@ fun CompanyApplicationsScreen(
                             expanded = expanded,
                             onExpandedChange = { expanded = !expanded }
                         ) {
-                            // FIX: display a human-readable label derived from
-                            // the stored value ("All" stays "All"; enum names
-                            // are title-cased for display only).
                             val displayLabel = if (state.selectedFilter == "All") "All Applications"
                             else state.selectedFilter.lowercase().replaceFirstChar { it.uppercase() }
 
@@ -233,7 +228,7 @@ fun CompanyApplicationsScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
-                                // FIX: value keys use the exact enum .name
+                                // value keys use the exact enum .name
                                 // strings so they match the when-branch in the
                                 // ViewModel.  Labels are purely for the UI.
                                 val filters = listOf(
@@ -284,7 +279,7 @@ fun CompanyApplicationsScreen(
                     colors = CardDefaults.cardColors(containerColor = CardWhite),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    // FIX: use the reactively-collected list, NOT a one-shot
+                    // use the reactively-collected list, NOT a one-shot
                     // imperative call.  Both the count badge and the loop below
                     // now recompose whenever the filter changes.
                     Column(modifier = Modifier.padding(20.dp)) {

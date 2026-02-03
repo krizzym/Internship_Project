@@ -10,7 +10,6 @@ import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -26,9 +25,6 @@ class ApplicationRepository(
 
     private val firestore: FirebaseFirestore = FirebaseManager.firestore
 
-    /**
-     * Submit application with resume (Base64 encoded)
-     */
     suspend fun submitApplication(
         internshipId: String,
         internshipTitle: String,
@@ -81,9 +77,9 @@ class ApplicationRepository(
                 "internshipTitle" to internshipTitle,
                 "companyName" to companyName,
                 "studentEmail" to studentEmail,
-                "studentId" to currentUserId, // ✅ CRITICAL: Store studentId
+                "studentId" to currentUserId,
                 "coverLetter" to coverLetter,
-                "status" to ApplicationStatus.PENDING.name, // ✅ Single source of truth for status
+                "status" to ApplicationStatus.PENDING.name,
                 "appliedDate" to currentDate,
                 "createdAt" to System.currentTimeMillis(),
                 "resumeBase64" to (resumeBase64 ?: ""),
@@ -149,16 +145,13 @@ class ApplicationRepository(
                 ApplicationStatus.PENDING
             }
 
-            // ✅ Security check: Only allow student to delete their own application
+            // Only allow student to delete their own application
             val currentUserEmail = FirebaseManager.getCurrentUserEmail()
             if (studentEmail != currentUserEmail) {
                 return Result.failure(Exception("You can only delete your own applications"))
             }
 
-            // ✅ REMOVED: Business rule restriction - now allows deletion of ALL statuses
-            // Students can delete PENDING, REVIEWED, SHORTLISTED, ACCEPTED, or REJECTED applications
-
-            // Optional: Add a warning log for non-pending deletions
+            // Add a warning log for non-pending deletions
             if (status != ApplicationStatus.PENDING) {
                 Log.w("ApplicationRepo", "Deleting non-pending application (${status.name}): $applicationId")
             }
@@ -177,16 +170,12 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * ✅ NEW: Get all applications by studentId (primary method)
-     * This is the correct way to query applications for the logged-in student
-     */
     suspend fun getApplicationsByStudentId(studentId: String): List<Application> {
         return try {
             Log.d("ApplicationRepo", "Fetching applications for studentId: $studentId")
 
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
-                .whereEqualTo("studentId", studentId) // ✅ Query by studentId
+                .whereEqualTo("studentId", studentId)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
@@ -204,7 +193,7 @@ class ApplicationRepository(
                         coverLetter = doc.getString("coverLetter") ?: "",
                         status = ApplicationStatus.valueOf(
                             doc.getString("status") ?: ApplicationStatus.PENDING.name
-                        ), // ✅ Read status from Firestore (single source of truth)
+                        ),
                         appliedDate = doc.getString("appliedDate") ?: "",
                         resumeBase64 = doc.getString("resumeBase64"),
                         resumeFileName = doc.getString("resumeFileName"),
@@ -222,21 +211,10 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * ✅ NEW: Real-time listener for student applications
-     * Returns a Flow that emits updates whenever applications change
-     */
-    // ✅ CRITICAL FIX for ApplicationRepository.kt
-// Replace the observeApplicationsByStudentId function (around line 349)
-
-    /**
-     * ✅ FIXED: Observe applications by student ID in real-time
-     * Uses studentEmail instead of studentId for compatibility
-     */
     fun observeApplicationsByStudentId(studentId: String): Flow<List<Application>> = callbackFlow {
         Log.d("ApplicationRepo", "Setting up real-time listener for studentId: $studentId")
 
-        // ✅ FIXED: Get student email from Firebase Auth
+        // Get student email from Firebase Auth
         val studentEmail = FirebaseManager.getCurrentUserEmail()
         if (studentEmail == null) {
             Log.e("ApplicationRepo", "No student email found")
@@ -244,14 +222,13 @@ class ApplicationRepository(
             return@callbackFlow
         }
 
-        // ✅ FIXED: Query by studentEmail (which is indexed) instead of studentId
+        // Query by studentEmail (which is indexed) instead of studentId
         val listener = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
             .whereEqualTo("studentEmail", studentEmail)
-            .orderBy("appliedDate", Query.Direction.DESCENDING) // ✅ Changed from createdAt to appliedDate
+            .orderBy("appliedDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e("ApplicationRepo", "Listen error: ${error.message}")
-                    // Don't close the flow on error, just log it
                     return@addSnapshotListener
                 }
 
@@ -292,9 +269,6 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Get all applications by student email (kept for backward compatibility)
-     */
     suspend fun getApplicationsByStudent(studentEmail: String): List<Application> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -374,9 +348,8 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Update application status (Company action)
-     */
+
+    // Update application status (Company action)
     suspend fun ApplicationRepository.updateApplicationStatus(
         applicationId: String,
         newStatus: ApplicationStatus
@@ -402,9 +375,7 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Update company notes (Company action)
-     */
+     //Update company notes (Company action)
     suspend fun ApplicationRepository.updateCompanyNotes(
         applicationId: String,
         notes: String
@@ -430,9 +401,7 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Get all applications for a specific internship
-     */
+     // Get all applications for a specific internship
     suspend fun getApplicationsByInternship(internshipId: String): List<Application> {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
@@ -470,9 +439,7 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Get specific application by internship and student
-     */
+   // Get specific application by internship and student
     suspend fun getApplicationByInternshipAndStudent(
         internshipId: String,
         studentEmail: String
@@ -512,14 +479,11 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * ✅ UPDATED: Check if already applied using studentId
-     */
     private suspend fun hasAppliedToInternship(internshipId: String, studentId: String): Boolean {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .whereEqualTo("internshipId", internshipId)
-                .whereEqualTo("studentId", studentId) // ✅ Check by studentId
+                .whereEqualTo("studentId", studentId)
                 .limit(1)
                 .get()
                 .await()
@@ -531,9 +495,6 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Update application status (used by company)
-     */
     suspend fun updateApplicationStatus(
         applicationId: String,
         newStatus: ApplicationStatus
@@ -541,8 +502,7 @@ class ApplicationRepository(
         return try {
             firestore.collection(FirebaseManager.Collections.APPLICATIONS)
                 .document(applicationId)
-                .update("status", newStatus.name) // ✅ Update the single source of truth
-                .await()
+                .update("status", newStatus.name)
 
             Log.d("ApplicationRepo", "Application $applicationId status updated to $newStatus")
             Result.success(Unit)
@@ -552,9 +512,6 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * ✅ UPDATED: Get application stats by studentId
-     */
     suspend fun getApplicationStatsByStudentId(studentId: String): Map<ApplicationStatus, Int> {
         return try {
             val applications = getApplicationsByStudentId(studentId)

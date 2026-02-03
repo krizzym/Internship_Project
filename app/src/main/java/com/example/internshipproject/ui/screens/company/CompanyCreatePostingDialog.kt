@@ -43,7 +43,7 @@ fun CompanyCreatePostingDialog(
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // ✅ NEW: Stipend state
+    // Stipend state
     var stipendType by remember { mutableStateOf("Unpaid") }
     var customStipendAmount by remember { mutableStateOf("") }
     var expandedStipend by remember { mutableStateOf(false) }
@@ -154,7 +154,7 @@ fun CompanyCreatePostingDialog(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         )
-                        // ✅ NEW: Helper text for Requirements
+                        // Helper text for Requirements
                         Text(
                             text = "Example format:\n• Proficient in Java/Kotlin\n• Basic understanding of Android development\n• Strong problem-solving skills",
                             fontSize = 12.sp,
@@ -235,7 +235,7 @@ fun CompanyCreatePostingDialog(
                                 ),
                                 shape = RoundedCornerShape(8.dp)
                             )
-                            // ✅ NEW: Helper text for Duration
+                            // Helper text for Duration
                             Text(
                                 text = "Format: X-Y months",
                                 fontSize = 10.sp,
@@ -296,7 +296,7 @@ fun CompanyCreatePostingDialog(
                         )
                     }
 
-                    // ✅ NEW: Stipend Section
+                    // Stipend Section
                     Text(
                         text = "Stipend",
                         fontSize = 16.sp,
@@ -334,8 +334,6 @@ fun CompanyCreatePostingDialog(
                                 onClick = {
                                     stipendType = "Unpaid"
                                     customStipendAmount = ""
-                                    // Update ViewModel if you have updateSalaryRange method
-                                    // viewModel.updateSalaryRange("Unpaid")
                                     expandedStipend = false
                                 }
                             )
@@ -355,8 +353,6 @@ fun CompanyCreatePostingDialog(
                             value = customStipendAmount,
                             onValueChange = {
                                 customStipendAmount = it
-                                // Update ViewModel if you have updateSalaryRange method
-                                // viewModel.updateSalaryRange(it)
                             },
                             label = { Text("Stipend Amount") },
                             placeholder = { Text("e.g., ₱5,000 - ₱8,000 per month") },

@@ -10,9 +10,6 @@ class StudentRepository {
 
     private val firestore: FirebaseFirestore = FirebaseManager.firestore
 
-    /**
-     * Get student profile by email
-     */
     suspend fun getStudentByEmail(email: String): Result<StudentProfile> {
         return try {
             Log.d("StudentRepo", "Fetching student profile for: $email")

@@ -17,9 +17,6 @@ class FirebaseAuthRepository {
     private val firestore: FirebaseFirestore = FirebaseManager.firestore
     private val storage: FirebaseStorage = FirebaseManager.storage
 
-    /**
-     * Register a new student
-     */
     suspend fun registerStudent(student: Student): Result<UserSession> {
         return try {
             // Create Firebase Authentication account
@@ -30,7 +27,6 @@ class FirebaseAuthRepository {
 
             val userId = authResult.user?.uid ?: throw Exception("Failed to get user ID")
 
-            // Upload resume to Firebase Storage if exists (OPTIONAL - won't fail registration)
             var resumeUrl: String? = null
             if (!student.resumeUri.isNullOrEmpty()) {
                 try {
@@ -42,7 +38,6 @@ class FirebaseAuthRepository {
                     Log.d("FirebaseAuth", "Resume uploaded successfully: $resumeUrl")
                 } catch (e: Exception) {
                     Log.e("FirebaseAuth", "Resume upload failed, continuing without resume: ${e.message}")
-                    // Continue registration even if resume upload fails
                     resumeUrl = null
                 }
             }
@@ -86,9 +81,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Register a new company
-     */
     suspend fun registerCompany(company: Company): Result<UserSession> {
         return try {
             // Create Firebase Authentication account
@@ -99,7 +91,7 @@ class FirebaseAuthRepository {
 
             val userId = authResult.user?.uid ?: throw Exception("Failed to get user ID")
 
-            // Upload company logo to Firebase Storage if exists (OPTIONAL)
+
             var logoUrl: String? = null
             if (!company.logoUri.isNullOrEmpty()) {
                 try {
@@ -150,9 +142,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Login with email and password
-     */
     suspend fun login(email: String, password: String): Result<UserSession> {
         return try {
             // Sign in with Firebase Authentication
@@ -200,9 +189,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Get student profile by user ID
-     */
     suspend fun getStudentProfile(userId: String): Student? {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.STUDENTS)
@@ -235,9 +221,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Get student profile by email
-     */
     suspend fun getStudentProfileByEmail(email: String): Student? {
         return try {
             val querySnapshot = firestore.collection(FirebaseManager.Collections.STUDENTS)
@@ -271,9 +254,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Get company profile by user ID
-     */
     suspend fun getCompanyProfile(userId: String): Company? {
         return try {
             val doc = firestore.collection(FirebaseManager.Collections.COMPANIES)
@@ -302,9 +282,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Update student profile
-     */
     suspend fun updateStudentProfile(userId: String, updates: Map<String, Any>): Result<Unit> {
         return try {
             firestore.collection(FirebaseManager.Collections.STUDENTS)
@@ -319,9 +296,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Upload file to Firebase Storage
-     */
     private suspend fun uploadFile(fileUri: Uri, storagePath: String): String {
         return try {
             val storageRef = storage.reference.child(storagePath)
@@ -338,9 +312,6 @@ class FirebaseAuthRepository {
         }
     }
 
-    /**
-     * Upload resume
-     */
     suspend fun uploadResume(userId: String, fileUri: Uri): Result<String> {
         return try {
             val url = uploadFile(
