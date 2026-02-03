@@ -11,6 +11,10 @@ import com.example.internshipproject.data.repository.StudentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -42,9 +46,37 @@ class CompanyApplicationsViewModel(
     private val studentRepository: StudentRepository = StudentRepository()
 ) : ViewModel() {
 
-    // Existing state for applications list
+    // ── cached companyId so refresh() can re-use it without a parameter ────
+    private var _currentCompanyId: String = ""
+
+    // ── raw state (full list + selected filter) ────────────────────────────
     private val _state = MutableStateFlow(CompanyApplicationsState())
     val state: StateFlow<CompanyApplicationsState> = _state.asStateFlow()
+
+    // ── FIX: derived StateFlow that recomputes whenever applications or
+    //         selectedFilter changes.  The UI collects THIS, so it recomposes
+    //         automatically on every filter change.
+    val filteredApplications: StateFlow<List<Application>> = combine(
+        _state.map { it.applications },
+        _state.map { it.selectedFilter }
+    ) { applications, filter ->
+        when (filter) {
+            // "All" shows everything; every other value is the enum name
+            // (UPPERCASE) that the dropdown passes in.
+            "All"        -> applications
+            else         -> {
+                // Safe: if the string doesn't match any enum constant the
+                // filter just returns an empty list instead of crashing.
+                val status = ApplicationStatus.values().firstOrNull { it.name == filter }
+                if (status != null) applications.filter { it.status == status }
+                else applications   // fallback – should never happen
+            }
+        }
+    }.stateIn(
+        scope     = viewModelScope,
+        started   = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList()
+    )
 
     // ✅ NEW: State for application details
     private val _detailsState = MutableStateFlow(ApplicationDetailsState())
@@ -58,6 +90,7 @@ class CompanyApplicationsViewModel(
      * Load all applications for a specific company
      */
     fun loadApplicationsForCompany(companyId: String) {
+        _currentCompanyId = companyId          // cache for refresh()
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
@@ -230,30 +263,28 @@ class CompanyApplicationsViewModel(
     }
 
     /**
-     * Filter applications by status
+     * Filter applications by status.
+     * Accepts "All" or any ApplicationStatus.name (e.g. "PENDING").
      */
     fun filterApplications(filter: String) {
         _state.value = _state.value.copy(selectedFilter = filter)
+        // filteredApplications recomputes automatically — nothing else needed.
     }
 
     /**
-     * Get filtered applications based on selected filter
+     * Manual refresh – re-fetches the full application list from Firestore
+     * and replaces the current UI state.  The Screen can call this when the
+     * user taps the refresh button without needing to know the companyId again.
      */
-    fun getFilteredApplications(): List<Application> {
-        val filter = _state.value.selectedFilter
-        return when (filter) {
-            "All" -> _state.value.applications
-            "Pending" -> _state.value.applications.filter { it.status == ApplicationStatus.PENDING }
-            "Reviewed" -> _state.value.applications.filter { it.status == ApplicationStatus.REVIEWED }
-            "Shortlisted" -> _state.value.applications.filter { it.status == ApplicationStatus.SHORTLISTED }
-            "Accepted" -> _state.value.applications.filter { it.status == ApplicationStatus.ACCEPTED }
-            "Rejected" -> _state.value.applications.filter { it.status == ApplicationStatus.REJECTED }
-            else -> _state.value.applications
+    fun refresh() {
+        if (_currentCompanyId.isNotEmpty()) {
+            loadApplicationsForCompany(_currentCompanyId)
         }
     }
 
     /**
-     * Get count of applications by status
+     * Get count of applications by status (uses the FULL list, not the
+     * filtered one, so the stat cards always show true totals).
      */
     fun getApplicationCountByStatus(status: ApplicationStatus): Int {
         return _state.value.applications.count { it.status == status }

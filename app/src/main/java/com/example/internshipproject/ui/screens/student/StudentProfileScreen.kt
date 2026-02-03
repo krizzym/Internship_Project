@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -115,7 +116,22 @@ fun StudentProfileScreen(
                 },
                 actions = {
                     TextButton(onClick = onLogout) {
-                        Text("Logout", color = Color.Red, fontWeight = FontWeight.SemiBold)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "Logout",
+                                tint = Color.Red,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                "Logout",
+                                color = Color.Red,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
