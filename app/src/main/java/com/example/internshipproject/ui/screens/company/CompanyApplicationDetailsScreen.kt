@@ -1,16 +1,14 @@
-// CompanyApplicationDetailsScreen.kt
+//CompanyApplicationDetailsScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
+import android.os.Environment
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -20,14 +18,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.internshipproject.data.model.ApplicationStatus
@@ -228,9 +223,6 @@ private fun CompanyApplicationDetailsContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Application Status Timeline Card
-        ApplicationStatusTimelineCard(currentStatus = application.status)
-
         // Position Applied For Card
         InfoCard(
             title = "Position Applied For",
@@ -249,68 +241,35 @@ private fun CompanyApplicationDetailsContent(
         )
 
         // Student Information Card
-        StudentInformationCard(application = application)
+        InfoCard(
+            title = "Student Information",
+            content = {
+                application.studentProfile?.let { profile ->
+                    InfoRow(label = "Name", value = profile.fullName)
+                    InfoRow(label = "Email", value = profile.email)
+                    InfoRow(label = "Location", value = "${profile.barangay}, ${profile.city}")
+                }
+            }
+        )
 
-        // Educational Background Card (if available)
-        application.studentProfile?.let { profile ->
-            InfoCard(
-                title = "Educational Background",
-                content = {
+        // Educational Background Card
+        InfoCard(
+            title = "Educational Background",
+            content = {
+                application.studentProfile?.let { profile ->
                     InfoRow(label = "School/University", value = profile.school)
                     InfoRow(label = "Course/Program", value = profile.course)
                     InfoRow(label = "Year Level", value = profile.yearLevel)
                 }
-            )
-        }
-
-        // Internship Preferences Card (if available)
-        application.studentProfile?.let { profile ->
-            if (profile.internshipTypes.isNotEmpty()) {
-                InfoCard(
-                    title = "Internship Preferences",
-                    content = {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            profile.internshipTypes.forEach { type ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.CheckCircle,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Text(text = type, style = MaterialTheme.typography.bodyMedium)
-                                }
-                            }
-                        }
-                    }
-                )
             }
-        }
-
-        // Skills Card (if available)
-        application.studentProfile?.let { profile ->
-            if (profile.skills.isNotBlank()) {
-                InfoCard(
-                    title = "Skills",
-                    content = {
-                        Text(
-                            text = profile.skills,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                )
-            }
-        }
+        )
 
         // Cover Letter Card
         InfoCard(
             title = "Cover Letter",
             content = {
                 Text(
-                    text = application.coverLetter,
+                    text = application.coverLetter.ifBlank { "No cover letter provided" },
                     style = MaterialTheme.typography.bodyMedium,
                     lineHeight = 20.sp
                 )
@@ -318,29 +277,65 @@ private fun CompanyApplicationDetailsContent(
         )
 
         // Resume Card
-        if (application.hasResume) {
-            ResumeCard(
-                fileName = application.resumeFileName ?: "Resume.pdf",
-                fileSize = application.resumeSize ?: 0L,
-                onViewClick = onResumeView
-            )
-        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Resume/CV",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-        // Application Timeline Card
-        InfoCard(
-            title = "Application Timeline",
-            content = {
-                InfoRow(label = "Applied", value = application.appliedDate)
+                if (application.hasResume) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = application.resumeFileName ?: "resume.pdf",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = formatFileSize(application.resumeSize ?: 0),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                        }
+
+                        Button(
+                            onClick = onResumeView,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Visibility,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("View")
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "No resume uploaded",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
             }
-        )
-
-        // COMPANY ACTIONS SECTION
-        Text(
-            text = "Company Actions",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        }
 
         // Update Application Status Card
         Card(
@@ -359,64 +354,101 @@ private fun CompanyApplicationDetailsContent(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                ExposedDropdownMenuBox(
-                    expanded = showStatusMenu,
-                    onExpandedChange = onShowStatusMenuChange
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedTextField(
-                        value = selectedStatus.name.replace("_", " "),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Status") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showStatusMenu)
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(),
-                        colors = OutlinedTextFieldDefaults.colors()
+                    Text(
+                        text = "Current Status:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
                     )
 
-                    ExposedDropdownMenu(
+                    Surface(
+                        color = selectedStatus.getStatusColor(),
+                        shape = RoundedCornerShape(20.dp)
+                    ) {
+                        Text(
+                            text = selectedStatus.getDisplayName().uppercase(),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Box {
+                    OutlinedButton(
+                        onClick = { onShowStatusMenuChange(true) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Change Status")
+                    }
+
+                    DropdownMenu(
                         expanded = showStatusMenu,
                         onDismissRequest = { onShowStatusMenuChange(false) }
                     ) {
                         ApplicationStatus.entries.forEach { status ->
                             DropdownMenuItem(
                                 text = {
-                                    Text(
-                                        text = status.getDisplayName(),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Surface(
+                                            color = status.getStatusColor(),
+                                            shape = RoundedCornerShape(4.dp),
+                                            modifier = Modifier.size(12.dp)
+                                        ) {}
+                                        Text(status.getDisplayName())
+                                    }
                                 },
                                 onClick = {
                                     onStatusSelected(status)
-                                    onShowStatusMenuChange(false)
                                 }
                             )
                         }
                     }
                 }
 
-                Button(
-                    onClick = onStatusUpdate,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isUpdating && selectedStatus != application.status
-                ) {
-                    if (isUpdating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                if (selectedStatus != application.status) {
+                    Button(
+                        onClick = onStatusUpdate,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUpdating
+                    ) {
+                        if (isUpdating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Updating...")
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Update Status")
+                        }
                     }
-                    Text("Update Status")
                 }
             }
         }
 
-        // Notes for Applicant Card
+        // Company Notes Card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -532,252 +564,6 @@ private fun CompanyApplicationDetailsContent(
 }
 
 @Composable
-private fun ApplicationStatusTimelineCard(currentStatus: ApplicationStatus) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Application Status",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Surface(
-                    color = currentStatus.getStatusColor(),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = currentStatus.getDisplayName().uppercase(),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Status Timeline
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                TimelineItem(
-                    title = "Submitted",
-                    description = "Application received",
-                    isActive = true,
-                    isCompleted = currentStatus.ordinal >= ApplicationStatus.PENDING.ordinal
-                )
-
-                TimelineItem(
-                    title = "Under Review",
-                    description = "Company is reviewing your application",
-                    isActive = currentStatus == ApplicationStatus.REVIEWED,
-                    isCompleted = currentStatus.ordinal >= ApplicationStatus.REVIEWED.ordinal
-                )
-
-                TimelineItem(
-                    title = "Shortlisted",
-                    description = "You've been shortlisted for interview",
-                    isActive = currentStatus == ApplicationStatus.SHORTLISTED,
-                    isCompleted = currentStatus.ordinal >= ApplicationStatus.SHORTLISTED.ordinal
-                )
-
-                TimelineItem(
-                    title = "Final Decision",
-                    description = when (currentStatus) {
-                        ApplicationStatus.ACCEPTED -> "Congratulations! Offer extended"
-                        ApplicationStatus.REJECTED -> "Application not moving forward"
-                        else -> "Awaiting final decision"
-                    },
-                    isActive = currentStatus == ApplicationStatus.ACCEPTED || currentStatus == ApplicationStatus.REJECTED,
-                    isCompleted = currentStatus == ApplicationStatus.ACCEPTED || currentStatus == ApplicationStatus.REJECTED,
-                    isLast = true
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TimelineItem(
-    title: String,
-    description: String,
-    isActive: Boolean,
-    isCompleted: Boolean,
-    isLast: Boolean = false
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isCompleted || isActive) MaterialTheme.colorScheme.primary
-                        else Color.LightGray
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isCompleted && !isActive) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                    )
-                }
-            }
-
-            if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(32.dp)
-                        .background(
-                            if (isCompleted) MaterialTheme.colorScheme.primary
-                            else Color.LightGray
-                        )
-                )
-            }
-        }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                color = if (isCompleted || isActive) Color.Black else Color.Gray
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
-            )
-        }
-    }
-}
-
-@Composable
-private fun StudentInformationCard(application: com.example.internshipproject.data.model.Application) {
-    InfoCard(
-        title = "Student Information",
-        content = {
-            application.studentProfile?.let { profile ->
-                InfoRow(label = "Name", value = profile.fullName)
-                InfoRow(label = "Email", value = application.studentEmail)
-                InfoRow(label = "Location", value = "${profile.barangay}, ${profile.city}")
-            } ?: run {
-                InfoRow(label = "Email", value = application.studentEmail)
-            }
-        }
-    )
-}
-
-@Composable
-private fun ResumeCard(
-    fileName: String,
-    fileSize: Long,
-    onViewClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Resume",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = null,
-                            modifier = Modifier.padding(8.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = fileName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = formatFileSize(fileSize),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-                }
-
-                Button(
-                    onClick = onViewClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Visibility,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("View")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun InfoCard(
     title: String,
     content: @Composable ColumnScope.() -> Unit
@@ -790,7 +576,7 @@ private fun InfoCard(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
                 text = title,
@@ -804,30 +590,24 @@ private fun InfoCard(
 
 @Composable
 private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
-            modifier = Modifier.weight(1f)
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f)
+            style = MaterialTheme.typography.bodyMedium
         )
     }
 }
 
-// Helper functions
+// Extension functions for ApplicationStatus
 private fun ApplicationStatus.getDisplayName(): String {
     return when (this) {
         ApplicationStatus.PENDING -> "Pending"
-        ApplicationStatus.REVIEWED -> "Reviewed"
+        ApplicationStatus.REVIEWED -> "Under Review"
         ApplicationStatus.SHORTLISTED -> "Shortlisted"
         ApplicationStatus.ACCEPTED -> "Accepted"
         ApplicationStatus.REJECTED -> "Rejected"
@@ -836,14 +616,15 @@ private fun ApplicationStatus.getDisplayName(): String {
 
 private fun ApplicationStatus.getStatusColor(): Color {
     return when (this) {
-        ApplicationStatus.PENDING -> Color(0xFFFFA726)      // Orange
-        ApplicationStatus.REVIEWED -> Color(0xFF42A5F5)     // Blue
-        ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)  // Green
-        ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)     // Dark Green
-        ApplicationStatus.REJECTED -> Color(0xFFEF5350)     // Red
+        ApplicationStatus.PENDING -> Color(0xFFFFA726)
+        ApplicationStatus.REVIEWED -> Color(0xFF42A5F5)
+        ApplicationStatus.SHORTLISTED -> Color(0xFF9C27B0)
+        ApplicationStatus.ACCEPTED -> Color(0xFF66BB6A)
+        ApplicationStatus.REJECTED -> Color(0xFFEF5350)
     }
 }
 
+// Helper function to format file size
 private fun formatFileSize(bytes: Long): String {
     return when {
         bytes < 1024 -> "$bytes B"
@@ -852,32 +633,65 @@ private fun formatFileSize(bytes: Long): String {
     }
 }
 
-private fun viewResumeFromBase64(context: Context, base64String: String, fileName: String) {
+// Helper function to view resume from Base64
+private fun viewResumeFromBase64(
+    context: Context,
+    base64String: String,
+    fileName: String
+) {
     try {
-        val pdfBytes = Base64.decode(base64String, Base64.DEFAULT)
-        val tempFile = File(context.cacheDir, fileName)
-        FileOutputStream(tempFile).use { fos ->
-            fos.write(pdfBytes)
+        val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
+        val mimeType = when {
+            fileName.endsWith(".pdf", ignoreCase = true) -> "application/pdf"
+            fileName.endsWith(".doc", ignoreCase = true) -> "application/msword"
+            fileName.endsWith(".docx", ignoreCase = true) -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            else -> "application/octet-stream"
         }
 
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            tempFile
-        )
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            }
 
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/pdf")
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
-        }
+            val uri = context.contentResolver.insert(
+                android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
 
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
+            uri?.let {
+                context.contentResolver.openOutputStream(it)?.use { outputStream ->
+                    outputStream.write(decodedBytes)
+                }
+
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, mimeType)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(android.content.Intent.createChooser(intent, "Open Resume"))
+            }
         } else {
-            Toast.makeText(context, "No PDF viewer app found", Toast.LENGTH_SHORT).show()
+            val file = File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                fileName
+            )
+            FileOutputStream(file).use { it.write(decodedBytes) }
+
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, mimeType)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(android.content.Intent.createChooser(intent, "Open Resume"))
         }
     } catch (e: Exception) {
-        Log.e("ResumeView", "Error viewing resume: ${e.message}")
-        Toast.makeText(context, "Error opening resume", Toast.LENGTH_SHORT).show()
+        Log.e("OpenResume", "Error opening resume: ${e.message}", e)
+        Toast.makeText(context, "Failed to open resume: ${e.message}", Toast.LENGTH_SHORT).show()
     }
 }
