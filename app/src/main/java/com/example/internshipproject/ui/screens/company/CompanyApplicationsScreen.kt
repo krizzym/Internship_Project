@@ -1,3 +1,4 @@
+//CompanyApplicationsScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.background
@@ -32,9 +33,9 @@ fun CompanyApplicationsScreen(
     val state by viewModel.state.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    // ✅ FIXED: Load applications using userId (companyId) directly
+    // FIX 1: loadApplications(userId) → loadApplicationsForCompany(userId)
     LaunchedEffect(userId) {
-        viewModel.loadApplications(userId)
+        viewModel.loadApplicationsForCompany(userId)
     }
 
     Scaffold(
@@ -111,7 +112,8 @@ fun CompanyApplicationsScreen(
                 }
             }
 
-            // ✅ IMPROVED: Stats Cards with better visibility
+            // Stats Cards with better visibility
+            // FIX 2-5: getPendingCount() etc. → getApplicationCountByStatus(ApplicationStatus.X)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -119,14 +121,14 @@ fun CompanyApplicationsScreen(
                 ) {
                     ImprovedStatCard(
                         title = "Pending",
-                        count = viewModel.getPendingCount(),
+                        count = viewModel.getApplicationCountByStatus(ApplicationStatus.PENDING),
                         color = Color(0xFFFBBF24),
                         backgroundColor = Color(0xFFFEF3C7),
                         modifier = Modifier.weight(1f)
                     )
                     ImprovedStatCard(
                         title = "Reviewed",
-                        count = viewModel.getReviewedCount(),
+                        count = viewModel.getApplicationCountByStatus(ApplicationStatus.REVIEWED),
                         color = Color(0xFF3B82F6),
                         backgroundColor = Color(0xFFDBEAFE),
                         modifier = Modifier.weight(1f)
@@ -141,14 +143,14 @@ fun CompanyApplicationsScreen(
                 ) {
                     ImprovedStatCard(
                         title = "Shortlisted",
-                        count = viewModel.getShortlistedCount(),
+                        count = viewModel.getApplicationCountByStatus(ApplicationStatus.SHORTLISTED),
                         color = Color(0xFF8B5CF6),
                         backgroundColor = Color(0xFFEDE9FE),
                         modifier = Modifier.weight(1f)
                     )
                     ImprovedStatCard(
                         title = "Accepted",
-                        count = viewModel.getAcceptedCount(),
+                        count = viewModel.getApplicationCountByStatus(ApplicationStatus.ACCEPTED),
                         color = Color(0xFF10B981),
                         backgroundColor = Color(0xFFD1FAE5),
                         modifier = Modifier.weight(1f)
@@ -231,7 +233,8 @@ fun CompanyApplicationsScreen(
                                             }
                                         },
                                         onClick = {
-                                            viewModel.setFilter(value)
+                                            // FIX 6: setFilter(value) → filterApplications(value)
+                                            viewModel.filterApplications(value)
                                             expanded = false
                                         }
                                     )

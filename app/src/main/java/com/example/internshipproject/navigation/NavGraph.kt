@@ -23,6 +23,7 @@ import com.example.internshipproject.ui.screens.student.*
 import com.example.internshipproject.ui.screens.company.CompanyMainScreen
 import com.example.internshipproject.ui.screens.company.EditInternshipScreen
 import com.example.internshipproject.ui.screens.company.StudentApplicationDetailsScreen
+import com.example.internshipproject.ui.screens.company.CompanyApplicationDetailsScreen  // ✅ NEW IMPORT
 import com.example.internshipproject.viewmodel.StudentApplicationsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,9 +56,14 @@ sealed class Screen(val route: String) {
         fun createRoute(internshipId: String) = "edit_internship/$internshipId"
     }
 
-    // ✅ NEW: Student Application Details Route
+    // Student Application Details Route (Read-only)
     object StudentApplicationDetails : Screen("student_application_details/{applicationId}") {
         fun createRoute(applicationId: String) = "student_application_details/$applicationId"
+    }
+
+    // ✅ NEW: Company Application Details Route (Editable)
+    object CompanyApplicationDetails : Screen("company_application_details/{applicationId}") {
+        fun createRoute(applicationId: String) = "company_application_details/$applicationId"
     }
 }
 
@@ -446,7 +452,7 @@ fun NavGraph(navController: NavHostController) {
         }
 
         // ============================================
-        // ✅ UPDATED: STUDENT APPLICATION DETAILS (Student View - Read Only)
+        // ✅ STUDENT APPLICATION DETAILS (Student View - Read Only)
         // ============================================
         composable(
             route = Screen.StudentApplicationDetails.route,
@@ -454,10 +460,26 @@ fun NavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
 
-            // ✅ FIXED: Use StudentViewApplicationScreen for students to view their own applications (read-only)
+            // ✅ Use StudentViewApplicationScreen for students to view their own applications (read-only)
             StudentViewApplicationScreen(
                 applicationId = applicationId,
                 navController = navController
+            )
+        }
+
+        // ============================================
+        // ✅ NEW: COMPANY APPLICATION DETAILS (Company View - Editable)
+        // ============================================
+        composable(
+            route = Screen.CompanyApplicationDetails.route,
+            arguments = listOf(navArgument("applicationId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val applicationId = backStackEntry.arguments?.getString("applicationId") ?: ""
+
+            // ✅ NEW: Use CompanyApplicationDetailsScreen for companies to review and update applications
+            CompanyApplicationDetailsScreen(
+                navController = navController,
+                applicationId = applicationId
             )
         }
     }

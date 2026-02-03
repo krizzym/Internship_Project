@@ -10,11 +10,15 @@ data class Application(
     val status: ApplicationStatus,
     val appliedDate: String,
     val internship: Internship? = null,
-    // ✅ NEW: Resume fields (stored as Base64 in Firestore)
+    // Resume fields (stored as Base64 in Firestore)
     val resumeBase64: String? = null,
     val resumeFileName: String? = null,
     val resumeSize: Long? = null,
-    val resumeMimeType: String? = null
+    val resumeMimeType: String? = null,
+    // ✅ NEW: Company notes field
+    val companyNotes: String? = null,
+    // Student profile data (fetched separately, not stored in application doc)
+    val studentProfile: StudentProfile? = null
 ) {
     // Helper to check if resume exists
     val hasResume: Boolean

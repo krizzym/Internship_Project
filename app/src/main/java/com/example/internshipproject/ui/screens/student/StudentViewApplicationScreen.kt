@@ -104,7 +104,7 @@ fun StudentViewApplicationScreen(
                             }
 
                             // Get notes
-                            notesForApplicant = data["notesForApplicant"] as? String ?: ""
+                            notesForApplicant = data["companyNotes"] as? String ?: ""
 
                             // Get resume data
                             resumeBase64 = data["resumeBase64"] as? String
@@ -276,6 +276,37 @@ fun StudentViewApplicationScreen(
                             )
                         }
 
+                        // Company Notes (if any)
+                        if (notesForApplicant.isNotBlank()) {
+                            item {
+                                InfoCard(title = "Notes from Company") {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                Color(0xFFFFF9C4),
+                                                RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(12.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Info,
+                                            contentDescription = "Note",
+                                            tint = Color(0xFFF57C00),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            notesForApplicant,
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF5D4037),
+                                            lineHeight = 20.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         // Position & Company Card
                         item {
                             InfoCard(title = "Position Applied For") {
@@ -410,37 +441,6 @@ fun StudentViewApplicationScreen(
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text("View", fontSize = 13.sp)
                                         }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Company Notes (if any)
-                        if (notesForApplicant.isNotBlank()) {
-                            item {
-                                InfoCard(title = "Company Notes") {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(
-                                                Color(0xFFFFF9C4),
-                                                RoundedCornerShape(8.dp)
-                                            )
-                                            .padding(12.dp)
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Info,
-                                            contentDescription = "Note",
-                                            tint = Color(0xFFF57C00),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            notesForApplicant,
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF5D4037),
-                                            lineHeight = 20.sp
-                                        )
                                     }
                                 }
                             }

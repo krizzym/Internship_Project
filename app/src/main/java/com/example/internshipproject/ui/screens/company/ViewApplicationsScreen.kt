@@ -1,3 +1,4 @@
+//ViewApplicationsScreen.kt 
 package com.example.internshipproject.ui.screens.company
 
 import android.content.Context
@@ -95,7 +96,7 @@ fun ViewApplicationsScreen(
                         // ✅ Navigate to Student Application Details screen
                         onReviewApplication = { applicationId ->
                             navController.navigate(
-                                Screen.StudentApplicationDetails.createRoute(applicationId)
+                                Screen.CompanyApplicationDetails.createRoute(applicationId)
                             )
                         }
                     )

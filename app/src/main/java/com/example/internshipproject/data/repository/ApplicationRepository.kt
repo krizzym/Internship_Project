@@ -18,6 +18,7 @@ import kotlinx.coroutines.tasks.await
 import java.io.InputStream
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.google.firebase.firestore.FieldValue
 
 class ApplicationRepository(
     private val context: Context? = null
@@ -250,6 +251,104 @@ class ApplicationRepository(
         } catch (e: Exception) {
             Log.e("ApplicationRepo", "Error fetching applications: ${e.message}")
             emptyList()
+        }
+    }
+
+    suspend fun ApplicationRepository.getApplicationById(applicationId: String): Result<Application> {
+        return try {
+            val firestore = FirebaseManager.firestore
+
+            val snapshot = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
+                .document(applicationId)
+                .get()
+                .await()
+
+            if (!snapshot.exists()) {
+                return Result.failure(Exception("Application not found"))
+            }
+
+            val data = snapshot.data ?: return Result.failure(Exception("Application data is null"))
+
+            val application = Application(
+                id = snapshot.id,
+                internshipId = data["internshipId"] as? String ?: "",
+                internshipTitle = data["internshipTitle"] as? String ?: "",
+                companyName = data["companyName"] as? String ?: "",
+                studentEmail = data["studentEmail"] as? String ?: "",
+                coverLetter = data["coverLetter"] as? String ?: "",
+                status = try {
+                    ApplicationStatus.valueOf(data["status"] as? String ?: "PENDING")
+                } catch (e: Exception) {
+                    ApplicationStatus.PENDING
+                },
+                appliedDate = data["appliedDate"] as? String ?: "",
+                resumeBase64 = data["resumeBase64"] as? String,
+                resumeFileName = data["resumeFileName"] as? String,
+                resumeSize = (data["resumeSize"] as? Number)?.toLong(),
+                resumeMimeType = data["resumeMimeType"] as? String,
+                companyNotes = data["companyNotes"] as? String
+            )
+
+            Result.success(application)
+        } catch (e: Exception) {
+            Log.e("ApplicationRepo", "Error fetching application: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update application status (Company action)
+     */
+    suspend fun ApplicationRepository.updateApplicationStatus(
+        applicationId: String,
+        newStatus: ApplicationStatus
+    ): Result<Unit> {
+        return try {
+            val firestore = FirebaseManager.firestore
+
+            firestore.collection(FirebaseManager.Collections.APPLICATIONS)
+                .document(applicationId)
+                .update(
+                    mapOf(
+                        "status" to newStatus.name,
+                        "lastUpdated" to FieldValue.serverTimestamp()
+                    )
+                )
+                .await()
+
+            Log.d("ApplicationRepo", "Application status updated to $newStatus")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("ApplicationRepo", "Error updating status: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update company notes (Company action)
+     */
+    suspend fun ApplicationRepository.updateCompanyNotes(
+        applicationId: String,
+        notes: String
+    ): Result<Unit> {
+        return try {
+            val firestore = FirebaseManager.firestore
+
+            firestore.collection(FirebaseManager.Collections.APPLICATIONS)
+                .document(applicationId)
+                .update(
+                    mapOf(
+                        "companyNotes" to notes,
+                        "lastUpdated" to FieldValue.serverTimestamp()
+                    )
+                )
+                .await()
+
+            Log.d("ApplicationRepo", "Company notes updated")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("ApplicationRepo", "Error updating notes: ${e.message}")
+            Result.failure(e)
         }
     }
 

@@ -190,7 +190,7 @@ fun StudentDashboardScreen(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "Welcome, ${studentProfile.firstName}!",
+                            text = "Welcome, ${studentProfile.firstName}! 👋",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary

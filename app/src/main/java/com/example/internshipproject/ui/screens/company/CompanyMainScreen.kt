@@ -110,7 +110,7 @@ fun CompanyMainScreen(
                             },
                             onReviewApplication = { applicationId ->
                                 // ✅ FIXED: Navigate via NavGraph instead of internal state
-                                navController.navigate(Screen.StudentApplicationDetails.createRoute(applicationId))
+                                navController.navigate(Screen.CompanyApplicationDetails.createRoute(applicationId))
                             }
                         )
                         1 -> CompanyMyPostingsScreen(
@@ -129,7 +129,7 @@ fun CompanyMainScreen(
                             onLogout = onLogout,
                             onReviewApplication = { applicationId ->
                                 // ✅ FIXED: Navigate via NavGraph instead of internal state
-                                navController.navigate(Screen.StudentApplicationDetails.createRoute(applicationId))
+                                navController.navigate(Screen.CompanyApplicationDetails.createRoute(applicationId))
                             }
                         )
                         3 -> CompanyProfileScreen(userId = userId, onLogout = onLogout)
