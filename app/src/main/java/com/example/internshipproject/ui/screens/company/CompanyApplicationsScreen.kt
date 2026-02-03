@@ -1,4 +1,3 @@
-//CompanyApplicationsScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import androidx.compose.foundation.background
@@ -31,30 +30,55 @@ fun CompanyApplicationsScreen(
     viewModel: CompanyApplicationsViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    // FIX: collect the derived StateFlow so the UI recomposes on every filter change
+    val filteredApplications by viewModel.filteredApplications.collectAsState()
+
     var expanded by remember { mutableStateOf(false) }
 
-    // FIX 1: loadApplications(userId) → loadApplicationsForCompany(userId)
     LaunchedEffect(userId) {
         viewModel.loadApplicationsForCompany(userId)
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column {
-                            Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            Text(
-                                "Internship Connection Platform",
-                                fontSize = 11.sp,
-                                color = TextSecondary
+            Column {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column {
+                                Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Internship Connection Platform",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { viewModel.refresh() },
+                            enabled = !state.isLoading          // disable while already loading
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh applications",
+                                tint = if (state.isLoading) Color.Gray else TextPrimary
                             )
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+                // Thin progress bar that slides in while data is being fetched
+                if (state.isLoading) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = PurpleButton,
+                        trackColor = PurpleButton.copy(alpha = 0.15f)
+                    )
+                }
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -94,7 +118,7 @@ fun CompanyApplicationsScreen(
                                 )
                             }
 
-                            // Total count badge
+                            // Total count badge — always shows the FULL list size
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
                                 color = PurpleButton.copy(alpha = 0.1f)
@@ -112,8 +136,7 @@ fun CompanyApplicationsScreen(
                 }
             }
 
-            // Stats Cards with better visibility
-            // FIX 2-5: getPendingCount() etc. → getApplicationCountByStatus(ApplicationStatus.X)
+            // Stats Cards – counts always reflect the full (unfiltered) list
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -179,8 +202,14 @@ fun CompanyApplicationsScreen(
                             expanded = expanded,
                             onExpandedChange = { expanded = !expanded }
                         ) {
+                            // FIX: display a human-readable label derived from
+                            // the stored value ("All" stays "All"; enum names
+                            // are title-cased for display only).
+                            val displayLabel = if (state.selectedFilter == "All") "All Applications"
+                            else state.selectedFilter.lowercase().replaceFirstChar { it.uppercase() }
+
                             OutlinedTextField(
-                                value = state.selectedFilter,
+                                value = displayLabel,
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("Status") },
@@ -204,13 +233,16 @@ fun CompanyApplicationsScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
+                                // FIX: value keys use the exact enum .name
+                                // strings so they match the when-branch in the
+                                // ViewModel.  Labels are purely for the UI.
                                 val filters = listOf(
-                                    "All" to "All Applications",
-                                    "PENDING" to "Pending",
-                                    "REVIEWED" to "Reviewed",
+                                    "All"         to "All Applications",
+                                    "PENDING"     to "Pending",
+                                    "REVIEWED"    to "Reviewed",
                                     "SHORTLISTED" to "Shortlisted",
-                                    "ACCEPTED" to "Accepted",
-                                    "REJECTED" to "Rejected"
+                                    "ACCEPTED"    to "Accepted",
+                                    "REJECTED"    to "Rejected"
                                 )
 
                                 filters.forEach { (value, label) ->
@@ -233,7 +265,6 @@ fun CompanyApplicationsScreen(
                                             }
                                         },
                                         onClick = {
-                                            // FIX 6: setFilter(value) → filterApplications(value)
                                             viewModel.filterApplications(value)
                                             expanded = false
                                         }
@@ -253,8 +284,9 @@ fun CompanyApplicationsScreen(
                     colors = CardDefaults.cardColors(containerColor = CardWhite),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    val filteredApplications = viewModel.getFilteredApplications()
-
+                    // FIX: use the reactively-collected list, NOT a one-shot
+                    // imperative call.  Both the count badge and the loop below
+                    // now recompose whenever the filter changes.
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -308,6 +340,7 @@ fun CompanyApplicationsScreen(
                                     if (state.selectedFilter == "All") {
                                         "Students will appear here when they apply"
                                     } else {
+                                        // Title-case the enum name for the message
                                         "No ${state.selectedFilter.lowercase()} applications yet"
                                     },
                                     fontSize = 14.sp,
@@ -380,11 +413,11 @@ fun ApplicationDetailsCard(
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = when (application.status) {
-                        ApplicationStatus.PENDING -> Color(0xFFFBBF24)
-                        ApplicationStatus.REVIEWED -> Color(0xFF3B82F6)
+                        ApplicationStatus.PENDING    -> Color(0xFFFBBF24)
+                        ApplicationStatus.REVIEWED   -> Color(0xFF3B82F6)
                         ApplicationStatus.SHORTLISTED -> Color(0xFF8B5CF6)
-                        ApplicationStatus.ACCEPTED -> Color(0xFF10B981)
-                        ApplicationStatus.REJECTED -> Color(0xFFEF4444)
+                        ApplicationStatus.ACCEPTED   -> Color(0xFF10B981)
+                        ApplicationStatus.REJECTED   -> Color(0xFFEF4444)
                     }
                 ) {
                     Text(
