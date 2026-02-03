@@ -1,5 +1,7 @@
+//StudentDashboardScreen.kt - Stats cards removed
 package com.example.internshipproject.ui.screens.student
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,7 +28,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * ✅ UPDATED: StudentDashboardScreen now uses ViewModel for application statistics
+ * ✅ UPDATED: Removed stats cards, cleaner dashboard
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,39 +47,37 @@ fun StudentDashboardScreen(
     val scope = rememberCoroutineScope()
     val repository = remember { InternshipRepository() }
 
-    // ✅ Observe applications for statistics
+    // ✅ Observe applications
     val applications by viewModel.applications.collectAsState()
 
-    // ✅ Calculate dashboard stats dynamically
-    val dashboardStats = remember(applications) {
-        viewModel.getDashboardStats()
-    }
-
-    // ✅ Set up real-time listener for applications
+    // ✅ Set up real-time listener
     LaunchedEffect(Unit) {
         viewModel.observeApplications()
     }
 
-    // Auto-refresh internships every 10 seconds to catch new postings
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(10000) // 10 seconds
-            scope.launch {
-                val latest = repository.getActiveInternships()
-                if (latest != currentInternships) {
-                    currentInternships = latest
-                }
-            }
-        }
-    }
-
-    // Manual refresh function
+    // ✅ Manual refresh function
     fun refreshInternships() {
+        if (isRefreshing) return
+
         scope.launch {
             isRefreshing = true
-            currentInternships = repository.getActiveInternships()
-            delay(500) // Small delay for visual feedback
-            isRefreshing = false
+            try {
+                val latest = repository.getActiveInternships()
+
+                if (latest.isNotEmpty()) {
+                    currentInternships = latest
+                    Log.d("StudentDashboard", "Refreshed: ${latest.size} internships")
+                } else {
+                    Log.d("StudentDashboard", "No internships, keeping current data")
+                }
+
+                viewModel.refresh()
+                delay(500)
+            } catch (e: Exception) {
+                Log.e("StudentDashboard", "Refresh error: ${e.message}")
+            } finally {
+                isRefreshing = false
+            }
         }
     }
 
@@ -102,7 +102,10 @@ fun StudentDashboardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { refreshInternships() }) {
+                    IconButton(
+                        onClick = { refreshInternships() },
+                        enabled = !isRefreshing
+                    ) {
                         Icon(
                             Icons.Default.Refresh,
                             contentDescription = "Refresh",
@@ -110,22 +113,7 @@ fun StudentDashboardScreen(
                         )
                     }
                     TextButton(onClick = onLogout) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.ExitToApp,
-                                contentDescription = "Logout",
-                                tint = Color.Red,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                "Logout",
-                                color = Color.Red,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                        Text("Logout", color = Color.Red, fontWeight = FontWeight.SemiBold)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -140,9 +128,7 @@ fun StudentDashboardScreen(
                     icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
                     label = { Text("Dashboard") },
                     selected = selectedTab == 0,
-                    onClick = {
-                        selectedTab = 0
-                    },
+                    onClick = { selectedTab = 0 },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = PurpleButton,
                         selectedTextColor = PurpleButton,
@@ -150,12 +136,7 @@ fun StudentDashboardScreen(
                     )
                 )
                 NavigationBarItem(
-                    icon = {
-                        Icon(
-                            Icons.Default.Description,
-                            contentDescription = "My Applications"
-                        )
-                    },
+                    icon = { Icon(Icons.Default.Description, contentDescription = "My Applications") },
                     label = { Text("My Applications") },
                     selected = selectedTab == 1,
                     onClick = {
@@ -201,11 +182,9 @@ fun StudentDashboardScreen(
                     colors = CardDefaults.cardColors(containerColor = CardWhite),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
                         Text(
-                            text = "Welcome, ${studentProfile.firstName}!",
+                            text = "Welcome, ${studentProfile.firstName}! 👋",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
@@ -220,31 +199,8 @@ fun StudentDashboardScreen(
                 }
             }
 
-            // ✅ UPDATED: Stats Cards using ViewModel data
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        title = "Total Applications",
-                        count = dashboardStats["total"] ?: 0,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        title = "Pending Review",
-                        count = dashboardStats["pending"] ?: 0,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        title = "Accepted Applications",
-                        count = dashboardStats["accepted"] ?: 0,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
 
-            // Available Internship Opportunities Section
+            // Section Header
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -268,7 +224,7 @@ fun StudentDashboardScreen(
                                 text = "${currentInternships.size} available",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = PurpleButton,
+                                color = TextPrimary,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                             )
                         }
@@ -285,13 +241,27 @@ fun StudentDashboardScreen(
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = PurpleButton)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                color = PurpleButton,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Text(
+                                text = "Refreshing...",
+                                fontSize = 14.sp,
+                                color = TextSecondary
+                            )
+                        }
                     }
                 }
             }
 
             // Internship Cards
-            if (currentInternships.isEmpty() && !isRefreshing) {
+            if (currentInternships.isEmpty()) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -301,37 +271,28 @@ fun StudentDashboardScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(40.dp),
+                                .padding(48.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("📋", fontSize = 48.sp)
+                            Icon(
+                                Icons.Default.WorkOff,
+                                contentDescription = null,
+                                tint = TextSecondary.copy(alpha = 0.5f),
+                                modifier = Modifier.size(64.dp)
+                            )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "No Internships Available Yet",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Companies will post internship opportunities here. Check back soon!",
-                                fontSize = 14.sp,
+                                text = "No internships available at the moment",
+                                fontSize = 16.sp,
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            OutlinedButton(
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
                                 onClick = { refreshInternships() },
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = PurpleButton
-                                )
+                                colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                                enabled = !isRefreshing
                             ) {
-                                Icon(
-                                    Icons.Default.Refresh,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text("Refresh")
                             }
                         }
@@ -345,39 +306,8 @@ fun StudentDashboardScreen(
                     )
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun StatCard(
-    title: String,
-    count: Int,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = CardWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = title,
-                fontSize = 12.sp,
-                color = TextSecondary,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Text(
-                text = count.toString(),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = PurpleButton
-            )
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
@@ -393,17 +323,8 @@ fun InternshipCard(
         colors = CardDefaults.cardColors(containerColor = CardWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = internship.title,
@@ -414,49 +335,41 @@ fun InternshipCard(
                     Text(
                         text = internship.companyName,
                         fontSize = 14.sp,
-                        color = PurpleButton,
-                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Details
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                InfoChip(
-                    icon = Icons.Default.LocationOn,
-                    text = internship.location
-                )
-                InfoChip(
-                    icon = Icons.Default.BusinessCenter,
-                    text = internship.workType
-                )
-            }
-
             Spacer(modifier = Modifier.height(12.dp))
 
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = internship.location,
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                InfoChip(
-                    icon = Icons.Default.Schedule,
-                    text = internship.duration
-                )
-                InfoChip(
-                    icon = Icons.Default.AttachMoney,
-                    text = internship.salaryRange
-                )
+                InfoChip(icon = Icons.Default.Schedule, text = internship.duration)
+                InfoChip(icon = Icons.Default.AttachMoney, text = internship.salaryRange)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Apply Button
             Button(
                 onClick = onClick,
                 modifier = Modifier.fillMaxWidth(),

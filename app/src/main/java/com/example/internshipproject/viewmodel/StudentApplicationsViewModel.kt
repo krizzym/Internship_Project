@@ -1,3 +1,4 @@
+// StudentApplicationsViewModel.kt - UPDATED with better delete handling
 package com.example.internshipproject.viewmodel
 
 import android.util.Log
@@ -13,8 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for managing student applications
- * Provides real-time updates and statistics
+ * ✅ UPDATED: Better handling of delete operations
  */
 class StudentApplicationsViewModel(
     private val applicationRepository: ApplicationRepository = ApplicationRepository()
@@ -58,8 +58,7 @@ class StudentApplicationsViewModel(
     }
 
     /**
-     * ✅ NEW: Set up real-time listener for applications
-     * This will automatically update when company changes status
+     * ✅ Set up real-time listener for applications
      */
     fun observeApplications() {
         val studentId = FirebaseManager.getCurrentUserId()
@@ -90,7 +89,6 @@ class StudentApplicationsViewModel(
 
     /**
      * ✅ Calculate statistics from current applications
-     * This is computed dynamically from the loaded data
      */
     fun getApplicationStats(): Map<ApplicationStatus, Int> {
         val stats = mutableMapOf<ApplicationStatus, Int>()
@@ -102,7 +100,6 @@ class StudentApplicationsViewModel(
 
     /**
      * ✅ Get dashboard statistics
-     * Returns total, pending, and accepted counts
      */
     fun getDashboardStats(): Map<String, Int> {
         val apps = _applications.value
@@ -121,9 +118,55 @@ class StudentApplicationsViewModel(
     }
 
     /**
-     * Refresh applications manually
+     * ✅ UPDATED: Refresh without clearing existing data
      */
     fun refresh() {
-        loadApplications()
+        val studentId = FirebaseManager.getCurrentUserId()
+        if (studentId == null) {
+            _error.value = "User not logged in"
+            return
+        }
+
+        viewModelScope.launch {
+            // ✅ Don't set loading to true - keeps UI stable
+            try {
+                Log.d("StudentAppVM", "Manual refresh triggered")
+                val apps = applicationRepository.getApplicationsByStudentId(studentId)
+                _applications.value = apps
+                Log.d("StudentAppVM", "Refreshed: ${apps.size} applications")
+            } catch (e: Exception) {
+                Log.e("StudentAppVM", "Refresh error: ${e.message}")
+                // Don't update error state for refresh failures - real-time listener will handle it
+            }
+        }
+    }
+
+    /**
+     * ✅ UPDATED: Delete with better state management
+     */
+    fun deleteApplication(applicationId: String, onComplete: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            // ✅ DON'T set isLoading - prevents UI from clearing
+            try {
+                Log.d("StudentAppVM", "Deleting application: $applicationId")
+
+                applicationRepository.deleteApplication(applicationId)
+                    .onSuccess {
+                        Log.d("StudentAppVM", "Successfully deleted application")
+                        // ✅ Real-time listener will automatically update the list
+                        // No need to manually refresh
+                        onComplete(true, "Application deleted successfully")
+                    }
+                    .onFailure { error ->
+                        Log.e("StudentAppVM", "Failed to delete: ${error.message}")
+                        _error.value = error.message
+                        onComplete(false, error.message ?: "Failed to delete application")
+                    }
+            } catch (e: Exception) {
+                Log.e("StudentAppVM", "Error in deleteApplication: ${e.message}")
+                _error.value = e.message
+                onComplete(false, e.message ?: "An error occurred")
+            }
+        }
     }
 }

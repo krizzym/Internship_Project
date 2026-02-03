@@ -118,6 +118,64 @@ class ApplicationRepository(
             Result.failure(e)
         }
     }
+    suspend fun deleteApplication(applicationId: String): Result<Unit> {
+        return try {
+            val currentUserId = FirebaseManager.getCurrentUserId()
+            if (currentUserId == null) {
+                return Result.failure(Exception("User not logged in"))
+            }
+
+            // Get the application first to check ownership
+            val appDoc = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
+                .document(applicationId)
+                .get()
+                .await()
+
+            if (!appDoc.exists()) {
+                return Result.failure(Exception("Application not found"))
+            }
+
+            // Convert document to check ownership
+            val data = appDoc.data
+            if (data == null) {
+                return Result.failure(Exception("Invalid application data"))
+            }
+
+            val studentEmail = data["studentEmail"] as? String
+            val statusString = data["status"] as? String
+            val status = try {
+                ApplicationStatus.valueOf(statusString ?: "PENDING")
+            } catch (e: Exception) {
+                ApplicationStatus.PENDING
+            }
+
+            // ✅ Security check: Only allow student to delete their own application
+            val currentUserEmail = FirebaseManager.getCurrentUserEmail()
+            if (studentEmail != currentUserEmail) {
+                return Result.failure(Exception("You can only delete your own applications"))
+            }
+
+            // ✅ REMOVED: Business rule restriction - now allows deletion of ALL statuses
+            // Students can delete PENDING, REVIEWED, SHORTLISTED, ACCEPTED, or REJECTED applications
+
+            // Optional: Add a warning log for non-pending deletions
+            if (status != ApplicationStatus.PENDING) {
+                Log.w("ApplicationRepo", "Deleting non-pending application (${status.name}): $applicationId")
+            }
+
+            // Delete the application
+            firestore.collection(FirebaseManager.Collections.APPLICATIONS)
+                .document(applicationId)
+                .delete()
+                .await()
+
+            Log.d("ApplicationRepo", "Successfully deleted application: $applicationId (status: ${status.name})")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("ApplicationRepo", "Error deleting application: ${e.message}")
+            Result.failure(Exception("Failed to delete application: ${e.message}"))
+        }
+    }
 
     /**
      * ✅ NEW: Get all applications by studentId (primary method)
@@ -168,16 +226,32 @@ class ApplicationRepository(
      * ✅ NEW: Real-time listener for student applications
      * Returns a Flow that emits updates whenever applications change
      */
+    // ✅ CRITICAL FIX for ApplicationRepository.kt
+// Replace the observeApplicationsByStudentId function (around line 349)
+
+    /**
+     * ✅ FIXED: Observe applications by student ID in real-time
+     * Uses studentEmail instead of studentId for compatibility
+     */
     fun observeApplicationsByStudentId(studentId: String): Flow<List<Application>> = callbackFlow {
         Log.d("ApplicationRepo", "Setting up real-time listener for studentId: $studentId")
 
+        // ✅ FIXED: Get student email from Firebase Auth
+        val studentEmail = FirebaseManager.getCurrentUserEmail()
+        if (studentEmail == null) {
+            Log.e("ApplicationRepo", "No student email found")
+            close(Exception("User not logged in"))
+            return@callbackFlow
+        }
+
+        // ✅ FIXED: Query by studentEmail (which is indexed) instead of studentId
         val listener = firestore.collection(FirebaseManager.Collections.APPLICATIONS)
-            .whereEqualTo("studentId", studentId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .whereEqualTo("studentEmail", studentEmail)
+            .orderBy("appliedDate", Query.Direction.DESCENDING) // ✅ Changed from createdAt to appliedDate
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e("ApplicationRepo", "Listen error: ${error.message}")
-                    close(error)
+                    // Don't close the flow on error, just log it
                     return@addSnapshotListener
                 }
 
@@ -198,7 +272,8 @@ class ApplicationRepository(
                                 resumeBase64 = doc.getString("resumeBase64"),
                                 resumeFileName = doc.getString("resumeFileName"),
                                 resumeSize = doc.getLong("resumeSize"),
-                                resumeMimeType = doc.getString("resumeMimeType")
+                                resumeMimeType = doc.getString("resumeMimeType"),
+                                companyNotes = doc.getString("companyNotes")
                             )
                         } catch (e: Exception) {
                             Log.e("ApplicationRepo", "Error parsing application: ${e.message}")
@@ -211,7 +286,10 @@ class ApplicationRepository(
                 }
             }
 
-        awaitClose { listener.remove() }
+        awaitClose {
+            Log.d("ApplicationRepo", "Closing real-time listener")
+            listener.remove()
+        }
     }
 
     /**
@@ -493,28 +571,6 @@ class ApplicationRepository(
         }
     }
 
-    /**
-     * Get application stats by email (kept for backward compatibility)
-     */
-    suspend fun getApplicationStats(studentEmail: String): Map<ApplicationStatus, Int> {
-        return try {
-            val applications = getApplicationsByStudent(studentEmail)
-            val stats = mutableMapOf<ApplicationStatus, Int>()
-
-            ApplicationStatus.values().forEach { status ->
-                stats[status] = applications.count { it.status == status }
-            }
-
-            stats
-        } catch (e: Exception) {
-            Log.e("ApplicationRepo", "Error getting application stats: ${e.message}")
-            emptyMap()
-        }
-    }
-
-    /**
-     * Encode resume to Base64
-     */
     private fun encodeResumeToBase64(context: Context, uri: Uri): ResumeData {
         val contentResolver = context.contentResolver
         val inputStream: InputStream = contentResolver.openInputStream(uri)
