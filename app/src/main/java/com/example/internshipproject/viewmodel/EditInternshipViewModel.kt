@@ -21,7 +21,8 @@ data class EditInternshipState(
     val isActive: Boolean = true,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val updateSuccess: Boolean = false
+    val updateSuccess: Boolean = false,
+    val errors: Map<String, String> = emptyMap()
 )
 
 class EditInternshipViewModel(
@@ -128,26 +129,32 @@ class EditInternshipViewModel(
 
     fun updateTitle(value: String) {
         _state.value = _state.value.copy(title = value, errorMessage = null)
+        validateField("title")
     }
 
     fun updateDescription(value: String) {
         _state.value = _state.value.copy(description = value, errorMessage = null)
+        validateField("description")
     }
 
     fun updateRequirements(value: String) {
         _state.value = _state.value.copy(requirements = value, errorMessage = null)
+        validateField("requirements")
     }
 
     fun updateWorkType(value: String) {
         _state.value = _state.value.copy(workType = value, errorMessage = null)
+        validateField("workType")
     }
 
     fun updateLocation(value: String) {
         _state.value = _state.value.copy(location = value, errorMessage = null)
+        validateField("location")
     }
 
     fun updateDuration(value: String) {
         _state.value = _state.value.copy(duration = value, errorMessage = null)
+        validateField("duration")
     }
 
     fun updateSalaryRange(value: String) {
@@ -156,6 +163,7 @@ class EditInternshipViewModel(
 
     fun updateAvailableSlots(value: String) {
         _state.value = _state.value.copy(availableSlots = value, errorMessage = null)
+        validateField("availableSlots")
     }
 
     fun updateApplicationDeadline(value: String) {
@@ -165,4 +173,76 @@ class EditInternshipViewModel(
     fun updateIsActive(value: Boolean) {
         _state.value = _state.value.copy(isActive = value, errorMessage = null)
     }
+
+    private fun validateField(fieldName: String) {
+        val currentState = _state.value
+        val newErrors = currentState.errors.toMutableMap()
+
+        when (fieldName) {
+            "title" -> {
+                if (currentState.title.isBlank()) {
+                    newErrors["title"] = "Job title is required"
+                } else {
+                    newErrors.remove("title")
+                }
+            }
+            "description" -> {
+                if (currentState.description.isBlank()) {
+                    newErrors["description"] = "Job description is required"
+                } else {
+                    newErrors.remove("description")
+                }
+            }
+            "requirements" -> {
+                if (currentState.requirements.isBlank()) {
+                    newErrors["requirements"] = "Requirements are required"
+                } else {
+                    newErrors.remove("requirements")
+                }
+            }
+            "workType" -> {
+                if (currentState.workType.isBlank()) {
+                    newErrors["workType"] = "Work mode is required"
+                } else {
+                    newErrors.remove("workType")
+                }
+            }
+            "location" -> {
+                if (currentState.location.isBlank()) {
+                    newErrors["location"] = "Location is required"
+                } else {
+                    newErrors.remove("location")
+                }
+            }
+            "duration" -> {
+                if (currentState.duration.isBlank()) {
+                    newErrors["duration"] = "Duration is required"
+                } else {
+                    newErrors.remove("duration")
+                }
+            }
+            "availableSlots" -> {
+                if (currentState.availableSlots.isBlank()) {
+                    newErrors["availableSlots"] = "Number of slots is required"
+                } else if (currentState.availableSlots.toIntOrNull() == null || currentState.availableSlots.toInt() <= 0) {
+                    newErrors["availableSlots"] = "Please enter a valid number of slots"
+                } else {
+                    newErrors.remove("availableSlots")
+                }
+            }
+        }
+
+        _state.value = _state.value.copy(errors = newErrors)
+    }
+
+    fun validateAllFields(): Boolean {
+        listOf(
+            "title", "description", "requirements", "workType",
+            "location", "duration", "availableSlots"
+        ).forEach { validateField(it) }
+
+        return _state.value.errors.isEmpty()
+    }
 }
+
+

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.internshipproject.viewmodel.EditInternshipViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -34,10 +35,17 @@ fun EditInternshipScreen(
     viewModel: EditInternshipViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val scope = rememberCoroutineScope()
 
     // Date picker state
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // Confirmation dialog state
+    var showConfirmationDialog by remember { mutableStateOf(false) }
+
+    // Snackbar for validation errors
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Load internship data when screen opens
     LaunchedEffect(internshipId) {
@@ -138,39 +146,78 @@ fun EditInternshipScreen(
                         // Job Information Section
                         SectionHeader("Job Information")
 
-                        OutlinedTextField(
-                            value = state.title,
-                            onValueChange = { viewModel.updateTitle(it) },
-                            label = { Text("Job Title *") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp),
-                            singleLine = true
-                        )
+                        Column {
+                            OutlinedTextField(
+                                value = state.title,
+                                onValueChange = { viewModel.updateTitle(it) },
+                                label = { Text("Job Title *") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                singleLine = true,
+                                isError = state.errors.containsKey("title")
+                            )
+                            if (state.errors.containsKey("title")) {
+                                Text(
+                                    text = state.errors["title"] ?: "",
+                                    color = Color(0xFFD32F2F),
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
 
-                        OutlinedTextField(
-                            value = state.description,
-                            onValueChange = { viewModel.updateDescription(it) },
-                            label = { Text("Job Description *") },
-                            placeholder = { Text("Provide a detailed description of the internship role") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .padding(bottom = 16.dp),
-                            maxLines = 6
-                        )
+                        Column {
+                            OutlinedTextField(
+                                value = state.description,
+                                onValueChange = { viewModel.updateDescription(it) },
+                                label = { Text("Job Description *") },
+                                placeholder = { Text("Provide a detailed description of the internship role") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp)
+                                    .padding(bottom = 8.dp),
+                                maxLines = 6,
+                                isError = state.errors.containsKey("description")
+                            )
+                            if (state.errors.containsKey("description")) {
+                                Text(
+                                    text = state.errors["description"] ?: "",
+                                    color = Color(0xFFD32F2F),
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 16.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
 
-                        OutlinedTextField(
-                            value = state.requirements,
-                            onValueChange = { viewModel.updateRequirements(it) },
-                            label = { Text("Requirements *") },
-                            placeholder = { Text("Specify what skills and qualifications are needed") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .padding(bottom = 24.dp),
-                            maxLines = 6
-                        )
+                        Column {
+                            OutlinedTextField(
+                                value = state.requirements,
+                                onValueChange = { viewModel.updateRequirements(it) },
+                                label = { Text("Requirements *") },
+                                placeholder = { Text("Specify what skills and qualifications are needed") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp)
+                                    .padding(bottom = 8.dp),
+                                maxLines = 6,
+                                isError = state.errors.containsKey("requirements")
+                            )
+                            if (state.errors.containsKey("requirements")) {
+                                Text(
+                                    text = state.errors["requirements"] ?: "",
+                                    color = Color(0xFFD32F2F),
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(start = 16.dp, bottom = 24.dp)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(24.dp))
+                            }
+                        }
 
                         // Internship Details Section
                         SectionHeader("Internship Details")
@@ -182,48 +229,70 @@ fun EditInternshipScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             // Internship Type Dropdown
-                            Box(modifier = Modifier.weight(1f)) {
-                                var expanded by remember { mutableStateOf(false) }
-                                OutlinedTextField(
-                                    value = state.workType,
-                                    onValueChange = { },
-                                    label = { Text("Internship Type *") },
-                                    readOnly = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    var expanded by remember { mutableStateOf(false) }
+                                    OutlinedTextField(
+                                        value = state.workType,
+                                        onValueChange = { },
+                                        label = { Text("Mode *") },
+                                        readOnly = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                        },
+                                        isError = state.errors.containsKey("workType")
+                                    )
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        listOf("On-site", "Remote", "Hybrid").forEach { type ->
+                                            DropdownMenuItem(
+                                                text = { Text(type) },
+                                                onClick = {
+                                                    viewModel.updateWorkType(type)
+                                                    expanded = false
+                                                }
+                                            )
+                                        }
                                     }
-                                )
-                                DropdownMenu(
-                                    expanded = expanded,
-                                    onDismissRequest = { expanded = false }
-                                ) {
-                                    listOf("On-site", "Remote", "Hybrid").forEach { type ->
-                                        DropdownMenuItem(
-                                            text = { Text(type) },
-                                            onClick = {
-                                                viewModel.updateWorkType(type)
-                                                expanded = false
-                                            }
-                                        )
-                                    }
+                                    // Clickable surface to open dropdown
+                                    Surface(
+                                        modifier = Modifier.matchParentSize(),
+                                        color = Color.Transparent,
+                                        onClick = { expanded = !expanded }
+                                    ) {}
                                 }
-                                // Clickable surface to open dropdown
-                                Surface(
-                                    modifier = Modifier.matchParentSize(),
-                                    color = Color.Transparent,
-                                    onClick = { expanded = !expanded }
-                                ) {}
+                                if (state.errors.containsKey("workType")) {
+                                    Text(
+                                        text = state.errors["workType"] ?: "",
+                                        color = Color(0xFFD32F2F),
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                                    )
+                                }
                             }
 
                             // Location
-                            OutlinedTextField(
-                                value = state.location,
-                                onValueChange = { viewModel.updateLocation(it) },
-                                label = { Text("Location *") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                OutlinedTextField(
+                                    value = state.location,
+                                    onValueChange = { viewModel.updateLocation(it) },
+                                    label = { Text("Location *") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    isError = state.errors.containsKey("location")
+                                )
+                                if (state.errors.containsKey("location")) {
+                                    Text(
+                                        text = state.errors["location"] ?: "",
+                                        color = Color(0xFFD32F2F),
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                                    )
+                                }
+                            }
                         }
 
                         Row(
@@ -233,14 +302,25 @@ fun EditInternshipScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             // Duration
-                            OutlinedTextField(
-                                value = state.duration,
-                                onValueChange = { viewModel.updateDuration(it) },
-                                label = { Text("Duration *") },
-                                placeholder = { Text("e.g., 3-6 months") },
-                                modifier = Modifier.weight(1f),
-                                singleLine = true
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                OutlinedTextField(
+                                    value = state.duration,
+                                    onValueChange = { viewModel.updateDuration(it) },
+                                    label = { Text("Duration *") },
+                                    placeholder = { Text("e.g., 3-6 months") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    isError = state.errors.containsKey("duration")
+                                )
+                                if (state.errors.containsKey("duration")) {
+                                    Text(
+                                        text = state.errors["duration"] ?: "",
+                                        color = Color(0xFFD32F2F),
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                                    )
+                                }
+                            }
 
                             // Stipend
                             OutlinedTextField(
@@ -260,14 +340,25 @@ fun EditInternshipScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             // Number of Slots
-                            OutlinedTextField(
-                                value = state.availableSlots,
-                                onValueChange = { viewModel.updateAvailableSlots(it) },
-                                label = { Text("Number of Slots *") },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                singleLine = true
-                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                OutlinedTextField(
+                                    value = state.availableSlots,
+                                    onValueChange = { viewModel.updateAvailableSlots(it) },
+                                    label = { Text("Number of Slots *") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true,
+                                    isError = state.errors.containsKey("availableSlots")
+                                )
+                                if (state.errors.containsKey("availableSlots")) {
+                                    Text(
+                                        text = state.errors["availableSlots"] ?: "",
+                                        color = Color(0xFFD32F2F),
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                                    )
+                                }
+                            }
 
                             // Application Deadline with Date Picker
                             OutlinedTextField(
@@ -352,7 +443,37 @@ fun EditInternshipScreen(
 
                             // Update Button
                             Button(
-                                onClick = { viewModel.updateInternship(internshipId) },
+                                onClick = {
+                                    // Validate all fields first
+                                    if (viewModel.validateAllFields()) {
+                                        // If validation passes, show confirmation dialog
+                                        showConfirmationDialog = true
+                                    } else {
+                                        // Show validation error message
+                                        val missingFields = state.errors.keys.joinToString(", ") { field ->
+                                            when (field) {
+                                                "title" -> "Job Title"
+                                                "description" -> "Description"
+                                                "requirements" -> "Requirements"
+                                                "workType" -> "Mode"
+                                                "location" -> "Location"
+                                                "duration" -> "Duration"
+                                                "availableSlots" -> "Slots"
+                                                else -> field
+                                            }
+                                        }
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = if (state.errors.size == 1) {
+                                                    "Please fill in the $missingFields field"
+                                                } else {
+                                                    "Please fill in all required fields"
+                                                },
+                                                duration = SnackbarDuration.Long
+                                            )
+                                        }
+                                    }
+                                },
                                 modifier = Modifier.weight(1f).height(50.dp),
                                 enabled = !state.isLoading,
                                 colors = ButtonDefaults.buttonColors(
@@ -373,6 +494,70 @@ fun EditInternshipScreen(
                 }
             }
         }
+
+        // Snackbar for validation errors
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) { snackbarData ->
+            Snackbar(
+                snackbarData = snackbarData,
+                containerColor = Color(0xFFD32F2F),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(8.dp)
+            )
+        }
+    }
+
+    // Confirmation Dialog
+    if (showConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmationDialog = false },
+            title = {
+                Text(
+                    text = "Confirm Update",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color(0xFF1F2937)
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to update this internship posting? The changes will be visible to students immediately.",
+                    fontSize = 16.sp,
+                    color = Color(0xFF6B7280)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showConfirmationDialog = false
+                        viewModel.updateInternship(internshipId)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF7B68EE)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Update", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showConfirmationDialog = false },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color.Gray
+                    )
+                ) {
+                    Text("Cancel", fontSize = 14.sp)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     // Date Picker Dialog

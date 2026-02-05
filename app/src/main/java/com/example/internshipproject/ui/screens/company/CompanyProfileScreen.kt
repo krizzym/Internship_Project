@@ -42,7 +42,9 @@ fun CompanyProfileScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
+
     var showLogoDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Get context for taking persistent permissions
     val context = LocalContext.current
@@ -138,8 +140,8 @@ fun CompanyProfileScreen(
                     }
                 },
                 actions = {
-                    // NEW: Logout Button
-                    TextButton(onClick = onLogout) {
+                    // Logout Button
+                    TextButton(onClick = { showLogoutDialog = true }) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -214,6 +216,7 @@ fun CompanyProfileScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
+
                         Text(
                             "Your account is verified",
                             color = Color(0xFF2E7D32),
@@ -523,6 +526,56 @@ fun CompanyProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
+    }
+
+    // Logout Confirmation Dialog - MOVED OUTSIDE OF NESTED CARD
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.ExitToApp,
+                    contentDescription = null,
+                    tint = Color.Red,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Logout",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to sign out?",
+                    fontSize = 16.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red
+                    )
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     // Logo Preview Dialog

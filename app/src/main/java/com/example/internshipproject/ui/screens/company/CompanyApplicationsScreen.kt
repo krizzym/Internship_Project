@@ -62,18 +62,7 @@ fun CompanyApplicationsScreen(
                             }
                         }
                     },
-                    actions = {
-                        IconButton(
-                            onClick = { viewModel.refresh() },
-                            enabled = !state.isLoading
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refresh applications",
-                                tint = if (state.isLoading) Color.Gray else TextPrimary
-                            )
-                        }
-                    },
+
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
                 )
                 // Thin progress bar that slides in while data is being fetched
