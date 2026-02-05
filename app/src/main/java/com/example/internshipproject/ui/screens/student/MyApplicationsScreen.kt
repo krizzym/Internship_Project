@@ -1,4 +1,3 @@
-
 package com.example.internshipproject.ui.screens.student
 
 import android.util.Log
@@ -77,7 +76,7 @@ fun MyApplicationsScreen(
                 )
                 if (success) {
                     Log.d("MyApplicationsScreen", "Delete successful")
-                    // ✅ No need to manually refresh - real-time listener handles it
+                    // Real-time listener handles update automatically
                 } else {
                     Log.e("MyApplicationsScreen", "Delete failed: $message")
                 }
@@ -120,18 +119,6 @@ fun MyApplicationsScreen(
                             Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                             Text("Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
                         }
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { handleRefresh() },
-                        enabled = !isLoading // ✅ Disable during load
-                    ) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = if (isLoading) PurpleButton else TextSecondary
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -374,7 +361,7 @@ fun ApplicationCard(
                     )
                 }
 
-                // Delete button now available for ALL applications
+                // Delete button available for all applications
                 IconButton(
                     onClick = { showDeleteDialog = true },
                     modifier = Modifier.size(32.dp)
@@ -445,7 +432,7 @@ fun ApplicationCard(
                         color = TextSecondary
                     )
 
-                    // ✅ Warning for non-pending applications
+                    // Warning for non-pending applications
                     if (application.status != ApplicationStatus.PENDING) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(

@@ -1,5 +1,6 @@
 package com.example.internshipproject.ui.screens.student
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,8 +41,8 @@ fun StudentDashboardScreen(
     viewModel: StudentApplicationsViewModel = viewModel()
 ) {
     var selectedTab by remember { mutableStateOf(0) }
-    var currentInternships by remember { mutableStateOf(internships) }
-    var isRefreshing by remember { mutableStateOf(false) }
+    var currentInternships by remember { mutableStateOf<List<Internship>>(emptyList()) }
+    var isRefreshing by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val repository = remember { InternshipRepository() }
 
@@ -53,18 +54,36 @@ fun StudentDashboardScreen(
         viewModel.getDashboardStats()
     }
 
-    // Set up real-time listener for applications
+    // Set up real-time listener for applications and load internships immediately
     LaunchedEffect(Unit) {
         viewModel.observeApplications()
+        // Load internships immediately on screen load
+        isRefreshing = true
+        try {
+            val loadedInternships = repository.getActiveInternships()
+            currentInternships = loadedInternships
+            Log.d("StudentDashboard", "Loaded ${loadedInternships.size} internships")
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Error loading internships", e)
+        } finally {
+            isRefreshing = false
+        }
     }
 
     // Manual refresh function
     fun refreshInternships() {
         scope.launch {
             isRefreshing = true
-            currentInternships = repository.getActiveInternships()
-            delay(500) // Small delay for visual feedback
-            isRefreshing = false
+            try {
+                val loadedInternships = repository.getActiveInternships()
+                currentInternships = loadedInternships
+                Log.d("StudentDashboard", "Refresh: Loaded ${loadedInternships.size} internships")
+                delay(300) // Small delay for visual feedback
+            } catch (e: Exception) {
+                Log.e("StudentDashboard", "Error refreshing internships", e)
+            } finally {
+                isRefreshing = false
+            }
         }
     }
 
@@ -86,15 +105,6 @@ fun StudentDashboardScreen(
                                 color = TextSecondary
                             )
                         }
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { refreshInternships() }) {
-                        Icon(
-                            Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = if (isRefreshing) PurpleButton else TextSecondary
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -189,7 +199,7 @@ fun StudentDashboardScreen(
                 }
             }
 
-            // ✅ UPDATED: Stats Cards using ViewModel data
+            // Stats Cards using ViewModel data
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

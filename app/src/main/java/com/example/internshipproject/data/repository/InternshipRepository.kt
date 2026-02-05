@@ -50,13 +50,15 @@ class InternshipRepository {
 
     suspend fun getAllInternships(): List<Internship> {
         return try {
+            Log.d("InternshipRepo", "Fetching all internships...")
             val snapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
                 .whereEqualTo("isActive", true)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
-            snapshot.documents.mapNotNull { doc ->
+            Log.d("InternshipRepo", "Retrieved ${snapshot.documents.size} documents")
+
+            val internships = snapshot.documents.mapNotNull { doc ->
                 try {
                     Internship(
                         id = doc.id,
@@ -76,31 +78,48 @@ class InternshipRepository {
                         isActive = doc.getBoolean("isActive") ?: true
                     )
                 } catch (e: Exception) {
-                    Log.e("InternshipRepo", "Error parsing internship: ${e.message}")
+                    Log.e("InternshipRepo", "Error parsing internship ${doc.id}: ${e.message}")
                     null
                 }
             }
+
+            // Sort by createdAt in memory to avoid needing Firestore index
+            val sortedInternships = internships.sortedByDescending {
+                it.id // If you have createdAt timestamp, use that instead
+            }
+
+            Log.d("InternshipRepo", "Successfully parsed ${sortedInternships.size} internships")
+            sortedInternships
         } catch (e: Exception) {
-            Log.e("InternshipRepo", "Error fetching internships: ${e.message}")
+            Log.e("InternshipRepo", "Error fetching internships: ${e.message}", e)
             emptyList()
         }
     }
 
     suspend fun getActiveInternships(): List<Internship> {
-        return getAllInternships()
+        return try {
+            Log.d("InternshipRepo", "Getting active internships...")
+            val result = getAllInternships()
+            Log.d("InternshipRepo", "Returning ${result.size} active internships")
+            result
+        } catch (e: Exception) {
+            Log.e("InternshipRepo", "Error in getActiveInternships: ${e.message}", e)
+            emptyList()
+        }
     }
 
     fun getActiveInternshipsFlow(): Flow<List<Internship>> = callbackFlow {
         val listener = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
             .whereEqualTo("isActive", true)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e("InternshipRepo", "Error listening to internships: ${error.message}")
+                    trySend(emptyList())
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null) {
+                    Log.d("InternshipRepo", "Flow received ${snapshot.documents.size} internships")
                     val internships = snapshot.documents.mapNotNull { doc ->
                         try {
                             Internship(
@@ -126,6 +145,8 @@ class InternshipRepository {
                         }
                     }
                     trySend(internships)
+                } else {
+                    trySend(emptyList())
                 }
             }
 
@@ -136,7 +157,6 @@ class InternshipRepository {
         return try {
             val snapshot = firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
                 .whereEqualTo("companyName", companyName)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
@@ -195,6 +215,7 @@ class InternshipRepository {
                 .add(internshipData)
                 .await()
 
+            Log.d("InternshipRepo", "Created internship with ID: ${docRef.id}")
             Result.success(docRef.id)
         } catch (e: Exception) {
             Log.e("InternshipRepo", "Error creating internship: ${e.message}")
