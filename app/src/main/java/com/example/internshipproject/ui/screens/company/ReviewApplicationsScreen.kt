@@ -1,9 +1,10 @@
+//ReviewApplicationsScreen.kt - FIXED VERSION
 package com.example.internshipproject.ui.screens.company
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Base64
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -11,9 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -21,17 +20,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.ui.viewmodel.ApplicationDetailViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,6 +114,7 @@ private fun ApplicationsContent(
 ) {
     val state = viewModel.state
     val filteredApplications = viewModel.getFilteredApplications()
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -173,13 +176,70 @@ private fun ApplicationsContent(
                         },
                         onViewResume = { app ->
                             if (app.hasResume) {
-                                openResume(context, app)
+                                coroutineScope.launch {
+                                    openResume(context, app)
+                                }
                             }
                         }
                     )
                 }
             }
         }
+    }
+}
+
+// FIXED: Added the missing openResume function with proper error handling
+private suspend fun openResume(context: Context, application: Application) {
+    try {
+        if (application.resumeBase64.isNullOrEmpty()) {
+            Log.e("ReviewApp", "Resume data is empty or null")
+            // Show error to user if needed
+            return
+        }
+
+        withContext(Dispatchers.IO) {
+            try {
+                val bytes = Base64.decode(application.resumeBase64, Base64.DEFAULT)
+                val fileName = application.resumeFileName ?: "resume.pdf"
+                val tempFile = File(context.cacheDir, fileName)
+
+                // Write the file
+                tempFile.writeBytes(bytes)
+                Log.d("ReviewApp", "Resume saved to: ${tempFile.absolutePath}, size: ${tempFile.length()} bytes")
+
+                withContext(Dispatchers.Main) {
+                    try {
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.provider",
+                            tempFile
+                        )
+
+                        Log.d("ReviewApp", "FileProvider URI created: $uri")
+
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, "application/pdf")
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        }
+
+                        // This will show the app chooser (including Google Drive option)
+                        val chooser = Intent.createChooser(intent, "Open Resume")
+                        context.startActivity(chooser)
+                        Log.d("ReviewApp", "PDF chooser opened successfully")
+                    } catch (e: Exception) {
+                        Log.e("ReviewApp", "Failed to open PDF: ${e.message}", e)
+                        e.printStackTrace()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ReviewApp", "Error decoding or saving file: ${e.message}", e)
+                e.printStackTrace()
+            }
+        }
+    } catch (e: Exception) {
+        Log.e("ReviewApp", "Error opening resume: ${e.message}", e)
+        e.printStackTrace()
     }
 }
 
@@ -217,19 +277,6 @@ private fun PostingInfoCard(posting: com.example.internshipproject.data.model.In
                     color = Color.Gray,
                     fontSize = 14.sp
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(
-                    imageVector = Icons.Default.Work,
-                    contentDescription = null,
-                    tint = Color.Gray,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = posting.workType,
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
             }
         }
     }
@@ -241,177 +288,193 @@ private fun StatusFilterChips(
     selectedStatus: ApplicationStatus?,
     onStatusSelected: (ApplicationStatus?) -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "Filter by Status:",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.Black
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // All chip
-            FilterChip(
-                selected = selectedStatus == null,
-                onClick = { onStatusSelected(null) },
-                label = {
-                    Text("All (${statusCounts.values.sum()})")
-                }
+        // All applications chip
+        FilterChip(
+            selected = selectedStatus == null,
+            onClick = { onStatusSelected(null) },
+            label = {
+                Text("All (${statusCounts.values.sum()})")
+            },
+            colors = FilterChipDefaults.filterChipColors(
+                selectedContainerColor = Color(0xFF6200EA),
+                selectedLabelColor = Color.White
             )
+        )
 
-            // Status chips
-            ApplicationStatus.values().forEach { status ->
-                val count = statusCounts[status] ?: 0
-                if (count > 0) {
-                    FilterChip(
-                        selected = selectedStatus == status,
-                        onClick = { onStatusSelected(status) },
-                        label = {
-                            Text("${status.name} ($count)")
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = getStatusColor(status).copy(alpha = 0.3f),
-                            selectedLabelColor = getStatusColor(status)
-                        )
-                    )
-                }
-            }
+        // Status-specific chips
+        ApplicationStatus.entries.forEach { status ->
+            val count = statusCounts[status] ?: 0
+            FilterChip(
+                selected = selectedStatus == status,
+                onClick = { onStatusSelected(status) },
+                label = {
+                    Text("${status.name} ($count)")
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = status.color,
+                    selectedLabelColor = Color.White
+                )
+            )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ApplicationCard(
     application: Application,
     onStatusChange: (ApplicationStatus) -> Unit,
     onViewResume: (Application) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
     var showStatusDialog by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = !expanded },
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Header
+            // Header with email and status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    // Display student name from profile if available, otherwise show email
+                    Text(
+                        text = application.studentProfile?.let {
+                            "${it.firstName} ${it.surname}"
+                        } ?: application.studentEmail.substringBefore("@"),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(
                         text = application.studentEmail,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Applied: ${application.appliedDate}",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         color = Color.Gray
                     )
                 }
+                StatusChip(
+                    status = application.status,
+                    onClick = { showStatusDialog = true }
+                )
+            }
 
-                // Status badge
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = getStatusColor(application.status).copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Divider(color = Color.LightGray.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Application details from student profile (if available)
+            application.studentProfile?.let { profile ->
+                InfoRow(icon = Icons.Default.School, text = profile.school)
+                InfoRow(icon = Icons.Default.Book, text = profile.course)
+                InfoRow(icon = Icons.Default.CalendarToday, text = "Year ${profile.yearLevel}")
+                InfoRow(icon = Icons.Default.LocationOn, text = profile.city)
+
+                // Skills
+                if (profile.skills.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = application.status.name,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = getStatusColor(application.status)
+                        text = "Skills:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Gray
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        profile.skills.split(",").forEach { skill ->
+                            SkillChip(skill.trim())
+                        }
+                    }
                 }
             }
 
-            // Expanded content
-            if (expanded) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider()
-                Spacer(modifier = Modifier.height(16.dp))
+            // Cover Letter
+            if (application.coverLetter.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Cover Letter:",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = application.coverLetter,
+                    fontSize = 14.sp,
+                    color = Color.DarkGray,
+                    maxLines = 3
+                )
+            }
 
-                // Cover Letter
-                if (application.coverLetter.isNotEmpty()) {
-                    Text(
-                        text = "Cover Letter:",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.Black
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = application.coverLetter,
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Action buttons
+            // Resume section
+            if (application.hasResume) {
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // View Resume button
-                    OutlinedButton(
-                        onClick = { onViewResume(application) },
-                        modifier = Modifier.weight(1f),
-                        enabled = application.hasResume
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.Description,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            tint = Color(0xFF6200EA),
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = if (application.hasResume) "View Resume" else "No Resume",
-                            fontSize = 12.sp
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = application.resumeFileName ?: "document.pdf",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = formatFileSize(application.resumeSize ?: 0L),
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
                     }
-
-                    // Change Status button
                     Button(
-                        onClick = { showStatusDialog = true },
-                        modifier = Modifier.weight(1f),
+                        onClick = { onViewResume(application) },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF6200EA)
                         )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Edit,
+                            imageVector = Icons.Default.Visibility,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Update Status", fontSize = 12.sp)
+                        Text("View")
                     }
                 }
             }
+
+            // Applied date
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Applied: ${application.appliedDate}",
+                fontSize = 12.sp,
+                color = Color.Gray
+            )
         }
     }
 
@@ -429,6 +492,73 @@ private fun ApplicationCard(
 }
 
 @Composable
+private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.Gray,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = Color.DarkGray
+        )
+    }
+}
+
+@Composable
+private fun SkillChip(skill: String) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFE8DEF8)
+    ) {
+        Text(
+            text = skill,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            fontSize = 12.sp,
+            color = Color(0xFF6200EA)
+        )
+    }
+}
+
+@Composable
+private fun StatusChip(
+    status: ApplicationStatus,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = status.color.copy(alpha = 0.2f),
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = status.name,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = status.color
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = status.color,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
+@Composable
 private fun StatusChangeDialog(
     currentStatus: ApplicationStatus,
     onDismiss: () -> Unit,
@@ -438,13 +568,16 @@ private fun StatusChangeDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Update Application Status") },
+        title = { Text("Change Application Status") },
         text = {
             Column {
-                Text("Select new status:")
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ApplicationStatus.values().forEach { status ->
+                Text(
+                    text = "Select new status:",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                ApplicationStatus.entries.forEach { status ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -454,13 +587,16 @@ private fun StatusChangeDialog(
                     ) {
                         RadioButton(
                             selected = selectedStatus == status,
-                            onClick = { selectedStatus = status }
+                            onClick = { selectedStatus = status },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = status.color
+                            )
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = status.name,
-                            color = getStatusColor(status),
-                            fontWeight = if (selectedStatus == status) FontWeight.Bold else FontWeight.Normal
+                            fontSize = 16.sp,
+                            color = if (selectedStatus == status) status.color else Color.DarkGray
                         )
                     }
                 }
@@ -469,9 +605,11 @@ private fun StatusChangeDialog(
         confirmButton = {
             Button(
                 onClick = { onConfirm(selectedStatus) },
-                enabled = selectedStatus != currentStatus
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = selectedStatus.color
+                )
             ) {
-                Text("Update")
+                Text("Confirm")
             }
         },
         dismissButton = {
@@ -503,8 +641,8 @@ private fun ErrorView(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = message,
-            color = Color.Red,
-            style = MaterialTheme.typography.bodyLarge
+            color = Color.Gray,
+            fontSize = 16.sp
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
@@ -513,48 +651,20 @@ private fun ErrorView(
     }
 }
 
-private fun getStatusColor(status: ApplicationStatus): Color {
-    return when (status) {
-        ApplicationStatus.PENDING -> Color(0xFFF57C00)
-        ApplicationStatus.REVIEWED -> Color(0xFF1976D2)
-        ApplicationStatus.SHORTLISTED -> Color(0xFF7B1FA2)
-        ApplicationStatus.ACCEPTED -> Color(0xFF388E3C)
-        ApplicationStatus.REJECTED -> Color(0xFFD32F2F)
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+        else -> "${bytes / (1024 * 1024)} MB"
     }
 }
 
-private fun openResume(context: Context, application: Application) {
-    try {
-        if (application.resumeBase64.isNullOrEmpty()) {
-            // Show toast or error message
-            return
-        }
-
-        // Decode Base64 to bytes
-        val bytes = Base64.decode(application.resumeBase64, Base64.DEFAULT)
-
-        // Create temp file
-        val fileName = application.resumeFileName ?: "resume.pdf"
-        val file = File(context.cacheDir, fileName)
-        file.writeBytes(bytes)
-
-        // Get URI using FileProvider
-        val uri = androidx.core.content.FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            file
-        )
-
-        // Open with intent
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, application.resumeMimeType ?: "application/pdf")
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
-
-        context.startActivity(Intent.createChooser(intent, "Open Resume"))
-
-    } catch (e: Exception) {
-        e.printStackTrace()
-        // Show error toast
+// Extension property for ApplicationStatus color
+val ApplicationStatus.color: Color
+    get() = when (this) {
+        ApplicationStatus.PENDING -> Color(0xFFFFA726)
+        ApplicationStatus.REVIEWED -> Color(0xFF42A5F5)
+        ApplicationStatus.SHORTLISTED -> Color(0xFF9C27B0)
+        ApplicationStatus.ACCEPTED -> Color(0xFF66BB6A)
+        ApplicationStatus.REJECTED -> Color(0xFFEF5350)
     }
-}

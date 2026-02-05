@@ -1,8 +1,8 @@
+//ReviewApplicationViewModel.kt - CORRECTED VERSION
 package com.example.internshipproject.viewmodel
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Environment
 import android.util.Base64
 import android.util.Log
@@ -23,7 +23,7 @@ import java.io.File
 data class ReviewApplicationState(
     val application: Application? = null,
     val studentProfile: StudentProfile? = null,
-    val selectedStatus: String = "Pending",
+    val selectedStatus: String = "PENDING",  // Changed from "Pending" to match enum
     val isLoading: Boolean = false,
     val updateSuccess: Boolean = false,
     val errorMessage: String? = null,
@@ -65,7 +65,6 @@ class ReviewApplicationViewModel(
                 Log.d("ReviewAppVM", "Student profile loaded: ${profile.firstName} ${profile.surname}")
             }.onFailure { error ->
                 Log.w("ReviewAppVM", "Failed to load student profile: ${error.message}")
-
             }
         }
     }
@@ -78,12 +77,21 @@ class ReviewApplicationViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-            val status = ApplicationStatus.valueOf(_state.value.selectedStatus.uppercase())
+            val status = try {
+                ApplicationStatus.valueOf(_state.value.selectedStatus.uppercase())
+            } catch (e: IllegalArgumentException) {
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    errorMessage = "Invalid status selected"
+                )
+                return@launch
+            }
 
             repository.updateApplicationStatus(applicationId, status).onSuccess {
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    updateSuccess = true
+                    updateSuccess = true,
+                    successMessage = "Application status updated successfully"
                 )
                 onComplete()
             }.onFailure { error ->
@@ -102,7 +110,7 @@ class ReviewApplicationViewModel(
     fun viewResume(context: Context, application: Application) {
         viewModelScope.launch {
             try {
-                if (application.resumeBase64 == null || application.resumeBase64.isEmpty()) {
+                if (application.resumeBase64.isNullOrEmpty()) {
                     _state.value = _state.value.copy(
                         errorMessage = "Resume not available"
                     )
@@ -131,8 +139,14 @@ class ReviewApplicationViewModel(
                                         Intent.FLAG_GRANT_READ_URI_PERMISSION
                             }
 
-                            context.startActivity(intent)
-                            Log.d("ReviewAppVM", "PDF viewer opened")
+                            if (intent.resolveActivity(context.packageManager) != null) {
+                                context.startActivity(intent)
+                                Log.d("ReviewAppVM", "PDF viewer opened")
+                            } else {
+                                _state.value = _state.value.copy(
+                                    errorMessage = "No PDF viewer found. Please install a PDF reader app."
+                                )
+                            }
                         } catch (e: Exception) {
                             Log.e("ReviewAppVM", "Failed to open PDF: ${e.message}")
                             _state.value = _state.value.copy(
@@ -153,7 +167,7 @@ class ReviewApplicationViewModel(
     fun downloadResume(context: Context, application: Application) {
         viewModelScope.launch {
             try {
-                if (application.resumeBase64 == null || application.resumeBase64.isEmpty()) {
+                if (application.resumeBase64.isNullOrEmpty()) {
                     _state.value = _state.value.copy(
                         errorMessage = "Resume not available"
                     )
@@ -176,7 +190,7 @@ class ReviewApplicationViewModel(
 
                     withContext(Dispatchers.Main) {
                         _state.value = _state.value.copy(
-                            successMessage = "Resume downloaded successfully!"
+                            successMessage = "Resume downloaded to Downloads folder"
                         )
                     }
                 }

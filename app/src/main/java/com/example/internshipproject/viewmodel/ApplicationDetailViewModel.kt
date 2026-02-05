@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.internshipproject.data.firebase.FirebaseManager
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.Internship

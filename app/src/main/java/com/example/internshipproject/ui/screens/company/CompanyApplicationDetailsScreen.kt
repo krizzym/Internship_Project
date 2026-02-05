@@ -399,15 +399,6 @@ private fun CompanyApplicationDetailsContent(
             }
         )
 
-        // Resume Card
-        if (application.hasResume || !application.studentProfile?.resumeUri.isNullOrBlank()) {
-            ResumeCard(
-                fileName = application.resumeFileName ?: "Resume.pdf",
-                fileSize = application.resumeSize ?: 0L,
-                onViewClick = onResumeView
-            )
-        }
-
         // Application Timeline Card
         InfoCard(
             title = "Application Timeline",

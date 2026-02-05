@@ -1,5 +1,9 @@
 package com.example.internshipproject.ui.screens.company
 
+import android.content.Context
+import android.content.Intent
+import android.util.Base64
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,15 +15,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.internshipproject.data.model.Application
 import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.ui.company.ImprovedStatCard
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.CompanyApplicationsViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +38,7 @@ fun CompanyApplicationsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val filteredApplications by viewModel.filteredApplications.collectAsState()
+    val context = LocalContext.current
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -228,9 +236,6 @@ fun CompanyApplicationsScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
-                                // value keys use the exact enum .name
-                                // strings so they match the when-branch in the
-                                // ViewModel.  Labels are purely for the UI.
                                 val filters = listOf(
                                     "All"         to "All Applications",
                                     "PENDING"     to "Pending",
@@ -279,9 +284,6 @@ fun CompanyApplicationsScreen(
                     colors = CardDefaults.cardColors(containerColor = CardWhite),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    // use the reactively-collected list, NOT a one-shot
-                    // imperative call.  Both the count badge and the loop below
-                    // now recompose whenever the filter changes.
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -335,7 +337,6 @@ fun CompanyApplicationsScreen(
                                     if (state.selectedFilter == "All") {
                                         "Students will appear here when they apply"
                                     } else {
-                                        // Title-case the enum name for the message
                                         "No ${state.selectedFilter.lowercase()} applications yet"
                                     },
                                     fontSize = 14.sp,
@@ -346,7 +347,12 @@ fun CompanyApplicationsScreen(
                             filteredApplications.forEach { application ->
                                 ApplicationDetailsCard(
                                     application = application,
-                                    onReview = { onReviewApplication(application.id) }
+                                    onReview = { onReviewApplication(application.id) },
+                                    onViewResume = {
+                                        if (application.hasResume) {
+                                            openResume(context, application)
+                                        }
+                                    }
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                             }
@@ -363,7 +369,8 @@ fun CompanyApplicationsScreen(
 @Composable
 fun ApplicationDetailsCard(
     application: Application,
-    onReview: () -> Unit
+    onReview: () -> Unit,
+    onViewResume: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -408,11 +415,11 @@ fun ApplicationDetailsCard(
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = when (application.status) {
-                        ApplicationStatus.PENDING    -> Color(0xFFFBBF24)
-                        ApplicationStatus.REVIEWED   -> Color(0xFF3B82F6)
+                        ApplicationStatus.PENDING -> Color(0xFFFBBF24)
+                        ApplicationStatus.REVIEWED -> Color(0xFF3B82F6)
                         ApplicationStatus.SHORTLISTED -> Color(0xFF8B5CF6)
-                        ApplicationStatus.ACCEPTED   -> Color(0xFF10B981)
-                        ApplicationStatus.REJECTED   -> Color(0xFFEF4444)
+                        ApplicationStatus.ACCEPTED -> Color(0xFF10B981)
+                        ApplicationStatus.REJECTED -> Color(0xFFEF4444)
                     }
                 ) {
                     Text(
@@ -469,26 +476,106 @@ fun ApplicationDetailsCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Action Button
-            Button(
-                onClick = onReview,
+            // Action Buttons
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(vertical = 12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    Icons.Default.Visibility,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Review Application",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                // Review Button
+                Button(
+                    onClick = onReview,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(vertical = 14.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Review",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                // Resume Button
+                OutlinedButton(
+                    onClick = onViewResume,
+                    modifier = Modifier.weight(1f),
+                    enabled = application.hasResume,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = PurpleButton
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(vertical = 14.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Resume",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
+    }
+}
+
+// Resume viewing function
+private fun openResume(context: Context, application: Application) {
+    try {
+        if (application.resumeBase64.isNullOrEmpty()) {
+            Log.e("CompanyApps", "Resume data is empty or null")
+            android.widget.Toast.makeText(
+                context,
+                "Resume not available",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        // Decode Base64 and save to temp file
+        val bytes = Base64.decode(application.resumeBase64, Base64.DEFAULT)
+        val fileName = application.resumeFileName ?: "resume.pdf"
+        val tempFile = File(context.cacheDir, fileName)
+        tempFile.writeBytes(bytes)
+
+        Log.d("CompanyApps", "Resume saved to: ${tempFile.absolutePath}")
+
+        // Create URI using FileProvider
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            tempFile
+        )
+
+        // Create intent to open PDF
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/pdf")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        }
+
+        // Show app chooser (including Google Drive)
+        val chooser = Intent.createChooser(intent, "Open Resume")
+        context.startActivity(chooser)
+
+        Log.d("CompanyApps", "Resume opened successfully")
+
+    } catch (e: Exception) {
+        Log.e("CompanyApps", "Error opening resume: ${e.message}", e)
+        android.widget.Toast.makeText(
+            context,
+            "Failed to open resume",
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
     }
 }
