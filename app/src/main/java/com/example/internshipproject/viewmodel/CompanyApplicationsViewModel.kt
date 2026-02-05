@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.example.internshipproject.data.firebase.FirebaseManager
 
 data class CompanyApplicationsState(
     val applications: List<Application> = emptyList(),
@@ -35,7 +36,7 @@ data class ApplicationDetailsState(
 // State for update operations (status/notes)
 sealed class UpdateState {
     object Idle : UpdateState()
-    object Updating : UpdateState()
+    object Updating : UpdateState()     // ← Change to "Updating"
     data class Success(val message: String) : UpdateState()
     data class Error(val message: String) : UpdateState()
 }
@@ -173,7 +174,43 @@ class CompanyApplicationsViewModel(
         }
     }
 
-   // Update application status
+    fun updateApplicationStatusAndNotes(
+        applicationId: String,
+        newStatus: ApplicationStatus,
+        notes: String
+    ) {
+        viewModelScope.launch {
+            _updateState.value = UpdateState.Updating
+            try {
+                // Update both fields atomically in Firebase
+                FirebaseManager.firestore
+                    .collection(FirebaseManager.Collections.APPLICATIONS)
+                    .document(applicationId)
+                    .update(
+                        mapOf(
+                            "status" to newStatus.name,
+                            "companyNotes" to notes,
+                            "lastUpdated" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                        )
+                    )
+                    .await()
+
+                // Success - update UI state
+                _updateState.value = UpdateState.Success("Application updated successfully")
+
+                // Reload the application details to reflect the changes
+                loadApplicationDetails(applicationId)
+
+                Log.d("CompanyAppsViewModel", "✅ Successfully updated status to $newStatus and notes")
+            } catch (e: Exception) {
+                Log.e("CompanyAppsViewModel", "❌ Error updating application", e)
+                _updateState.value = UpdateState.Error("Failed to update: ${e.message}")
+            }
+        }
+    }
+
+
+    // Update application status
     fun updateApplicationStatus(applicationId: String, newStatus: ApplicationStatus) {
         viewModelScope.launch {
             _updateState.value = UpdateState.Updating
@@ -249,49 +286,33 @@ class CompanyApplicationsViewModel(
         }
     }
 
-      // Filter applications by status.
-     // Accepts "All" or any ApplicationStatus.name (e.g. "PENDING").
     fun filterApplications(filter: String) {
         _state.value = _state.value.copy(selectedFilter = filter)
-        // filteredApplications recomputes automatically — nothing else needed.
     }
 
-
-     // Manual refresh – re-fetches the full application list from Firestore
-      // and replaces the current UI state.  The Screen can call this when the
-      // user taps the refresh button without needing to know the companyId again.
     fun refresh() {
         if (_currentCompanyId.isNotEmpty()) {
             loadApplicationsForCompany(_currentCompanyId)
         }
     }
 
-     // Get count of applications by status (uses the FULL list, not the
-     // filtered one, so the stat cards always show true totals).
     fun getApplicationCountByStatus(status: ApplicationStatus): Int {
         return _state.value.applications.count { it.status == status }
     }
 
-  // Clear details state (when leaving details screen)
     fun clearDetailsState() {
         _detailsState.value = ApplicationDetailsState()
     }
 
-   // Reset update state
     fun resetUpdateState() {
         _updateState.value = UpdateState.Idle
     }
-
-    // Clear error message
 
     fun clearError() {
         _state.value = _state.value.copy(errorMessage = null)
     }
 }
 
-
- // Extension function to handle updateCompanyNotes on ApplicationRepository
- // This matches the extension function defined in ApplicationRepository
 private suspend fun ApplicationRepository.updateCompanyNotes(
     applicationId: String,
     notes: String

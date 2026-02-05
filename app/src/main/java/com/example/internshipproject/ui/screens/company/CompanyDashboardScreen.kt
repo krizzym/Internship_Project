@@ -54,17 +54,6 @@ fun CompanyDashboardScreen(
                         }
                     }
                 },
-                actions = {
-                    TextButton(onClick = onLogout) {
-                        Icon(
-                            Icons.Default.ExitToApp,
-                            contentDescription = "Logout",
-                            tint = Color.Red,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text("Logout", color = Color.Red, fontWeight = FontWeight.SemiBold)
-                    }
-                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         }

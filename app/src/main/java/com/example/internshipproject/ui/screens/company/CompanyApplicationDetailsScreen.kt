@@ -1,12 +1,6 @@
-//CompanyApplicationDetailsScreen.kt
 package com.example.internshipproject.ui.screens.company
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.util.Base64
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,7 +8,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,19 +15,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.FileProvider
+import com.example.internshipproject.data.model.ApplicationStatus
+import android.widget.Toast
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.viewmodel.CompanyApplicationsViewModel
 import com.example.internshipproject.viewmodel.UpdateState
-import java.io.File
-import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +43,21 @@ fun CompanyApplicationDetailsScreen(
     var showNotesDialog by remember { mutableStateOf(false) }
     var notesText by remember { mutableStateOf("") }
     var selectedStatus by remember { mutableStateOf<ApplicationStatus?>(null) }
+
+    // Validation states
+    var hasAttemptedSubmit by remember { mutableStateOf(false) }
+    var hasStatusBeenTouched by remember { mutableStateOf(false) }
+    var hasNotesBeenTouched by remember { mutableStateOf(false) }
+
+    val charCount = notesText.length
+    val trimmedNotesLength = notesText.trim().length
+    val hasStatusChanged = selectedStatus != detailsState.application?.status
+    val hasValidNotes = trimmedNotesLength >= 20
+    val isFormValid = hasStatusChanged && hasValidNotes
+
+    // Helper text should only show after interaction
+    val shouldShowStatusHelper = hasStatusBeenTouched || hasAttemptedSubmit
+    val shouldShowNotesHelper = hasNotesBeenTouched || hasAttemptedSubmit
 
     // Load application on first composition
     LaunchedEffect(applicationId) {
@@ -76,6 +82,10 @@ fun CompanyApplicationDetailsScreen(
                     Toast.LENGTH_SHORT
                 ).show()
                 viewModel.resetUpdateState()
+                // Reset validation states after successful update
+                hasAttemptedSubmit = false
+                hasStatusBeenTouched = false
+                hasNotesBeenTouched = false
             }
             is UpdateState.Error -> {
                 Toast.makeText(
@@ -167,34 +177,65 @@ fun CompanyApplicationDetailsScreen(
                     application = detailsState.application!!,
                     selectedStatus = selectedStatus ?: detailsState.application!!.status,
                     notesText = notesText,
+                    charCount = charCount,
+                    trimmedNotesLength = trimmedNotesLength,
                     showStatusMenu = showStatusMenu,
                     onShowStatusMenuChange = { showStatusMenu = it },
-                    onStatusSelected = { selectedStatus = it },
+                    onStatusSelected = {
+                        selectedStatus = it
+                        hasStatusBeenTouched = true
+                    },
                     onStatusUpdate = {
                         selectedStatus?.let { status ->
                             viewModel.updateApplicationStatus(applicationId, status)
                             showStatusMenu = false
                         }
                     },
-                    onNotesTextChange = { notesText = it },
+                    onNotesTextChange = {
+                        notesText = it
+                        hasNotesBeenTouched = true
+                    },
                     onNotesUpdate = {
                         viewModel.updateCompanyNotes(applicationId, notesText)
                         showNotesDialog = false
-                    },
-                    onResumeView = {
-                        // ── FIX: prioritised resume-open strategy ─────────────
-                        val app = detailsState.application!!
-                        openResume(
-                            context       = context,
-                            resumeUrl     = app.studentProfile?.resumeUri,   // Firebase Storage HTTPS URL
-                            resumeBase64  = app.resumeBase64,                // inline Base64 fallback
-                            resumeFileName = app.resumeFileName ?: "resume.pdf"
-                        )
                     },
                     showNotesDialog = showNotesDialog,
                     onShowNotesDialogChange = { showNotesDialog = it },
                     isUpdating = updateState is UpdateState.Updating,
                     context = context,
+                    isFormValid = isFormValid,
+                    hasAttemptedSubmit = hasAttemptedSubmit,
+                    shouldShowStatusHelper = shouldShowStatusHelper,
+                    shouldShowNotesHelper = shouldShowNotesHelper,
+                    hasStatusChanged = hasStatusChanged,
+                    hasValidNotes = hasValidNotes,
+                    // Callbacks for Cancel/confirm
+                    onCancelChanges = {
+                        // Reset to original values from database
+                        detailsState.application?.let { app ->
+                            selectedStatus = app.status
+                            notesText = app.companyNotes ?: ""
+                        }
+                        // Reset validation states
+                        hasAttemptedSubmit = false
+                        hasStatusBeenTouched = false
+                        hasNotesBeenTouched = false
+                        Toast.makeText(context, "Changes discarded", Toast.LENGTH_SHORT).show()
+                    },
+                    onConfirmChanges = {
+                        hasAttemptedSubmit = true
+
+                        // Only proceed if form is valid
+                        if (isFormValid) {
+                            selectedStatus?.let { status ->
+                                viewModel.updateApplicationStatusAndNotes(
+                                    applicationId = applicationId,
+                                    newStatus = status,
+                                    notes = notesText.trim()
+                                )
+                            }
+                        }
+                    },
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -202,105 +243,40 @@ fun CompanyApplicationDetailsScreen(
     }
 }
 
-private fun openResume(
-    context: Context,
-    resumeUrl: String?,
-    resumeBase64: String?,
-    resumeFileName: String
-) {
-    // ── Strategy 1: HTTPS URL (Google Drive / browser / PDF viewer) ────────
-    if (!resumeUrl.isNullOrBlank()) {
-        try {
-            val uri = Uri.parse(resumeUrl)
-            // Basic sanity: must be http(s)
-            if (uri.scheme?.lowercase() !in listOf("http", "https")) {
-                Log.w("ResumeView", "resumeUrl has unexpected scheme: ${uri.scheme}")
-                // fall through to Base64 path
-            } else {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri, "application/pdf")
-                    // No setPackage() → system chooser appears
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                }
-                if (intent.resolveActivity(context.packageManager) != null) {
-                    context.startActivity(intent)
-                    return   // success – done
-                } else {
-                    Toast.makeText(context, "No app available to open this file", Toast.LENGTH_SHORT).show()
-                    return
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("ResumeView", "Failed to open resume URL: ${e.message}", e)
-            // fall through to Base64 path
-        }
-    }
 
-    // ── Strategy 2: Base64 → temp file → FileProvider
-    if (!resumeBase64.isNullOrBlank()) {
-        try {
-            val pdfBytes = Base64.decode(resumeBase64, Base64.DEFAULT)
-            if (pdfBytes.isEmpty()) {
-                Toast.makeText(context, "Resume file is empty", Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            val tempFile = File(context.cacheDir, resumeFileName)
-            FileOutputStream(tempFile).use { fos ->
-                fos.write(pdfBytes)
-            }
-
-            val uri: Uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.provider",
-                tempFile
-            )
-
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/pdf")
-                // Grant read permission so the receiving app can access the FileProvider URI
-                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
-                // No setPackage() → system chooser appears
-            }
-
-            if (intent.resolveActivity(context.packageManager) != null) {
-                context.startActivity(intent)
-            } else {
-                Toast.makeText(context, "No PDF viewer app found", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            Log.e("ResumeView", "Error opening resume from Base64: ${e.message}", e)
-            Toast.makeText(context, "Could not open resume", Toast.LENGTH_SHORT).show()
-        }
-        return
-    }
-
-    // ── Neither source available
-    Toast.makeText(context, "No resume available for this applicant", Toast.LENGTH_SHORT).show()
-}
-
-
-// Main content composable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CompanyApplicationDetailsContent(
     application: com.example.internshipproject.data.model.Application,
     selectedStatus: ApplicationStatus,
     notesText: String,
+    charCount: Int,
+    trimmedNotesLength: Int,
     showStatusMenu: Boolean,
     onShowStatusMenuChange: (Boolean) -> Unit,
     onStatusSelected: (ApplicationStatus) -> Unit,
     onStatusUpdate: () -> Unit,
     onNotesTextChange: (String) -> Unit,
     onNotesUpdate: () -> Unit,
-    onResumeView: () -> Unit,
     showNotesDialog: Boolean,
     onShowNotesDialogChange: (Boolean) -> Unit,
     isUpdating: Boolean,
     context: Context,
+    isFormValid: Boolean,
+    hasAttemptedSubmit: Boolean,
+    shouldShowStatusHelper: Boolean,
+    shouldShowNotesHelper: Boolean,
+    hasStatusChanged: Boolean,
+    hasValidNotes: Boolean,
+    onCancelChanges: () -> Unit,
+    onConfirmChanges: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+
+    // Determine when to show validation messages and their colors
+    val showStatusError = shouldShowStatusHelper && !hasStatusChanged
+    val showNotesError = shouldShowNotesHelper && !hasValidNotes
 
     Column(
         modifier = modifier
@@ -407,7 +383,6 @@ private fun CompanyApplicationDetailsContent(
             }
         )
 
-        // COMPANY ACTIONS SECTION
         Text(
             text = "Company Actions",
             style = MaterialTheme.typography.titleLarge,
@@ -415,7 +390,7 @@ private fun CompanyApplicationDetailsContent(
             modifier = Modifier.padding(top = 8.dp)
         )
 
-        // Update Application Status Card
+        // Single unified card with status, notes, and action buttons
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -426,8 +401,9 @@ private fun CompanyApplicationDetailsContent(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Application Status Section
                 Text(
-                    text = "Update Application Status",
+                    text = "Application Status",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -447,7 +423,16 @@ private fun CompanyApplicationDetailsContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(),
-                        colors = OutlinedTextFieldDefaults.colors()
+                        colors = OutlinedTextFieldDefaults.colors(),
+                        supportingText = {
+                            if (showStatusError) {
+                                Text(
+                                    text = "Required.",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
+                        isError = showStatusError
                     )
 
                     ExposedDropdownMenu(
@@ -471,70 +456,95 @@ private fun CompanyApplicationDetailsContent(
                     }
                 }
 
-                Button(
-                    onClick = onStatusUpdate,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isUpdating && selectedStatus != application.status
-                ) {
-                    if (isUpdating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text("Update Status")
-                }
-            }
-        }
+                Spacer(modifier = Modifier.height(4.dp))
 
-        // Notes for Applicant Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+                // Notes for Applicant Section
+                Text(
+                    text = "Notes for Applicant",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                OutlinedTextField(
+                    value = notesText,
+                    onValueChange = onNotesTextChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    placeholder = {
+                        Text("Add feedback, interview notes, or remarks. These notes will be visible to the student.")
+                    },
+                    maxLines = 5,
+                    colors = OutlinedTextFieldDefaults.colors(),
+                    supportingText = {
+                        if (shouldShowNotesHelper) {
+                            Text(
+                                text = "Minimum of 20 characters required.",
+                                color = if (showNotesError) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    Color.Gray
+                                }
+                            )
+                        }
+                    },
+                    isError = showNotesError
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Notes for Applicant",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        text = "$charCount characters (min. 20)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (shouldShowNotesHelper && showNotesError) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            Color.Gray
+                        }
                     )
-
-                    IconButton(onClick = { onShowNotesDialogChange(true) }) {
-                        Icon(
-                            imageVector = if (application.companyNotes.isNullOrEmpty())
-                                Icons.Filled.Add
-                            else
-                                Icons.Filled.Edit,
-                            contentDescription = "Edit Notes",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
 
-                if (application.companyNotes.isNullOrEmpty()) {
-                    Text(
-                        text = "No notes yet. Click + to add notes about this applicant.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                } else {
-                    Text(
-                        text = application.companyNotes!!,
-                        style = MaterialTheme.typography.bodyMedium,
-                        lineHeight = 20.sp
-                    )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Cancel Button
+                    OutlinedButton(
+                        onClick = onCancelChanges,
+                        modifier = Modifier.weight(1f),
+                        enabled = !isUpdating,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("Cancel")
+                    }
+
+                    // Confirm Button
+                    Button(
+                        onClick = onConfirmChanges,
+                        modifier = Modifier.weight(1f),
+                        enabled = !isUpdating && isFormValid,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
+                        )
+                    ) {
+                        if (isUpdating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Confirm")
+                        }
+                    }
                 }
             }
         }
@@ -542,68 +552,7 @@ private fun CompanyApplicationDetailsContent(
         // Bottom spacing
         Spacer(modifier = Modifier.height(16.dp))
     }
-
-    // Notes Dialog
-    if (showNotesDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                onNotesTextChange(application.companyNotes ?: "")
-                onShowNotesDialogChange(false)
-            },
-            title = {
-                Text(
-                    "Company Notes",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Add feedback, interview notes, or remarks. These notes will be visible to the student.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-
-                    OutlinedTextField(
-                        value = notesText,
-                        onValueChange = onNotesTextChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        placeholder = { Text("Add feedback or notes for the applicant...") },
-                        maxLines = 10
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = onNotesUpdate,
-                    enabled = !isUpdating && notesText != application.companyNotes
-                ) {
-                    if (isUpdating) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
-                    Text("Save Notes")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    onNotesTextChange(application.companyNotes ?: "")
-                    onShowNotesDialogChange(false)
-                }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
 }
-
 
 // Status Timeline
 @Composable
@@ -616,8 +565,9 @@ private fun ApplicationStatusTimelineCard(currentStatus: ApplicationStatus) {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
+            // Header Row with Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -626,46 +576,48 @@ private fun ApplicationStatusTimelineCard(currentStatus: ApplicationStatus) {
                 Text(
                     text = "Application Status",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
                 )
 
                 Surface(
                     color = currentStatus.getStatusColor(),
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
                         text = currentStatus.getDisplayName().uppercase(),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Status Timeline
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 TimelineItem(
                     title = "Submitted",
                     description = "Application received",
-                    isActive = true,
-                    isCompleted = currentStatus.ordinal >= ApplicationStatus.PENDING.ordinal
+                    isCompleted = currentStatus.ordinal >= ApplicationStatus.PENDING.ordinal,
+                    isLast = false
                 )
 
                 TimelineItem(
                     title = "Under Review",
                     description = "Company is reviewing your application",
-                    isActive = currentStatus == ApplicationStatus.REVIEWED,
-                    isCompleted = currentStatus.ordinal >= ApplicationStatus.REVIEWED.ordinal
+                    isCompleted = currentStatus.ordinal >= ApplicationStatus.REVIEWED.ordinal,
+                    isLast = false
                 )
 
                 TimelineItem(
                     title = "Shortlisted",
                     description = "You've been shortlisted for interview",
-                    isActive = currentStatus == ApplicationStatus.SHORTLISTED,
-                    isCompleted = currentStatus.ordinal >= ApplicationStatus.SHORTLISTED.ordinal
+                    isCompleted = currentStatus.ordinal >= ApplicationStatus.SHORTLISTED.ordinal,
+                    isLast = false
                 )
 
                 TimelineItem(
@@ -675,7 +627,6 @@ private fun ApplicationStatusTimelineCard(currentStatus: ApplicationStatus) {
                         ApplicationStatus.REJECTED -> "Application not moving forward"
                         else -> "Awaiting final decision"
                     },
-                    isActive = currentStatus == ApplicationStatus.ACCEPTED || currentStatus == ApplicationStatus.REJECTED,
                     isCompleted = currentStatus == ApplicationStatus.ACCEPTED || currentStatus == ApplicationStatus.REJECTED,
                     isLast = true
                 )
@@ -688,75 +639,81 @@ private fun ApplicationStatusTimelineCard(currentStatus: ApplicationStatus) {
 private fun TimelineItem(
     title: String,
     description: String,
-    isActive: Boolean,
     isCompleted: Boolean,
     isLast: Boolean = false
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(bottom = if (isLast) 0.dp else 4.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Circle with checkmark or empty
             Box(
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isCompleted || isActive) MaterialTheme.colorScheme.primary
-                        else Color.LightGray
+                        if (isCompleted) {
+                            Color(0xFF5C6BC0) // Material Blue-ish color matching screenshot
+                        } else {
+                            Color(0xFFE0E0E0) // Light gray for incomplete
+                        }
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (isCompleted && !isActive) {
+                if (isCompleted) {
                     Icon(
                         imageVector = Icons.Filled.Check,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 } else {
+                    // Empty circle
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
+                            .size(14.dp)
                             .clip(CircleShape)
                             .background(Color.White)
                     )
                 }
             }
 
+            // Connector line
             if (!isLast) {
                 Box(
                     modifier = Modifier
                         .width(2.dp)
-                        .height(32.dp)
-                        .background(
-                            if (isCompleted) MaterialTheme.colorScheme.primary
-                            else Color.LightGray
-                        )
+                        .height(36.dp)
+                        .background(Color(0xFFE0E0E0))
                 )
             }
         }
 
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(top = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                color = if (isCompleted || isActive) Color.Black else Color.Gray
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black,
+                fontSize = 15.sp
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color.Gray,
+                fontSize = 13.sp
             )
         }
     }
 }
-
 
 // Student information
 @Composable
@@ -773,87 +730,6 @@ private fun StudentInformationCard(application: com.example.internshipproject.da
             }
         }
     )
-}
-
-
-// Resume card
-@Composable
-private fun ResumeCard(
-    fileName: String,
-    fileSize: Long,
-    onViewClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "Resume",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = null,
-                            modifier = Modifier.padding(8.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = fileName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = formatFileSize(fileSize),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-                }
-
-                Button(
-                    onClick = onViewClick,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Visibility,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("View")
-                }
-            }
-        }
-    }
 }
 
 

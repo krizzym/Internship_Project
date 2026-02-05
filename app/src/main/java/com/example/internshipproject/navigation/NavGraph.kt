@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+
 sealed class Screen(val route: String) {
     object Join : Screen("join")
     object StudentRegistration : Screen("student_registration")
