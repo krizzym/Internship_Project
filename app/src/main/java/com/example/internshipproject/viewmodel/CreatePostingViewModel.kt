@@ -109,7 +109,7 @@ class CreatePostingViewModel(
             }
             "internshipType" -> {
                 if (currentState.internshipType.isBlank()) {
-                    newErrors["internshipType"] = "Internship type is required"
+                    newErrors["internshipType"] = "Work mode is required"
                 } else {
                     newErrors.remove("internshipType")
                 }
@@ -147,6 +147,16 @@ class CreatePostingViewModel(
         }
 
         _state.value = _state.value.copy(errors = newErrors)
+    }
+
+    // Function to validate all fields and return if form is valid
+    fun validateAllFields(): Boolean {
+        listOf(
+            "jobTitle", "jobDescription", "requirements", "internshipType",
+            "location", "duration", "slots", "deadline"
+        ).forEach { validateField(it) }
+
+        return _state.value.errors.isEmpty()
     }
 
     fun createPosting(userId: String, companyName: String, companyAddress: String, aboutCompany: String, onComplete: () -> Unit) {
