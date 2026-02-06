@@ -9,7 +9,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-
 class InternshipRepository {
 
     private val firestore: FirebaseFirestore = FirebaseManager.firestore
@@ -271,6 +270,64 @@ class InternshipRepository {
         } catch (e: Exception) {
             Log.e("InternshipRepo", "Error searching internships: ${e.message}")
             emptyList()
+        }
+    }
+    suspend fun deleteInternship(internshipId: String): Result<Unit> {
+        return try {
+            // Verify user is authenticated
+            val currentUserId = FirebaseManager.getCurrentUserId()
+            if (currentUserId == null) {
+                return Result.failure(Exception("User not logged in"))
+            }
+
+            Log.d("InternshipRepository", "Starting deletion of internship: $internshipId")
+
+            // Start a batch write for atomic operation
+            // This ensures either ALL operations succeed or ALL fail (no partial state)
+            val batch = firestore.batch()
+
+            // Reference to the internship document
+            val internshipRef = firestore
+                .collection(FirebaseManager.Collections.INTERNSHIPS)
+                .document(internshipId)
+
+            // Reference to applications collection
+            val applicationsRef = firestore
+                .collection(FirebaseManager.Collections.APPLICATIONS)
+
+            // Step 1: Delete the internship document
+            batch.delete(internshipRef)
+            Log.d("InternshipRepository", "Added internship deletion to batch")
+
+            // Step 2: Query all applications related to this internship
+            val relatedApplications = applicationsRef
+                .whereEqualTo("internshipId", internshipId)
+                .get()
+                .await()
+
+            val applicationCount = relatedApplications.size()
+            Log.d("InternshipRepository", "Found $applicationCount related applications to delete")
+
+            // Step 3: Add all application deletions to the batch
+            relatedApplications.documents.forEach { applicationDoc ->
+                batch.delete(applicationDoc.reference)
+                Log.d("InternshipRepository", "Added application ${applicationDoc.id} to deletion batch")
+            }
+
+            // Step 4: Commit the entire batch operation atomically
+            batch.commit().await()
+
+            Log.d("InternshipRepository", "✅ Successfully deleted internship $internshipId and $applicationCount related applications")
+
+            // Return success
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            // Log detailed error information for debugging
+            Log.e("InternshipRepository", "❌ Error deleting internship $internshipId: ${e.message}", e)
+
+            // Return failure with the exception
+            Result.failure(e)
         }
     }
 }

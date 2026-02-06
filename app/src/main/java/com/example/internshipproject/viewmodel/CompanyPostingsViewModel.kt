@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import android.util.Log
+import kotlinx.coroutines.flow.update
+
 
 data class CompanyPostingsState(
     val postings: List<Internship> = emptyList(),
@@ -69,8 +72,50 @@ class CompanyPostingsViewModel(
 
     fun deletePosting(postingId: String, onComplete: () -> Unit) {
         viewModelScope.launch {
-            repository.deleteInternship(postingId).onSuccess {
-                onComplete()
+            // Set loading state
+            _state.update { it.copy(isLoading = true) }
+
+            Log.d("CompanyPostingsVM", "Initiating deletion of posting: $postingId")
+
+            try {
+                // Call repository delete function
+                val result = repository.deleteInternship(postingId)
+
+                if (result.isSuccess) {
+                    // Success - the Flow will automatically update the postings list
+                    Log.d("CompanyPostingsVM", "✅ Posting deleted successfully")
+
+                    _state.update { it.copy(isLoading = false) }
+
+                    // Execute callback (e.g., navigate back, show success message)
+                    onComplete()
+
+                } else {
+                    // Handle failure
+                    val errorMessage = result.exceptionOrNull()?.message ?: "Failed to delete posting"
+
+                    Log.e("CompanyPostingsVM", "❌ Failed to delete posting: $errorMessage")
+
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = errorMessage
+                        )
+                    }
+                }
+
+            } catch (e: Exception) {
+                // Handle unexpected errors
+                val errorMessage = e.message ?: "An error occurred while deleting the posting"
+
+                Log.e("CompanyPostingsVM", "❌ Exception in deletePosting: ${e.message}", e)
+
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = errorMessage
+                    )
+                }
             }
         }
     }

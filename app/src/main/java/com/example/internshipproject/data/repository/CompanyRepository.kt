@@ -194,15 +194,53 @@ class CompanyRepository {
 
     suspend fun deleteInternship(postingId: String): Result<Unit> {
         return try {
-            firestore.collection(FirebaseManager.Collections.INTERNSHIPS)
+            Log.d("CompanyRepo", "Starting deletion of internship: $postingId")
+
+            // Start a batch write for atomic operation
+            // This ensures either ALL operations succeed or ALL fail (no partial state)
+            val batch = firestore.batch()
+
+            // Reference to the internship document
+            val internshipRef = firestore
+                .collection(FirebaseManager.Collections.INTERNSHIPS)
                 .document(postingId)
-                .delete()
+
+            // Reference to applications collection
+            val applicationsRef = firestore
+                .collection(FirebaseManager.Collections.APPLICATIONS)
+
+            // Step 1: Delete the internship document
+            batch.delete(internshipRef)
+            Log.d("CompanyRepo", "Added internship deletion to batch")
+
+            // Step 2: Query all applications related to this internship
+            val relatedApplications = applicationsRef
+                .whereEqualTo("internshipId", postingId)
+                .get()
                 .await()
 
-            Log.d("CompanyRepo", "Internship deleted: $postingId")
+            val applicationCount = relatedApplications.size()
+            Log.d("CompanyRepo", "Found $applicationCount related applications to delete")
+
+            // Step 3: Add all application deletions to the batch
+            relatedApplications.documents.forEach { applicationDoc ->
+                batch.delete(applicationDoc.reference)
+                Log.d("CompanyRepo", "Added application ${applicationDoc.id} to deletion batch")
+            }
+
+            // Step 4: Commit the entire batch operation atomically
+            batch.commit().await()
+
+            Log.d("CompanyRepo", "✅ Successfully deleted internship $postingId and $applicationCount applications")
+
+            // Return success
             Result.success(Unit)
+
         } catch (e: Exception) {
-            Log.e("CompanyRepo", "Failed to delete internship: ${e.message}")
+            // Log detailed error information for debugging
+            Log.e("CompanyRepo", "❌ Failed to delete internship: ${e.message}", e)
+
+            // Return failure with the exception
             Result.failure(e)
         }
     }

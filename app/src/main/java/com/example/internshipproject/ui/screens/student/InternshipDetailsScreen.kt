@@ -1,3 +1,6 @@
+// InternshipDetailsScreen.kt
+// SIMPLE CORRECTED VERSION - Just removes the problematic code
+
 package com.example.internshipproject.ui.screens
 
 import android.net.Uri
@@ -229,7 +232,6 @@ fun InternshipDetailsScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Cover letter TextField with improved placeholder styling
                     OutlinedTextField(
                         value = coverLetter,
                         onValueChange = { coverLetter = it },
