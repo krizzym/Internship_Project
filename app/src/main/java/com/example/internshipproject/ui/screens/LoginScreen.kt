@@ -30,6 +30,8 @@ fun LoginScreen(
     viewModel: LoginViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    var showResetDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
 
     // Handle login success based on role
     LaunchedEffect(state.loginSuccess, state.userRole, state.userId) {
@@ -38,6 +40,14 @@ fun LoginScreen(
                 "student" -> onStudentLoginSuccess(state.userId!!)
                 "company" -> onCompanyLoginSuccess(state.userId!!)
             }
+        }
+    }
+
+    // Handle password reset success
+    LaunchedEffect(state.resetEmailSent) {
+        if (state.resetEmailSent) {
+            showResetDialog = false
+            viewModel.resetResetEmailSent()
         }
     }
 
@@ -123,7 +133,28 @@ fun LoginScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        // Forgot Password Link
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(
+                                onClick = { 
+                                    resetEmail = state.email
+                                    showResetDialog = true 
+                                },
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(
+                                    text = "Forgot Password?",
+                                    fontSize = 13.sp,
+                                    color = PrimaryDeepBlueButton,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         // Improved Error Message
                         if (state.errorMessage != null) {
@@ -149,7 +180,7 @@ fun LoginScreen(
                                     )
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = "Login Failed",
+                                            text = "Error",
                                             color = Color(0xFFDC2626),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
@@ -193,6 +224,63 @@ fun LoginScreen(
             }
         }
     }
+
+    // Forgot Password Dialog
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { 
+                showResetDialog = false 
+                viewModel.clearErrorMessage()
+            },
+            title = { Text("Reset Password") },
+            text = {
+                Column {
+                    Text(
+                        "Enter your email address and we'll send you a link to reset your password.",
+                        fontSize = 14.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    OutlinedTextField(
+                        value = resetEmail,
+                        onValueChange = { resetEmail = it },
+                        label = { Text("Email Address") },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Email
+                        ),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryDeepBlueButton
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.sendPasswordReset(resetEmail) },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
+                    enabled = !state.isResetLoading
+                ) {
+                    if (state.isResetLoading) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+                    } else {
+                        Text("Send Link")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { 
+                    showResetDialog = false 
+                    viewModel.clearErrorMessage()
+                }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = CardWhite,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
 }
 
 // Helper function to format error messages
@@ -209,6 +297,6 @@ private fun getFormattedErrorMessage(errorMessage: String?): String {
             "Invalid email or password format. Please check your input."
         errorMessage.contains("credential", ignoreCase = true) ->
             "Invalid email or password. Please try again."
-        else -> "Login failed. Please check your email and password and try again."
+        else -> errorMessage
     }
 }

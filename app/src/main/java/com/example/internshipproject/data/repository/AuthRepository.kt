@@ -283,4 +283,15 @@ class AuthRepository {
             Result.failure(Exception("Upload failed: ${e.message}"))
         }
     }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
+            Log.d("FirebaseAuth", "Password reset email sent to: $email")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FirebaseAuth", "Failed to send reset email: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

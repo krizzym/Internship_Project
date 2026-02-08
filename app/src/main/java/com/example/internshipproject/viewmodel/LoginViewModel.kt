@@ -15,8 +15,10 @@ data class LoginState(
     val isLoading: Boolean = false,
     val loginSuccess: Boolean = false,
     val errorMessage: String? = null,
-    val userRole: String? = null,  // Added
-    val userId: String? = null     // Added
+    val userRole: String? = null,
+    val userId: String? = null,
+    val resetEmailSent: Boolean = false,
+    val isResetLoading: Boolean = false
 )
 
 class LoginViewModel(
@@ -79,8 +81,8 @@ class LoginViewModel(
                     _state.value = _state.value.copy(
                         isLoading = false,
                         loginSuccess = true,
-                        userRole = userSession.userRole,  // Capture role
-                        userId = userSession.token         // Capture userId
+                        userRole = userSession.userRole,
+                        userId = userSession.token
                     )
                 },
                 onFailure = { error ->
@@ -91,5 +93,41 @@ class LoginViewModel(
                 }
             )
         }
+    }
+
+    fun sendPasswordReset(email: String) {
+        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _state.value = _state.value.copy(errorMessage = "Please enter a valid email address")
+            return
+        }
+
+        _state.value = _state.value.copy(isResetLoading = true, errorMessage = null)
+
+        viewModelScope.launch {
+            val result = repository.sendPasswordResetEmail(email)
+            result.fold(
+                onSuccess = {
+                    _state.value = _state.value.copy(
+                        isResetLoading = false,
+                        resetEmailSent = true,
+                        errorMessage = null
+                    )
+                },
+                onFailure = { error ->
+                    _state.value = _state.value.copy(
+                        isResetLoading = false,
+                        errorMessage = error.message ?: "Failed to send reset email"
+                    )
+                }
+            )
+        }
+    }
+
+    fun resetResetEmailSent() {
+        _state.value = _state.value.copy(resetEmailSent = false)
+    }
+
+    fun clearErrorMessage() {
+        _state.value = _state.value.copy(errorMessage = null)
     }
 }
