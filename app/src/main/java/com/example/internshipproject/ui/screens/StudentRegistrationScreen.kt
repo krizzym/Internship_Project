@@ -24,7 +24,7 @@ import com.example.internshipproject.ui.components.*
 import com.example.internshipproject.ui.theme.*
 import com.example.internshipproject.viewmodel.StudentRegistrationViewModel
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.ui.text.style.TextDecoration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,44 +66,46 @@ fun StudentRegistrationScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundGradientBrush)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column {
-                            Text(text = "FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            Text(text = "Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+        // Top App Bar
+        TopAppBar(
+            title = {
+                Column {
+                    Text(text = "FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "Internship Connection Platform", fontSize = 12.sp, color = TextSecondary)
+                }
+            },
+            navigationIcon = {
+                IconButton(onClick = onBackClick) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+        )
 
+        // Scrollable content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
             Card(
-                modifier = Modifier.fillMaxSize().padding(16.dp),
-                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(24.dp)
+                    modifier = Modifier.padding(20.dp)
                 ) {
                     Text(
                         text = "Student Registration",
-                        fontSize = 28.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
@@ -112,12 +114,13 @@ fun StudentRegistrationScreen(
                         text = "Create your student account to find internship opportunities",
                         fontSize = 14.sp,
                         color = TextSecondary,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
                     )
 
                     SectionTitle("Account Information")
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         InputField(
                             value = state.firstName,
                             onValueChange = { viewModel.updateFirstName(it) },
@@ -135,7 +138,7 @@ fun StudentRegistrationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     InputField(
                         value = state.lastName,
@@ -145,7 +148,7 @@ fun StudentRegistrationScreen(
                         errorMessage = state.errors["lastName"] ?: ""
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     InputField(
                         value = state.email,
@@ -157,7 +160,7 @@ fun StudentRegistrationScreen(
                         errorMessage = state.errors["email"] ?: ""
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     PasswordTextField(
                         value = state.password,
@@ -169,7 +172,7 @@ fun StudentRegistrationScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     PasswordTextField(
                         value = state.confirmPassword,
@@ -180,11 +183,12 @@ fun StudentRegistrationScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SectionTitle("Educational Information")
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         InputField(
                             value = state.school,
                             onValueChange = { viewModel.updateSchool(it) },
@@ -203,14 +207,15 @@ fun StudentRegistrationScreen(
                                 value = if (showOtherCourseInput) "Others" else state.course.ifEmpty { "Select course" },
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Course / Program *") },
+                                label = { Text("Course / Program *", fontSize = 14.sp) },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCourse) },
                                 modifier = Modifier.fillMaxWidth().menuAnchor(),
                                 isError = state.errors.containsKey("course"),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                                )
+                                ),
+                                textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
                             )
 
                             ExposedDropdownMenu(
@@ -219,7 +224,7 @@ fun StudentRegistrationScreen(
                             ) {
                                 courses.forEach { course ->
                                     DropdownMenuItem(
-                                        text = { Text(course) },
+                                        text = { Text(course, fontSize = 14.sp) },
                                         onClick = {
                                             if (course == "Others") {
                                                 showOtherCourseInput = true
@@ -246,7 +251,7 @@ fun StudentRegistrationScreen(
                     }
 
                     if (showOtherCourseInput) {
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         InputField(
                             value = state.course,
@@ -259,7 +264,7 @@ fun StudentRegistrationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     var expandedYearLevel by remember { mutableStateOf(false) }
                     val yearLevels = listOf("2nd Year", "3rd Year", "4th Year", "5th Year")
@@ -272,14 +277,15 @@ fun StudentRegistrationScreen(
                             value = state.yearLevel.ifEmpty { "Select your level" },
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Year Level *") },
+                            label = { Text("Year Level *", fontSize = 14.sp) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedYearLevel) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             isError = state.errors.containsKey("yearLevel"),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryDeepBlueButton,
                                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                            )
+                            ),
+                            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
                         )
 
                         ExposedDropdownMenu(
@@ -288,7 +294,7 @@ fun StudentRegistrationScreen(
                         ) {
                             yearLevels.forEach { level ->
                                 DropdownMenuItem(
-                                    text = { Text(level) },
+                                    text = { Text(level, fontSize = 14.sp) },
                                     onClick = {
                                         viewModel.updateYearLevel(level)
                                         expandedYearLevel = false
@@ -307,11 +313,12 @@ fun StudentRegistrationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SectionTitle("Location")
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         InputField(
                             value = state.city,
                             onValueChange = { viewModel.updateCity(it) },
@@ -331,31 +338,50 @@ fun StudentRegistrationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SectionTitle("Internship Preferences")
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = "Preferred Internship Types * (Select all that apply)",
                         fontSize = 14.sp,
                         color = TextPrimary,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
 
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = state.onsite, onCheckedChange = { viewModel.toggleOnsite() })
-                        Text("On-site", fontSize = 14.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.onsite,
+                            onCheckedChange = { viewModel.toggleOnsite() }
+                        )
+                        Text("On-site", fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp))
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = state.remote, onCheckedChange = { viewModel.toggleRemote() })
-                        Text("Remote", fontSize = 14.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.remote,
+                            onCheckedChange = { viewModel.toggleRemote() }
+                        )
+                        Text("Remote", fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp))
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = state.hybrid, onCheckedChange = { viewModel.toggleHybrid() })
-                        Text("Hybrid", fontSize = 14.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.hybrid,
+                            onCheckedChange = { viewModel.toggleHybrid() }
+                        )
+                        Text("Hybrid", fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp))
                     }
 
                     if (state.errors.containsKey("internshipTypes")) {
@@ -367,24 +393,29 @@ fun StudentRegistrationScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Terms & Conditions Checkbox
+                    // Terms & Conditions Checkbox with proper alignment
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Top
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Checkbox(
                             checked = state.agreedToTerms,
-                            onCheckedChange = { viewModel.toggleAgreement() },
-                            modifier = Modifier.padding(end = 8.dp)
+                            onCheckedChange = { viewModel.toggleAgreement() }
                         )
 
                         val annotatedText = buildAnnotatedString {
                             append("I agree to the ")
 
                             pushStringAnnotation(tag = "TERMS", annotation = "terms")
-                            withStyle(style = SpanStyle(color = PrimaryDeepBlueButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PrimaryDeepBlueButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            ) {
                                 append("Terms & Conditions")
                             }
                             pop()
@@ -392,7 +423,13 @@ fun StudentRegistrationScreen(
                             append(" and ")
 
                             pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
-                            withStyle(style = SpanStyle(color = PrimaryDeepBlueButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = PrimaryDeepBlueButton,
+                                    fontWeight = FontWeight.Medium,
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            ) {
                                 append("Privacy Policy")
                             }
                             pop()
@@ -404,6 +441,7 @@ fun StudentRegistrationScreen(
                                 fontSize = 14.sp,
                                 color = TextSecondary
                             ),
+                            modifier = Modifier.padding(start = 4.dp),
                             onClick = { offset ->
                                 annotatedText.getStringAnnotations(tag = "TERMS", start = offset, end = offset)
                                     .firstOrNull()?.let {
@@ -447,11 +485,12 @@ fun StudentRegistrationScreen(
                         Text(
                             text = it,
                             color = Color.Red,
+                            fontSize = 14.sp,
                             modifier = Modifier.padding(top = 8.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -459,7 +498,10 @@ fun StudentRegistrationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(text = "Already have an account? ", fontSize = 14.sp, color = TextSecondary)
-                        TextButton(onClick = onLoginClick) {
+                        TextButton(
+                            onClick = onLoginClick,
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
                             Text(
                                 text = "Log in",
                                 fontSize = 14.sp,
@@ -470,6 +512,8 @@ fun StudentRegistrationScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
