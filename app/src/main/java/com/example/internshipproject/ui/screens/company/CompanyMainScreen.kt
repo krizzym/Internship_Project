@@ -1,5 +1,6 @@
 package com.example.internshipproject.ui.screens.company
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,6 +16,7 @@ import com.example.internshipproject.ui.screens.company.CompanyDashboardScreen
 import com.example.internshipproject.ui.screens.company.CompanyMyPostingsScreen
 import com.example.internshipproject.ui.screens.company.CompanyProfileScreen
 import com.example.internshipproject.ui.screens.company.ViewApplicationsScreen
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
 import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 
 @Composable
@@ -27,12 +29,12 @@ fun CompanyMainScreen(
     var navigationState by remember { mutableStateOf<NavigationState>(NavigationState.Tab(0)) }
 
     Scaffold(
+        containerColor = Color.Transparent, // Show background gradient
         bottomBar = {
-            // Only show bottom bar when not in detail screens
             if (navigationState is NavigationState.Tab) {
                 NavigationBar(
-                    containerColor = Color.White,
-                    tonalElevation = 8.dp
+                    containerColor = Color.White.copy(alpha = 0.95f),
+                    tonalElevation = 0.dp
                 ) {
                     NavigationBarItem(
                         icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
@@ -44,8 +46,7 @@ fun CompanyMainScreen(
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PrimaryDeepBlueButton,
-                            selectedTextColor = PrimaryDeepBlueButton,
-                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                            selectedTextColor = PrimaryDeepBlueButton
                         )
                     )
                     NavigationBarItem(
@@ -58,8 +59,7 @@ fun CompanyMainScreen(
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PrimaryDeepBlueButton,
-                            selectedTextColor = PrimaryDeepBlueButton,
-                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                            selectedTextColor = PrimaryDeepBlueButton
                         )
                     )
                     NavigationBarItem(
@@ -72,8 +72,7 @@ fun CompanyMainScreen(
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PrimaryDeepBlueButton,
-                            selectedTextColor = PrimaryDeepBlueButton,
-                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                            selectedTextColor = PrimaryDeepBlueButton
                         )
                     )
                     NavigationBarItem(
@@ -86,17 +85,21 @@ fun CompanyMainScreen(
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = PrimaryDeepBlueButton,
-                            selectedTextColor = PrimaryDeepBlueButton,
-                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                            selectedTextColor = PrimaryDeepBlueButton
                         )
                     )
                 }
             }
-        }
+        },
+        modifier = Modifier.background(BackgroundGradientBrush)
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
+        Box(modifier = Modifier.fillMaxSize()) {
             when (navigationState) {
                 is NavigationState.Tab -> {
+                    val contentModifier = Modifier.padding(
+                        bottom = if (navigationState is NavigationState.Tab) 0.dp else paddingValues.calculateBottomPadding()
+                    )
+                    
                     when (selectedTab) {
                         0 -> CompanyDashboardScreen(
                             userId = userId,
@@ -105,11 +108,9 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                // Use NavGraph navigation for editing
                                 navController.navigate(Screen.EditInternship.createRoute(postingId))
                             },
                             onReviewApplication = { applicationId ->
-                                // Navigate via NavGraph instead of internal state
                                 navController.navigate(Screen.CompanyApplicationDetails.createRoute(applicationId))
                             }
                         )
@@ -120,7 +121,6 @@ fun CompanyMainScreen(
                                 navigationState = NavigationState.ViewApplications(postingId)
                             },
                             onEditPosting = { postingId ->
-                                // Use NavGraph navigation for editing
                                 navController.navigate(Screen.EditInternship.createRoute(postingId))
                             }
                         )
@@ -128,7 +128,6 @@ fun CompanyMainScreen(
                             userId = userId,
                             onLogout = onLogout,
                             onReviewApplication = { applicationId ->
-                                // Navigate via NavGraph instead of internal state
                                 navController.navigate(Screen.CompanyApplicationDetails.createRoute(applicationId))
                             }
                         )
@@ -139,23 +138,13 @@ fun CompanyMainScreen(
                     ViewApplicationsScreen(
                         navController = navController,
                         postingId = (navigationState as NavigationState.ViewApplications).postingId,
-                        // Add callback to navigate back to My Postings tab
                         onNavigateBack = {
-                            selectedTab = 1  // Go back to My Postings tab
+                            selectedTab = 1
                             navigationState = NavigationState.Tab(1)
                         }
                     )
                 }
-                is NavigationState.EditPosting -> {
-                    LaunchedEffect(Unit) {
-                        navigationState = NavigationState.Tab(selectedTab)
-                    }
-                }
-                is NavigationState.ReviewApplication -> {
-                    LaunchedEffect(Unit) {
-                        navigationState = NavigationState.Tab(selectedTab)
-                    }
-                }
+                else -> {}
             }
         }
     }
