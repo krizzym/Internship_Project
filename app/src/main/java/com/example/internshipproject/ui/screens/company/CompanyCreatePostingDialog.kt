@@ -54,6 +54,14 @@ fun CompanyCreatePostingDialog(
     // Snackbar for validation errors
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val categories = listOf(
+        "Engineering and technology",
+        "Business & Management",
+        "Healthcare & Medical",
+        "Education",
+        "Criminology"
+    )
+
     LaunchedEffect(userId) {
         scope.launch {
             repository.getCompanyProfile(userId).onSuccess { company = it }
@@ -133,6 +141,47 @@ fun CompanyCreatePostingDialog(
                                     fontSize = 12.sp,
                                     modifier = Modifier.padding(start = 16.dp, top = 4.dp)
                                 )
+                            }
+                        }
+
+                        // Category Dropdown
+                        var expandedCategory by remember { mutableStateOf(false) }
+                        Column {
+                            ExposedDropdownMenuBox(
+                                expanded = expandedCategory,
+                                onExpandedChange = { expandedCategory = it }
+                            ) {
+                                OutlinedTextField(
+                                    value = state.category,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Category *") },
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(
+                                            expanded = expandedCategory
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = PurpleButton,
+                                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expandedCategory,
+                                    onDismissRequest = { expandedCategory = false }
+                                ) {
+                                    categories.forEach { category ->
+                                        DropdownMenuItem(
+                                            text = { Text(category) },
+                                            onClick = {
+                                                viewModel.updateCategory(category)
+                                                expandedCategory = false
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
 

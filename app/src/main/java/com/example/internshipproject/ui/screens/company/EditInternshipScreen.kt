@@ -47,6 +47,14 @@ fun EditInternshipScreen(
     // Snackbar for validation errors
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val categories = listOf(
+        "Engineering and technology",
+        "Business & Management",
+        "Healthcare & Medical",
+        "Education",
+        "Criminology"
+    )
+
     // Load internship data when screen opens
     LaunchedEffect(internshipId) {
         viewModel.loadInternship(internshipId)
@@ -167,6 +175,48 @@ fun EditInternshipScreen(
                             } else {
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
+                        }
+
+                        // Category Dropdown
+                        var expandedCategory by remember { mutableStateOf(false) }
+                        Column {
+                            ExposedDropdownMenuBox(
+                                expanded = expandedCategory,
+                                onExpandedChange = { expandedCategory = it }
+                            ) {
+                                OutlinedTextField(
+                                    value = state.category,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Category *") },
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(
+                                            expanded = expandedCategory
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFF7B68EE),
+                                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expandedCategory,
+                                    onDismissRequest = { expandedCategory = false }
+                                ) {
+                                    categories.forEach { category ->
+                                        DropdownMenuItem(
+                                            text = { Text(category) },
+                                            onClick = {
+                                                viewModel.updateCategory(category)
+                                                expandedCategory = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
 
                         Column {

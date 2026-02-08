@@ -4,6 +4,7 @@ data class Internship(
     val id: String,
     val title: String,
     val companyName: String,
+    val category: String = "Engineering and technology", // Added category
     val companyLogo: String? = null,
     val location: String,
     val workType: String,

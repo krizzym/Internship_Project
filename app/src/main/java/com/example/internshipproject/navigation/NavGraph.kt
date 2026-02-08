@@ -155,10 +155,6 @@ fun NavGraph(navController: NavHostController) {
             var profile by remember { mutableStateOf<StudentProfile?>(null) }
             var isLoading by remember { mutableStateOf(true) }
 
-            // Collect real-time internships using Flow
-            val internships by internshipRepository.getActiveInternshipsFlow()
-                .collectAsState(initial = emptyList())
-
             LaunchedEffect(userId) {
                 withContext(Dispatchers.IO) {
                     isLoading = true
@@ -188,7 +184,6 @@ fun NavGraph(navController: NavHostController) {
             profile?.let { studentProfile ->
                 StudentDashboardScreen(
                     studentProfile = studentProfile,
-                    internships = internships, // Real-time updates
                     viewModel = viewModel, // Pass ViewModel
                     onInternshipClick = { internshipId ->
                         navController.navigate(Screen.InternshipDetails.createRoute(internshipId))
@@ -198,12 +193,6 @@ fun NavGraph(navController: NavHostController) {
                     },
                     onNavigateToProfile = {
                         navController.navigate(Screen.StudentProfile.createRoute(userId))
-                    },
-                    onLogout = {
-                        FirebaseManager.signOut()
-                        navController.navigate(Screen.Join.route) {
-                            popUpTo(0) { inclusive = true }
-                        }
                     }
                 )
             }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 data class CreatePostingState(
     val jobTitle: String = "",
+    val category: String = "Engineering and technology", // Added category
     val jobDescription: String = "",
     val requirements: String = "",
     val internshipType: String = "",
@@ -36,6 +37,10 @@ class CreatePostingViewModel(
     fun updateJobTitle(value: String) {
         _state.value = _state.value.copy(jobTitle = value)
         validateField("jobTitle")
+    }
+
+    fun updateCategory(value: String) {
+        _state.value = _state.value.copy(category = value)
     }
 
     fun updateJobDescription(value: String) {
@@ -176,6 +181,7 @@ class CreatePostingViewModel(
                 id = "",
                 title = _state.value.jobTitle,
                 companyName = companyName,
+                category = _state.value.category, // Pass category
                 companyLogo = null,
                 location = _state.value.location,
                 workType = _state.value.internshipType,

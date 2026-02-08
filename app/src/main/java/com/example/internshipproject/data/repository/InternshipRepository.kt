@@ -24,6 +24,7 @@ class InternshipRepository {
                 Internship(
                     id = doc.id,
                     title = doc.getString("title") ?: "",
+                    category = doc.getString("category") ?: "Engineering and technology",
                     companyName = doc.getString("companyName") ?: "",
                     companyLogo = doc.getString("companyLogo"),
                     location = doc.getString("location") ?: "",
@@ -62,6 +63,7 @@ class InternshipRepository {
                     Internship(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
+                        category = doc.getString("category") ?: "Engineering and technology",
                         companyName = doc.getString("companyName") ?: "",
                         companyLogo = doc.getString("companyLogo"),
                         location = doc.getString("location") ?: "",
@@ -124,6 +126,7 @@ class InternshipRepository {
                             Internship(
                                 id = doc.id,
                                 title = doc.getString("title") ?: "",
+                                category = doc.getString("category") ?: "Engineering and technology",
                                 companyName = doc.getString("companyName") ?: "",
                                 companyLogo = doc.getString("companyLogo"),
                                 location = doc.getString("location") ?: "",
@@ -164,6 +167,7 @@ class InternshipRepository {
                     Internship(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
+                        category = doc.getString("category") ?: "Engineering and technology",
                         companyName = doc.getString("companyName") ?: "",
                         companyLogo = doc.getString("companyLogo"),
                         location = doc.getString("location") ?: "",
@@ -193,6 +197,7 @@ class InternshipRepository {
         return try {
             val internshipData = hashMapOf(
                 "title" to internship.title,
+                "category" to internship.category,
                 "companyName" to internship.companyName,
                 "companyLogo" to (internship.companyLogo ?: ""),
                 "location" to internship.location,

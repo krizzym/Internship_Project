@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 
 data class EditInternshipState(
     val title: String = "",
+    val category: String = "Engineering and technology", // Added category
     val description: String = "",
     val requirements: String = "",
     val workType: String = "Hybrid",
@@ -40,6 +41,7 @@ class EditInternshipViewModel(
                 onSuccess = { internship ->
                     _state.value = _state.value.copy(
                         title = internship.title,
+                        category = internship.category, // Load category
                         description = internship.description,
                         requirements = internship.requirements,
                         workType = internship.workType,
@@ -98,6 +100,7 @@ class EditInternshipViewModel(
 
             val updateData = mapOf(
                 "title" to currentState.title.trim(),
+                "category" to currentState.category, // Include category in update
                 "description" to currentState.description.trim(),
                 "requirements" to currentState.requirements.trim(),
                 "workType" to currentState.workType,
@@ -130,6 +133,10 @@ class EditInternshipViewModel(
     fun updateTitle(value: String) {
         _state.value = _state.value.copy(title = value, errorMessage = null)
         validateField("title")
+    }
+
+    fun updateCategory(value: String) {
+        _state.value = _state.value.copy(category = value, errorMessage = null)
     }
 
     fun updateDescription(value: String) {
@@ -244,5 +251,3 @@ class EditInternshipViewModel(
         return _state.value.errors.isEmpty()
     }
 }
-
-

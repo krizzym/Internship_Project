@@ -118,6 +118,7 @@ class CompanyRepository {
             val internshipData = hashMapOf(
                 "companyId" to userId,
                 "title" to internship.title,
+                "category" to internship.category,
                 "companyName" to internship.companyName,
                 "companyLogo" to (internship.companyLogo ?: ""),
                 "location" to internship.location,
@@ -150,6 +151,7 @@ class CompanyRepository {
         return try {
             val updates = hashMapOf(
                 "title" to internship.title,
+                "category" to internship.category,
                 "location" to internship.location,
                 "workType" to internship.workType,
                 "duration" to internship.duration,
@@ -262,6 +264,7 @@ class CompanyRepository {
                             Internship(
                                 id = doc.id,
                                 title = doc.getString("title") ?: "",
+                                category = doc.getString("category") ?: "Engineering and technology",
                                 companyName = doc.getString("companyName") ?: "",
                                 companyLogo = doc.getString("companyLogo"),
                                 location = doc.getString("location") ?: "",
@@ -302,6 +305,7 @@ class CompanyRepository {
                     Internship(
                         id = doc.id,
                         title = doc.getString("title") ?: "",
+                        category = doc.getString("category") ?: "Engineering and technology",
                         companyName = doc.getString("companyName") ?: "",
                         companyLogo = doc.getString("companyLogo"),
                         location = doc.getString("location") ?: "",
@@ -337,6 +341,7 @@ class CompanyRepository {
                 val internship = Internship(
                     id = doc.id,
                     title = doc.getString("title") ?: "",
+                    category = doc.getString("category") ?: "Engineering and technology",
                     companyName = doc.getString("companyName") ?: "",
                     companyLogo = doc.getString("companyLogo"),
                     location = doc.getString("location") ?: "",

@@ -262,7 +262,7 @@ fun StudentRegistrationScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     var expandedYearLevel by remember { mutableStateOf(false) }
-                    val yearLevels = listOf("4th Year", "5th Year")
+                    val yearLevels = listOf("2nd Year", "3rd Year", "4th Year", "5th Year")
 
                     ExposedDropdownMenuBox(
                         expanded = expandedYearLevel,

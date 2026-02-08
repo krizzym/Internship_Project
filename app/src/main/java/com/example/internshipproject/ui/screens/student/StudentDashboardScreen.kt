@@ -2,6 +2,7 @@ package com.example.internshipproject.ui.screens.student
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,24 +28,57 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.foundation.shape.CircleShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentDashboardScreen(
     studentProfile: StudentProfile,
-    internships: List<Internship>,
     onInternshipClick: (String) -> Unit,
     onNavigateToApplications: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    onLogout: () -> Unit,
     viewModel: StudentApplicationsViewModel = viewModel()
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     var currentInternships by remember { mutableStateOf<List<Internship>>(emptyList()) }
     var isRefreshing by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     val repository = remember { InternshipRepository() }
+
+    // Search and Filter State
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf("All") }
+    var showFilterMenu by remember { mutableStateOf(false) }
+
+    val categories = listOf(
+        "All",
+        "Engineering and technology",
+        "Business & Management",
+        "Healthcare & Medical",
+        "Education",
+        "Criminology"
+    )
+
+    val filteredInternships = remember(searchQuery, selectedCategory, currentInternships) {
+        currentInternships.filter { internship ->
+            val matchesSearch = if (searchQuery.isBlank()) {
+                true
+            } else {
+                internship.title.contains(searchQuery, ignoreCase = true) ||
+                internship.companyName.contains(searchQuery, ignoreCase = true) ||
+                internship.description.contains(searchQuery, ignoreCase = true) ||
+                internship.requirements.contains(searchQuery, ignoreCase = true)
+            }
+
+            val matchesCategory = if (selectedCategory == "All") {
+                true
+            } else {
+                // Now we use the explicit category field for 100% accuracy
+                internship.category == selectedCategory
+            }
+
+            matchesSearch && matchesCategory
+        }
+    }
 
     // Observe applications for statistics
     val applications by viewModel.applications.collectAsState()
@@ -152,7 +186,6 @@ fun StudentDashboardScreen(
                     label = { Text("Profile") },
                     selected = selectedTab == 2,
                     onClick = {
-                        selectedTab = 2
                         onNavigateToProfile()
                     },
                     colors = NavigationBarItemDefaults.colors(
@@ -223,11 +256,125 @@ fun StudentDashboardScreen(
                 }
             }
 
+            // Search and Filter Bar
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Search internships...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = PurpleButton,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
+                        ),
+                        singleLine = true
+                    )
+
+                    Box {
+                        IconButton(
+                            onClick = { showFilterMenu = true },
+                            modifier = Modifier
+                                .background(
+                                    if (selectedCategory != "All") PurpleButton else Color.White,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (selectedCategory != "All") PurpleButton else Color.Gray.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .size(56.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.FilterList,
+                                contentDescription = "Filter",
+                                tint = if (selectedCategory != "All") Color.White else TextPrimary
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showFilterMenu,
+                            onDismissRequest = { showFilterMenu = false },
+                            modifier = Modifier.background(Color.White)
+                        ) {
+                            categories.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { 
+                                        Text(
+                                            category,
+                                            color = if (selectedCategory == category) PurpleButton else TextPrimary,
+                                            fontWeight = if (selectedCategory == category) FontWeight.Bold else FontWeight.Normal
+                                        ) 
+                                    },
+                                    onClick = {
+                                        selectedCategory = category
+                                        showFilterMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                if (selectedCategory != "All") {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = PurpleButton.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, PurpleButton.copy(alpha = 0.2f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = selectedCategory,
+                                    fontSize = 12.sp,
+                                    color = PurpleButton,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                IconButton(
+                                    onClick = { selectedCategory = "All" },
+                                    modifier = Modifier.size(16.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Close,
+                                        contentDescription = "Remove filter",
+                                        tint = PurpleButton,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Available Internship Opportunities Section
             item {
                 Text(
-                    text = if (currentInternships.isNotEmpty()) {
-                        "Available Internship Opportunities (${currentInternships.size})"
+                    text = if (filteredInternships.isNotEmpty()) {
+                        "Available Internship Opportunities (${filteredInternships.size})"
                     } else {
                         "Available Internship Opportunities"
                     },
@@ -253,7 +400,7 @@ fun StudentDashboardScreen(
             }
 
             // Internship Cards
-            if (currentInternships.isEmpty() && !isRefreshing) {
+            if (filteredInternships.isEmpty() && !isRefreshing) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -266,41 +413,50 @@ fun StudentDashboardScreen(
                                 .padding(40.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("📋", fontSize = 48.sp)
+                            Text(if (searchQuery.isEmpty() && selectedCategory == "All") "📋" else "🔍", fontSize = 48.sp)
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "No Internships Available Yet",
+                                if (searchQuery.isEmpty() && selectedCategory == "All") "No Internships Available Yet" else "No matching internships found",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = TextPrimary,
+                                textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "Companies will post internship opportunities here. Check back soon!",
+                                if (searchQuery.isEmpty() && selectedCategory == "All") "Companies will post internship opportunities here. Check back soon!"
+                                else "Try searching for something else or clear the filters.",
                                 fontSize = 14.sp,
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             OutlinedButton(
-                                onClick = { refreshInternships() },
+                                onClick = {
+                                    if (searchQuery.isEmpty() && selectedCategory == "All") {
+                                        refreshInternships()
+                                    } else {
+                                        searchQuery = ""
+                                        selectedCategory = "All"
+                                    }
+                                },
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = PurpleButton
                                 )
                             ) {
                                 Icon(
-                                    Icons.Default.Refresh,
+                                    if (searchQuery.isEmpty() && selectedCategory == "All") Icons.Default.Refresh else Icons.Default.Clear,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Refresh")
+                                Text(if (searchQuery.isEmpty() && selectedCategory == "All") "Refresh" else "Clear All Filters")
                             }
                         }
                     }
                 }
             } else {
-                items(currentInternships) { internship ->
+                items(filteredInternships) { internship ->
                     InternshipCard(
                         internship = internship,
                         onClick = { onInternshipClick(internship.id) }
