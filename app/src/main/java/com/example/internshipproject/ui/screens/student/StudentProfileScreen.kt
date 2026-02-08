@@ -86,7 +86,11 @@ fun StudentProfileScreen(
                 snackbar = { snackbarData ->
                     Snackbar(
                         snackbarData = snackbarData,
-                        containerColor = if (snackbarData.visuals.message.contains("successfully", ignoreCase = true)) {
+                        containerColor = if (snackbarData.visuals.message.contains(
+                                "successfully",
+                                ignoreCase = true
+                            )
+                        ) {
                             Color(0xFF4CAF50) // Green for success
                         } else {
                             Color(0xFFE53935) // Red for errors
@@ -153,7 +157,12 @@ fun StudentProfileScreen(
                     )
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Description, contentDescription = "My Applications") },
+                    icon = {
+                        Icon(
+                            Icons.Default.Description,
+                            contentDescription = "My Applications"
+                        )
+                    },
                     label = { Text("My Applications") },
                     selected = false,
                     onClick = onNavigateToApplications,
@@ -218,10 +227,39 @@ fun StudentProfileScreen(
                 Column(modifier = Modifier.padding(20.dp)) {
                     SectionTitle("Account Information")
 
+                    // Info message about non-editable fields
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        color = Color(0xFFF3F4F6),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFF6B7280),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "These account details cannot be changed",
+                                fontSize = 13.sp,
+                                color = Color(0xFF6B7280),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
                     // First Name and Middle Name (READ ONLY)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
+
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -363,7 +401,13 @@ fun StudentProfileScreen(
                             value = state.course,
                             onValueChange = { viewModel.updateCourse(it) },
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("e.g., BS Computer Science", fontSize = 14.sp, color = TextSecondary.copy(alpha = 0.5f)) },
+                            placeholder = {
+                                Text(
+                                    "e.g., BS Computer Science",
+                                    fontSize = 14.sp,
+                                    color = TextSecondary.copy(alpha = 0.5f)
+                                )
+                            },
                             isError = state.errors.containsKey("course"),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryDeepBlueButton,
@@ -385,7 +429,8 @@ fun StudentProfileScreen(
 
                     // Year Level
                     var expandedYearLevel by remember { mutableStateOf(false) }
-                    val yearLevels = listOf("1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year")
+                    val yearLevels =
+                        listOf("1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year")
 
                     ExposedDropdownMenuBox(
                         expanded = expandedYearLevel,
@@ -397,7 +442,8 @@ fun StudentProfileScreen(
                             readOnly = true,
                             label = { Text("Year Level *") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedYearLevel) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                            modifier = Modifier.fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             isError = state.errors.containsKey("yearLevel"),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PrimaryDeepBlueButton,
@@ -486,18 +532,33 @@ fun StudentProfileScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = state.onsite, onCheckedChange = { viewModel.toggleOnsite() })
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.onsite,
+                            onCheckedChange = { viewModel.toggleOnsite() })
                         Text("On-site", fontSize = 14.sp, color = TextPrimary)
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = state.remote, onCheckedChange = { viewModel.toggleRemote() })
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.remote,
+                            onCheckedChange = { viewModel.toggleRemote() })
                         Text("Remote", fontSize = 14.sp, color = TextPrimary)
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = state.hybrid, onCheckedChange = { viewModel.toggleHybrid() })
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = state.hybrid,
+                            onCheckedChange = { viewModel.toggleHybrid() })
                         Text("Hybrid", fontSize = 14.sp, color = TextPrimary)
                     }
 
@@ -524,7 +585,13 @@ fun StudentProfileScreen(
                         value = state.skills,
                         onValueChange = { viewModel.updateSkills(it) },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g., CSS, Java, C++", fontSize = 14.sp, color = TextSecondary.copy(alpha = 0.5f)) },
+                        placeholder = {
+                            Text(
+                                "e.g., CSS, Java, C++",
+                                fontSize = 14.sp,
+                                color = TextSecondary.copy(alpha = 0.5f)
+                            )
+                        },
                         singleLine = false,
                         maxLines = 3,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -544,7 +611,7 @@ fun StudentProfileScreen(
 
                     PrimaryButton(
                         text = "Update Profile",
-                        onClick = { 
+                        onClick = {
                             if (viewModel.validateAllFields()) {
                                 showUpdateDialog = true
                             }
@@ -563,9 +630,27 @@ fun StudentProfileScreen(
     if (showUpdateDialog) {
         AlertDialog(
             onDismissRequest = { showUpdateDialog = false },
-            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = PrimaryDeepBlueButton) },
-            title = { Text("Confirm Update") },
-            text = { Text("Are you sure you want to update your profile information?") },
+            icon = {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = PrimaryDeepBlueButton
+                )
+            },
+            title = {
+                Text(
+                    "Confirm Update",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to update your profile information?",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = {
@@ -591,9 +676,27 @@ fun StudentProfileScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.Red) },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to log out?") },
+            icon = {
+                Icon(
+                    Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = null,
+                    tint = Color.Red
+                )
+            },
+            title = {
+                Text(
+                    "Logout",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to log out?",
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
             confirmButton = {
                 Button(
                     onClick = {

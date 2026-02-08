@@ -190,7 +190,7 @@ fun EditInternshipScreen(
                                     },
                                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFF7B68EE),
+                                        focusedBorderColor = Color(0xFF1F2937),
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -419,7 +419,7 @@ fun EditInternshipScreen(
                                         Icon(
                                             Icons.Default.CalendarToday,
                                             contentDescription = "Select date",
-                                            tint = Color(0xFF7B68EE)
+                                            tint = Color(0xFF1F2937)
                                         )
                                     }
                                 },
@@ -521,7 +521,7 @@ fun EditInternshipScreen(
                                 modifier = Modifier.weight(1f).height(50.dp),
                                 enabled = !state.isLoading,
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF7B68EE)
+                                    containerColor = Color(0xFF1F2937)
                                 )
                             ) {
                                 if (state.isLoading) {
@@ -581,7 +581,7 @@ fun EditInternshipScreen(
                         viewModel.updateInternship(internshipId)
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF7B68EE)
+                        containerColor = Color(0xFF1F2937)
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -619,7 +619,7 @@ fun EditInternshipScreen(
                         showDatePicker = false
                     }
                 ) {
-                    Text("OK", color = Color(0xFF7B68EE))
+                    Text("OK", color = Color(0xFF1F2937))
                 }
             },
             dismissButton = {
@@ -631,9 +631,9 @@ fun EditInternshipScreen(
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = Color(0xFF7B68EE),
-                    todayContentColor = Color(0xFF7B68EE),
-                    todayDateBorderColor = Color(0xFF7B68EE)
+                    selectedDayContainerColor = Color(0xFF1F2937),
+                    todayContentColor = Color(0xFF1F2937),
+                    todayDateBorderColor = Color(0xFF1F2937)
                 )
             )
         }
