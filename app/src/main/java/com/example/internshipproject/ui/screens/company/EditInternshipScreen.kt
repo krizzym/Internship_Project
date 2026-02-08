@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
 import com.example.internshipproject.viewmodel.EditInternshipViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -70,14 +71,7 @@ fun EditInternshipScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF5B7BED),
-                        Color(0xFF8B6EC7)
-                    )
-                )
-            )
+            .background(BackgroundGradientBrush)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()

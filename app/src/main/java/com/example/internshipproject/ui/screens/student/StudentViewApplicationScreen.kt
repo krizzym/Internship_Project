@@ -644,8 +644,8 @@ fun buildTimelineFromStatus(status: ApplicationStatus, appliedDate: String): Lis
 // Helper function to get status color
 private fun getApplicationStatusColor(status: ApplicationStatus): Color {
     return when (status) {
-        ApplicationStatus.PENDING -> Color(0xFFFFA726)
-        ApplicationStatus.REVIEWED -> Color(0xFF42A5F5)
+        ApplicationStatus.PENDING -> Color(0xFFBE7B0B)
+        ApplicationStatus.REVIEWED -> Color(0xFF0067AD)
         ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)
         ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)
         ApplicationStatus.REJECTED -> Color(0xFFEF5350)

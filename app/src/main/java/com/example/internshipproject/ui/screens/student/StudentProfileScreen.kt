@@ -126,12 +126,12 @@ fun StudentProfileScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ExitToApp,
                                 contentDescription = "Logout",
-                                tint = Color.Red,
+                                tint = Color(0xFFEF5350),
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
                                 "Logout",
-                                color = Color.Red,
+                                color = Color(0xFFEF5350),
                                 fontWeight = FontWeight.SemiBold
                             )
                         }

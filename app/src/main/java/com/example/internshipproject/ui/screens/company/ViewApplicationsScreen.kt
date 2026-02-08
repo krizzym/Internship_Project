@@ -456,11 +456,11 @@ private fun StatusChip(status: ApplicationStatus) {
 
 private fun getStatusColor(status: ApplicationStatus): Color {
     return when (status) {
-        ApplicationStatus.PENDING -> Color(0xFFF59E0B)
-        ApplicationStatus.REVIEWED -> Color(0xFF3B82F6)
-        ApplicationStatus.SHORTLISTED -> Color(0xFF8B5CF6)
-        ApplicationStatus.ACCEPTED -> Color(0xFF10B981)
-        ApplicationStatus.REJECTED -> Color(0xFFEF4444)
+        ApplicationStatus.PENDING -> Color(0xFFBE7B0B)
+        ApplicationStatus.REVIEWED -> Color(0xFF0067AD)
+        ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)
+        ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)
+        ApplicationStatus.REJECTED -> Color(0xFFEF5350)
     }
 }
 

@@ -75,11 +75,12 @@ fun InternshipDetailsScreen(
                 )
             )
         },
-        containerColor = BackgroundPurple
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
