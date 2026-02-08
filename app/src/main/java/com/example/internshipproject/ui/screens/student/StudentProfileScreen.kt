@@ -1,4 +1,4 @@
-package com.example.internshipproject.ui.screens
+package com.example.internshipproject.ui.screens.student
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -6,10 +6,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.internshipproject.data.model.StudentProfile
-import com.example.internshipproject.ui.components.InputField
 import com.example.internshipproject.ui.components.PrimaryButton
 import com.example.internshipproject.ui.components.SectionTitle
 import com.example.internshipproject.ui.theme.*
@@ -36,6 +36,10 @@ fun StudentProfileScreen(
     viewModel: StudentProfileViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    // Dialog state
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
 
     // Snackbar host state for showing messages
     val snackbarHostState = remember { SnackbarHostState() }
@@ -114,13 +118,13 @@ fun StudentProfileScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = onLogout) {
+                    TextButton(onClick = { showLogoutDialog = true }) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
-                                Icons.Default.ExitToApp,
+                                Icons.AutoMirrored.Filled.ExitToApp,
                                 contentDescription = "Logout",
                                 tint = Color.Red,
                                 modifier = Modifier.size(20.dp)
@@ -393,7 +397,7 @@ fun StudentProfileScreen(
                             readOnly = true,
                             label = { Text("Year Level *") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedYearLevel) },
-                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             isError = state.errors.containsKey("yearLevel"),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = PurpleButton,
@@ -540,7 +544,11 @@ fun StudentProfileScreen(
 
                     PrimaryButton(
                         text = "Update Profile",
-                        onClick = { viewModel.updateProfile() },
+                        onClick = { 
+                            if (viewModel.validateAllFields()) {
+                                showUpdateDialog = true
+                            }
+                        },
                         isLoading = state.isUpdating,
                         enabled = !state.isUpdating
                     )
@@ -549,5 +557,61 @@ fun StudentProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+
+    // Update Profile Confirmation
+    if (showUpdateDialog) {
+        AlertDialog(
+            onDismissRequest = { showUpdateDialog = false },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = PurpleButton) },
+            title = { Text("Confirm Update") },
+            text = { Text("Are you sure you want to update your profile information?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showUpdateDialog = false
+                        viewModel.updateProfile()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUpdateDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = CardWhite,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    // Logout Confirmation
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = Color.Red) },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to log out?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            },
+            containerColor = CardWhite,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }

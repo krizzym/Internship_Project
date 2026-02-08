@@ -191,6 +191,15 @@ class StudentProfileViewModel(
         _state.value = currentState.copy(errors = newErrors)
     }
 
+    fun validateAllFields(): Boolean {
+        listOf(
+            "firstName", "surname", "school", "course",
+            "yearLevel", "city", "barangay", "internshipTypes"
+        ).forEach { validateField(it) }
+
+        return _state.value.errors.isEmpty()
+    }
+
     fun updateProfile() {
         // Clear previous messages
         _state.value = _state.value.copy(
@@ -199,13 +208,7 @@ class StudentProfileViewModel(
         )
 
         // Validate all fields
-        listOf(
-            "firstName", "surname", "school", "course",
-            "yearLevel", "city", "barangay", "internshipTypes"
-        ).forEach { validateField(it) }
-
-        // If there are validation errors, stop and show error
-        if (_state.value.errors.isNotEmpty()) {
+        if (!validateAllFields()) {
             _state.value = _state.value.copy(
                 errorMessage = "Please fix all errors before updating"
             )
