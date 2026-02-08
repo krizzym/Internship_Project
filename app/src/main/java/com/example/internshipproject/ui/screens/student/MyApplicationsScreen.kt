@@ -3,8 +3,10 @@ package com.example.internshipproject.ui.screens.student
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -33,13 +35,15 @@ fun MyApplicationsScreen(
     onNavigateToProfile: () -> Unit,
     viewModel: StudentApplicationsViewModel = viewModel()
 ) {
-    var selectedTab by remember { mutableStateOf(1) }
     val scope = rememberCoroutineScope()
 
     // Observe applications from ViewModel
     val applications by viewModel.applications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    // Filter state
+    var selectedFilterStatus by remember { mutableStateOf<ApplicationStatus?>(null) }
 
     // Snackbar state for feedback messages
     val snackbarHostState = remember { SnackbarHostState() }
@@ -49,9 +53,17 @@ fun MyApplicationsScreen(
         viewModel.getApplicationStats()
     }
 
+    // Filtered list of applications
+    val filteredApplications = remember(applications, selectedFilterStatus) {
+        if (selectedFilterStatus == null) {
+            applications
+        } else {
+            applications.filter { it.status == selectedFilterStatus }
+        }
+    }
+
     // Set up real-time listener when screen is first displayed
     LaunchedEffect(Unit) {
-        Log.d("MyApplicationsScreen", "Setting up observer")
         viewModel.observeApplications()
     }
 
@@ -66,52 +78,21 @@ fun MyApplicationsScreen(
         }
     }
 
-    // Delete handler that doesn't clear all data
+    // Delete handler
     fun handleDelete(applicationId: String) {
-        Log.d("MyApplicationsScreen", "Deleting application: $applicationId")
-        viewModel.deleteApplication(applicationId) { success, message ->
+        viewModel.deleteApplication(applicationId) { _, message ->
             scope.launch {
                 snackbarHostState.showSnackbar(
                     message = message,
                     duration = SnackbarDuration.Short
                 )
-                if (success) {
-                    Log.d("MyApplicationsScreen", "Delete successful")
-                    // Real-time listener handles update automatically
-                } else {
-                    Log.e("MyApplicationsScreen", "Delete failed: $message")
-                }
             }
         }
     }
 
-    // Refresh handler that doesn't clear data
-    fun handleRefresh() {
-        Log.d("MyApplicationsScreen", "Manual refresh triggered")
-        scope.launch {
-            viewModel.refresh()
-        }
-    }
-
     Scaffold(
-        snackbarHost = {
-            SnackbarHost(
-                hostState = snackbarHostState,
-                snackbar = { snackbarData ->
-                    Snackbar(
-                        snackbarData = snackbarData,
-                        containerColor = if (snackbarData.visuals.message.contains("success", ignoreCase = true)) {
-                            Color(0xFF4CAF50)
-                        } else {
-                            Color(0xFFE53935)
-                        },
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            )
-        },
+        containerColor = Color.Transparent,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -126,28 +107,25 @@ fun MyApplicationsScreen(
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+            NavigationBar(
+                containerColor = Color.White.copy(alpha = 0.95f),
+                tonalElevation = 0.dp
+            ) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
                     label = { Text("Dashboard") },
-                    selected = selectedTab == 0,
-                    onClick = {
-                        selectedTab = 0
-                        onBackToDashboard()
-                    },
+                    selected = false,
+                    onClick = { onBackToDashboard() },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = PrimaryDeepBlueButton,
-                        selectedTextColor = PrimaryDeepBlueButton,
-                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                        selectedTextColor = PrimaryDeepBlueButton
                     )
                 )
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Description, contentDescription = "My Applications") },
                     label = { Text("My Applications") },
-                    selected = selectedTab == 1,
-                    onClick = {
-                        selectedTab = 1
-                    },
+                    selected = true,
+                    onClick = { },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = PrimaryDeepBlueButton,
                         selectedTextColor = PrimaryDeepBlueButton,
@@ -157,173 +135,211 @@ fun MyApplicationsScreen(
                 NavigationBarItem(
                     icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
                     label = { Text("Profile") },
-                    selected = selectedTab == 2,
-                    onClick = {
-                        selectedTab = 2
-                        onNavigateToProfile()
-                    },
+                    selected = false,
+                    onClick = { onNavigateToProfile() },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = PrimaryDeepBlueButton,
-                        selectedTextColor = PrimaryDeepBlueButton,
-                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                        selectedTextColor = PrimaryDeepBlueButton
                     )
                 )
             }
-        }
+        },
+        modifier = Modifier.background(BackgroundGradientBrush)
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(BackgroundGradientBrush)
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 12.dp, 
+                top = paddingValues.calculateTopPadding() + 12.dp, 
+                end = 12.dp, 
+                bottom = paddingValues.calculateBottomPadding() + 80.dp // Extra padding to avoid cut-off
+            ),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Header Card
             item {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        Text(
-                            "My Applications",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            "Track all your internship applications",
-                            fontSize = 14.sp,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                }
-            }
-
-            // Status Cards
-            item {
-                Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite)
+                    colors = CardDefaults.cardColors(containerColor = CardWhite),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        StatusRow("Pending", applicationStats[ApplicationStatus.PENDING] ?: 0)
-                        StatusRow("Reviewed", applicationStats[ApplicationStatus.REVIEWED] ?: 0)
-                        StatusRow("Shortlisted", applicationStats[ApplicationStatus.SHORTLISTED] ?: 0)
-                        StatusRow("Accepted", applicationStats[ApplicationStatus.ACCEPTED] ?: 0)
-                    }
-                }
-            }
-
-            // Small loading indicator that doesn't hide content
-            if (isLoading && applications.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(
-                                color = PrimaryDeepBlueButton,
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                            Text(
-                                text = "Loading applications...",
-                                fontSize = 14.sp,
-                                color = TextSecondary
-                            )
-                        }
-                    }
-                }
-            }
-
-            // All Applications Section
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            "All Applications (${applications.size})",
-                            fontSize = 18.sp,
+                            "My Applications",
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
                         )
+                        Text(
+                            "Select a status to filter your list",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+            // Clickable Status Cards - Compact Grid
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // ALL CARD - LONG ONE
+                    StatusFilterCard(
+                        label = "All Submissions",
+                        count = applications.size,
+                        isSelected = selectedFilterStatus == null,
+                        color = PrimaryDeepBlueButton,
+                        onClick = { selectedFilterStatus = null },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                        // Always show current applications, even during operations
-                        if (applications.isEmpty() && !isLoading) {
-                            // Empty State
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    "You haven't applied to any internships yet.",
-                                    fontSize = 14.sp,
-                                    color = TextSecondary,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
-                                Button(
-                                    onClick = onBrowseInternships,
-                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton)
-                                ) {
-                                    Text("Browse Internships")
-                                }
-                            }
-                        } else {
-                            // Application Cards - always visible
-                            applications.forEach { application ->
-                                ApplicationCard(
-                                    application = application,
-                                    onClick = { onApplicationClick(application.id) },
-                                    onDelete = { applicationId -> handleDelete(applicationId) }
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StatusFilterCard(
+                            label = "Pending",
+                            count = applicationStats[ApplicationStatus.PENDING] ?: 0,
+                            isSelected = selectedFilterStatus == ApplicationStatus.PENDING,
+                            color = Color(0xFFBE7B0B),
+                            onClick = { selectedFilterStatus = ApplicationStatus.PENDING },
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatusFilterCard(
+                            label = "Accepted",
+                            count = applicationStats[ApplicationStatus.ACCEPTED] ?: 0,
+                            isSelected = selectedFilterStatus == ApplicationStatus.ACCEPTED,
+                            color = Color(0xFF4CAF50),
+                            onClick = { selectedFilterStatus = ApplicationStatus.ACCEPTED },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StatusFilterCard(
+                            label = "Reviewed",
+                            count = applicationStats[ApplicationStatus.REVIEWED] ?: 0,
+                            isSelected = selectedFilterStatus == ApplicationStatus.REVIEWED,
+                            color = Color(0xFF0067AD),
+                            onClick = { selectedFilterStatus = ApplicationStatus.REVIEWED },
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatusFilterCard(
+                            label = "Shortlisted",
+                            count = applicationStats[ApplicationStatus.SHORTLISTED] ?: 0,
+                            isSelected = selectedFilterStatus == ApplicationStatus.SHORTLISTED,
+                            color = Color(0xFF66BB6A),
+                            onClick = { selectedFilterStatus = ApplicationStatus.SHORTLISTED },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+
+            // Section Label
+            item {
+                Text(
+                    text = if (selectedFilterStatus == null) "All Submissions" else "${selectedFilterStatus!!.name.lowercase().replaceFirstChar { it.uppercase() }} Applications",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            // Loading state
+            if (isLoading && applications.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(32.dp))
+                    }
+                }
+            }
+
+            // Empty state - occupies all remaining space
+            if (filteredApplications.isEmpty() && !isLoading) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillParentMaxHeight(0.6f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = CardWhite.copy(alpha = 0.85f))
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.Inbox, null, tint = TextSecondary, modifier = Modifier.size(40.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "No ${selectedFilterStatus?.name?.lowercase() ?: ""} applications.",
+                                color = TextPrimary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                "Your submitted internships will appear here.",
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
                         }
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            // Application List
+            items(filteredApplications) { application ->
+                ApplicationCard(
+                    application = application,
+                    onClick = { onApplicationClick(application.id) },
+                    onDelete = { handleDelete(it) }
+                )
+            }
         }
     }
 }
 
 @Composable
-fun StatusRow(label: String, count: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+fun StatusFilterCard(
+    label: String,
+    count: Int,
+    isSelected: Boolean,
+    color: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.clickable { onClick() },
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) color else CardWhite
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 1.dp),
+        border = if (!isSelected) BorderStroke(1.dp, color.copy(alpha = 0.15f)) else null
     ) {
-        Text(label, fontSize = 14.sp, color = TextSecondary)
-        Text(
-            count.toString(),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = PrimaryDeepBlueButton
-        )
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = label,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) Color.White else TextPrimary
+            )
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = if (isSelected) Color.White.copy(alpha = 0.25f) else color.copy(alpha = 0.1f)
+            ) {
+                Text(
+                    text = count.toString(),
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) Color.White else color
+                )
+            }
+        }
     }
 }
 
@@ -331,18 +347,17 @@ fun StatusRow(label: String, count: Int) {
 fun ApplicationCard(
     application: Application,
     onClick: () -> Unit,
-    onDelete: (String) -> Unit = {}
+    onDelete: (String) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFF2F2F2))
+        shape = RoundedCornerShape(10.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Title, Company, and Delete Button
+        Column(modifier = Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -351,127 +366,76 @@ fun ApplicationCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         application.internshipTitle,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
                     Text(
                         application.companyName,
-                        fontSize = 14.sp,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(top = 4.dp)
+                        fontSize = 12.sp,
+                        color = PrimaryDeepBlueButton,
+                        fontWeight = FontWeight.Medium
                     )
                 }
-
-                // Delete button available for all applications
-                IconButton(
-                    onClick = { showDeleteDialog = true },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete Application",
-                        tint = Color(0xFFAF0000),
-                        modifier = Modifier.size(20.dp)
-                    )
+                IconButton(onClick = { showDeleteDialog = true }, modifier = Modifier.size(24.dp)) {
+                    Icon(Icons.Default.Delete, null, tint = Color(0xFFEF5350), modifier = Modifier.size(18.dp))
                 }
             }
 
+            Spacer(modifier = Modifier.height(10.dp))
+            
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Applied: ${application.appliedDate}",
-                    fontSize = 12.sp,
-                    color = TextSecondary
-                )
+                Text("Applied: ${application.appliedDate}", fontSize = 11.sp, color = TextSecondary)
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = getStatusColor(application.status)
+                    color = getStatusColor(application.status).copy(alpha = 0.1f),
+                    border = BorderStroke(1.dp, getStatusColor(application.status).copy(alpha = 0.5f))
                 ) {
                     Text(
-                        application.status.name,
-                        fontSize = 11.sp,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        text = application.status.name,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = getStatusColor(application.status)
                     )
                 }
             }
 
             Button(
                 onClick = onClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(36.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
-                shape = RoundedCornerShape(6.dp)
+                shape = RoundedCornerShape(6.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Text("View Application", fontSize = 13.sp)
+                Text("View Details", fontSize = 12.sp)
             }
         }
     }
 
-    // Delete confirmation with status-based message
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = {
-                Text(
-                    "Delete Application?",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        "Are you sure you want to delete your application for ${application.internshipTitle}?",
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-
-                    // Warning for non-pending applications
-                    if (application.status != ApplicationStatus.PENDING) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Note: This application has status '${application.status.name}'. Deleting it will permanently remove it from your records.",
-                            fontSize = 12.sp,
-                            color = Color(0xFFF15350),
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "This action cannot be undone.",
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                    )
-                }
-            },
+            title = { Text("Delete Application?", fontSize = 18.sp) },
+            text = { Text("This action cannot be undone.", fontSize = 14.sp) },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete(application.id)
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color(0xFFEF5350)
-                    )
-                ) {
-                    Text("Delete", fontWeight = FontWeight.Bold)
+                TextButton(onClick = { 
+                    showDeleteDialog = false
+                    onDelete(application.id) 
+                }) {
+                    Text("Delete", color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel", fontWeight = FontWeight.Medium)
+                    Text("Cancel")
                 }
             },
+            containerColor = CardWhite,
             shape = RoundedCornerShape(16.dp)
         )
     }
