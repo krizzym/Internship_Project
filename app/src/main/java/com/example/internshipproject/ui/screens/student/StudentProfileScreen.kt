@@ -3,6 +3,7 @@ package com.example.internshipproject.ui.screens.student
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -525,41 +526,37 @@ fun StudentProfileScreen(
                     SectionTitle("Internship Preferences")
 
                     Text(
-                        text = "Preferred Internship Types * (Select all that apply)",
+                        text = "Preferred Internship Type *",
                         fontSize = 14.sp,
                         color = TextPrimary,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = state.onsite,
-                            onCheckedChange = { viewModel.toggleOnsite() })
-                        Text("On-site", fontSize = 14.sp, color = TextPrimary)
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = state.remote,
-                            onCheckedChange = { viewModel.toggleRemote() })
-                        Text("Remote", fontSize = 14.sp, color = TextPrimary)
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = state.hybrid,
-                            onCheckedChange = { viewModel.toggleHybrid() })
-                        Text("Hybrid", fontSize = 14.sp, color = TextPrimary)
+                    val internshipOptions = listOf("On-site", "Remote", "Hybrid")
+                    internshipOptions.forEach { type ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = state.selectedInternshipType == type,
+                                    onClick = { viewModel.updateInternshipType(type) }
+                                )
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = state.selectedInternshipType == type,
+                                onClick = { viewModel.updateInternshipType(type) },
+                                colors = RadioButtonDefaults.colors(selectedColor = PrimaryDeepBlueButton)
+                            )
+                            Text(
+                                text = type,
+                                fontSize = 14.sp,
+                                color = TextPrimary,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
 
                     if (state.errors.containsKey("internshipTypes")) {

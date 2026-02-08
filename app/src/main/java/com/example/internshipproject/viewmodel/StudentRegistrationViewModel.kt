@@ -23,9 +23,7 @@ data class StudentRegistrationState(
     val yearLevel: String = "",
     val city: String = "",
     val barangay: String = "",
-    val onsite: Boolean = false,
-    val remote: Boolean = false,
-    val hybrid: Boolean = false,
+    val selectedInternshipType: String = "", // Changed to single selection
     val skills: String = "",
     val resumeUri: Uri? = null,
     val agreedToTerms: Boolean = false,
@@ -96,18 +94,8 @@ class StudentRegistrationViewModel(
         validateField("barangay")
     }
 
-    fun toggleOnsite() {
-        _state.value = _state.value.copy(onsite = !_state.value.onsite)
-        validateField("internshipTypes")
-    }
-
-    fun toggleRemote() {
-        _state.value = _state.value.copy(remote = !_state.value.remote)
-        validateField("internshipTypes")
-    }
-
-    fun toggleHybrid() {
-        _state.value = _state.value.copy(hybrid = !_state.value.hybrid)
+    fun updateInternshipType(type: String) {
+        _state.value = _state.value.copy(selectedInternshipType = type)
         validateField("internshipTypes")
     }
 
@@ -203,8 +191,8 @@ class StudentRegistrationViewModel(
                 }
             }
             "internshipTypes" -> {
-                if (!currentState.onsite && !currentState.remote && !currentState.hybrid) {
-                    newErrors["internshipTypes"] = "Select at least one internship type"
+                if (currentState.selectedInternshipType.isBlank()) {
+                    newErrors["internshipTypes"] = "Please select your preferred internship type"
                 } else {
                     newErrors.remove("internshipTypes")
                 }
@@ -244,11 +232,7 @@ class StudentRegistrationViewModel(
 
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
 
-        val internshipTypes = buildList {
-            if (currentState.onsite) add("On-site")
-            if (currentState.remote) add("Remote")
-            if (currentState.hybrid) add("Hybrid")
-        }
+        val internshipTypes = listOf(currentState.selectedInternshipType)
 
         val student = Student(
             firstName = currentState.firstName,

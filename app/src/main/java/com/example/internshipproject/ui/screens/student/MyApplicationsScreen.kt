@@ -90,210 +90,212 @@ fun MyApplicationsScreen(
         }
     }
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column {
-                            Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            Text("Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
+    Box(modifier = Modifier.fillMaxSize().background(BackgroundGradientBrush)) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column {
+                                Text("FirstStep", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                Text("Internship Connection Platform", fontSize = 11.sp, color = TextSecondary)
+                            }
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color.White.copy(alpha = 0.95f),
-                tonalElevation = 0.dp
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                )
+            }
+        ) { paddingValues ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 12.dp, 
+                    top = paddingValues.calculateTopPadding() + 12.dp, 
+                    end = 12.dp, 
+                    bottom = 100.dp // Added bottom padding so content scrolls behind nav bar
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
-                    label = { Text("Dashboard") },
-                    selected = false,
-                    onClick = { onBackToDashboard() },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PrimaryDeepBlueButton,
-                        selectedTextColor = PrimaryDeepBlueButton
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Description, contentDescription = "My Applications") },
-                    label = { Text("My Applications") },
-                    selected = true,
-                    onClick = { },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PrimaryDeepBlueButton,
-                        selectedTextColor = PrimaryDeepBlueButton,
-                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") },
-                    selected = false,
-                    onClick = { onNavigateToProfile() },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PrimaryDeepBlueButton,
-                        selectedTextColor = PrimaryDeepBlueButton
-                    )
-                )
-            }
-        },
-        modifier = Modifier.background(BackgroundGradientBrush)
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 12.dp, 
-                top = paddingValues.calculateTopPadding() + 12.dp, 
-                end = 12.dp, 
-                bottom = paddingValues.calculateBottomPadding() + 80.dp // Extra padding to avoid cut-off
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // Header Card
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "My Applications",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        Text(
-                            "Select a status to filter your list",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-            }
-
-            // Clickable Status Cards - Compact Grid
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    // ALL CARD - LONG ONE
-                    StatusFilterCard(
-                        label = "All Submissions",
-                        count = applications.size,
-                        isSelected = selectedFilterStatus == null,
-                        color = PrimaryDeepBlueButton,
-                        onClick = { selectedFilterStatus = null },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        StatusFilterCard(
-                            label = "Pending",
-                            count = applicationStats[ApplicationStatus.PENDING] ?: 0,
-                            isSelected = selectedFilterStatus == ApplicationStatus.PENDING,
-                            color = Color(0xFFBE7B0B),
-                            onClick = { selectedFilterStatus = ApplicationStatus.PENDING },
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatusFilterCard(
-                            label = "Accepted",
-                            count = applicationStats[ApplicationStatus.ACCEPTED] ?: 0,
-                            isSelected = selectedFilterStatus == ApplicationStatus.ACCEPTED,
-                            color = Color(0xFF4CAF50),
-                            onClick = { selectedFilterStatus = ApplicationStatus.ACCEPTED },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        StatusFilterCard(
-                            label = "Reviewed",
-                            count = applicationStats[ApplicationStatus.REVIEWED] ?: 0,
-                            isSelected = selectedFilterStatus == ApplicationStatus.REVIEWED,
-                            color = Color(0xFF0067AD),
-                            onClick = { selectedFilterStatus = ApplicationStatus.REVIEWED },
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatusFilterCard(
-                            label = "Shortlisted",
-                            count = applicationStats[ApplicationStatus.SHORTLISTED] ?: 0,
-                            isSelected = selectedFilterStatus == ApplicationStatus.SHORTLISTED,
-                            color = Color(0xFF66BB6A),
-                            onClick = { selectedFilterStatus = ApplicationStatus.SHORTLISTED },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-            }
-
-            // Section Label
-            item {
-                Text(
-                    text = if (selectedFilterStatus == null) "All Submissions" else "${selectedFilterStatus!!.name.lowercase().replaceFirstChar { it.uppercase() }} Applications",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            // Loading state
-            if (isLoading && applications.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(32.dp))
-                    }
-                }
-            }
-
-            // Empty state - occupies all remaining space
-            if (filteredApplications.isEmpty() && !isLoading) {
+                // Header Card
                 item {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillParentMaxHeight(0.6f),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardWhite.copy(alpha = 0.85f))
+                        colors = CardDefaults.cardColors(containerColor = CardWhite),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(Icons.Default.Inbox, null, tint = TextSecondary, modifier = Modifier.size(40.dp))
-                            Spacer(modifier = Modifier.height(12.dp))
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                "No ${selectedFilterStatus?.name?.lowercase() ?: ""} applications.",
-                                color = TextPrimary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold
+                                "My Applications",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
                             )
                             Text(
-                                "Your submitted internships will appear here.",
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                color = TextSecondary,
-                                fontSize = 13.sp
+                                "Select a status to filter your list",
+                                fontSize = 12.sp,
+                                color = TextSecondary
                             )
                         }
                     }
                 }
-            }
 
-            // Application List
-            items(filteredApplications) { application ->
-                ApplicationCard(
-                    application = application,
-                    onClick = { onApplicationClick(application.id) },
-                    onDelete = { handleDelete(it) }
-                )
+                // Clickable Status Cards - COMPACT GRID
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        // ALL CARD - THE LONG ONE
+                        StatusFilterCard(
+                            label = "All Submissions",
+                            count = applications.size,
+                            isSelected = selectedFilterStatus == null,
+                            color = PrimaryDeepBlueButton,
+                            onClick = { selectedFilterStatus = null },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            StatusFilterCard(
+                                label = "Pending",
+                                count = applicationStats[ApplicationStatus.PENDING] ?: 0,
+                                isSelected = selectedFilterStatus == ApplicationStatus.PENDING,
+                                color = Color(0xFFBE7B0B),
+                                onClick = { selectedFilterStatus = ApplicationStatus.PENDING },
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatusFilterCard(
+                                label = "Accepted",
+                                count = applicationStats[ApplicationStatus.ACCEPTED] ?: 0,
+                                isSelected = selectedFilterStatus == ApplicationStatus.ACCEPTED,
+                                color = Color(0xFF4CAF50),
+                                onClick = { selectedFilterStatus = ApplicationStatus.ACCEPTED },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            StatusFilterCard(
+                                label = "Reviewed",
+                                count = applicationStats[ApplicationStatus.REVIEWED] ?: 0,
+                                isSelected = selectedFilterStatus == ApplicationStatus.REVIEWED,
+                                color = Color(0xFF0067AD),
+                                onClick = { selectedFilterStatus = ApplicationStatus.REVIEWED },
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatusFilterCard(
+                                label = "Shortlisted",
+                                count = applicationStats[ApplicationStatus.SHORTLISTED] ?: 0,
+                                isSelected = selectedFilterStatus == ApplicationStatus.SHORTLISTED,
+                                color = Color(0xFF66BB6A),
+                                onClick = { selectedFilterStatus = ApplicationStatus.SHORTLISTED },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
+                // Section Label
+                item {
+                    Text(
+                        text = if (selectedFilterStatus == null) "All Submissions" else "${selectedFilterStatus!!.name.lowercase().replaceFirstChar { it.uppercase() }} Applications",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                // Loading state
+                if (isLoading && applications.isEmpty()) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(32.dp))
+                        }
+                    }
+                }
+
+                // Empty state - EXPANDED TO OCCUPY SPACE
+                if (filteredApplications.isEmpty() && !isLoading) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillParentMaxHeight(0.6f), // Occupy most of the remaining visible area
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = CardWhite.copy(alpha = 0.85f))
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Default.Inbox, null, tint = TextSecondary, modifier = Modifier.size(48.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    "No ${selectedFilterStatus?.name?.lowercase() ?: ""} applications.",
+                                    color = TextPrimary,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    "Your submitted internships will appear here.",
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    color = TextSecondary,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Application List
+                items(filteredApplications) { application ->
+                    ApplicationCard(
+                        application = application,
+                        onClick = { onApplicationClick(application.id) },
+                        onDelete = { handleDelete(it) }
+                    )
+                }
             }
+        }
+
+        // NAVIGATION BAR OVERLAPPING AT BOTTOM
+        NavigationBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            containerColor = Color.White.copy(alpha = 0.9f),
+            tonalElevation = 0.dp
+        ) {
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
+                label = { Text("Dashboard") },
+                selected = false,
+                onClick = { onBackToDashboard() },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PrimaryDeepBlueButton,
+                    selectedTextColor = PrimaryDeepBlueButton
+                )
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Description, contentDescription = "My Applications") },
+                label = { Text("My Applications") },
+                selected = true,
+                onClick = { },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PrimaryDeepBlueButton,
+                    selectedTextColor = PrimaryDeepBlueButton,
+                    indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
+                )
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+                label = { Text("Profile") },
+                selected = false,
+                onClick = { onNavigateToProfile() },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = PrimaryDeepBlueButton,
+                    selectedTextColor = PrimaryDeepBlueButton
+                )
+            )
         }
     }
 }
@@ -436,7 +438,7 @@ fun ApplicationCard(
                 }
             },
             containerColor = CardWhite,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(12.dp)
         )
     }
 }
