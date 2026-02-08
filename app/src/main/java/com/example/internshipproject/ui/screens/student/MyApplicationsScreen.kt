@@ -339,7 +339,7 @@ fun ApplicationCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFF2C3E50))  // Dark border
+        border = BorderStroke(1.dp, Color(0xFFF2F2F2))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Title, Company, and Delete Button
@@ -371,7 +371,7 @@ fun ApplicationCard(
                     Icon(
                         Icons.Default.Delete,
                         contentDescription = "Delete Application",
-                        tint = Color(0xFFEF5350),
+                        tint = Color(0xFFAF0000),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -440,7 +440,7 @@ fun ApplicationCard(
                         Text(
                             "Note: This application has status '${application.status.name}'. Deleting it will permanently remove it from your records.",
                             fontSize = 12.sp,
-                            color = Color(0xFFEF5350),
+                            color = Color(0xFFF15350),
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -479,8 +479,8 @@ fun ApplicationCard(
 
 fun getStatusColor(status: ApplicationStatus): Color {
     return when (status) {
-        ApplicationStatus.PENDING -> Color(0xFFFFA726)
-        ApplicationStatus.REVIEWED -> Color(0xFF42A5F5)
+        ApplicationStatus.PENDING -> Color(0xFFBE7B0B)
+        ApplicationStatus.REVIEWED -> Color(0xFF0067AD)
         ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)
         ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)
         ApplicationStatus.REJECTED -> Color(0xFFEF5350)

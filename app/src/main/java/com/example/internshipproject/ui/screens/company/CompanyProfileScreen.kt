@@ -114,9 +114,9 @@ fun CompanyProfileScreen(
                     Snackbar(
                         snackbarData = snackbarData,
                         containerColor = if (snackbarData.visuals.message.contains("successfully", ignoreCase = true)) {
-                            Color(0xFF4CAF50) // Green for success
+                            Color(0xFF4CAF50)
                         } else {
-                            Color(0xFFE53935) // Red for errors
+                            Color(0xFFE53935)
                         },
                         contentColor = Color.White,
                         shape = RoundedCornerShape(8.dp),
@@ -196,7 +196,6 @@ fun CompanyProfileScreen(
                 }
             }
 
-            // Success Message (existing verification status card - kept for compatibility)
             if (state.updateSuccess) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -227,7 +226,7 @@ fun CompanyProfileScreen(
                 }
             }
 
-            // Account Information
+            // Account Info
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -264,7 +263,7 @@ fun CompanyProfileScreen(
                 }
             }
 
-            // Company Information
+            // Company Info
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -536,7 +535,7 @@ fun CompanyProfileScreen(
                 Icon(
                     Icons.Default.ExitToApp,
                     contentDescription = null,
-                    tint = Color.Red,
+                    tint = Color(0xFFEF5350),
                     modifier = Modifier.size(32.dp)
                 )
             },
@@ -545,6 +544,7 @@ fun CompanyProfileScreen(
                     text = "Logout",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
+
                 )
             },
             text = {

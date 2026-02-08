@@ -33,6 +33,7 @@ import com.example.internshipproject.data.model.ApplicationStatus
 import com.example.internshipproject.data.model.Internship
 import com.example.internshipproject.data.repository.ApplicationRepository
 import com.example.internshipproject.data.repository.InternshipRepository
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
 import kotlinx.coroutines.launch
 
 class ApplicationDetailViewModel : ViewModel() {
@@ -194,6 +195,7 @@ fun ApplicationDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
         ) {
             when {
@@ -411,10 +413,10 @@ private fun ApplicationStatusCard(application: Application) {
                     contentDescription = null,
                     tint = when (application.status) {
                         ApplicationStatus.PENDING -> Color(0xFFF57C00)
-                        ApplicationStatus.REVIEWED -> Color(0xFF1976D2)
-                        ApplicationStatus.SHORTLISTED -> Color(0xFF7B1FA2)
-                        ApplicationStatus.ACCEPTED -> Color(0xFF388E3C)
-                        ApplicationStatus.REJECTED -> Color(0xFFD32F2F)
+                        ApplicationStatus.REVIEWED -> Color(0xFF0067AD)
+                        ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)
+                        ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)
+                        ApplicationStatus.REJECTED -> Color(0xFFEF5350)
                     },
                     modifier = Modifier.size(24.dp)
                 )

@@ -662,9 +662,9 @@ private fun formatFileSize(bytes: Long): String {
 // Extension property for ApplicationStatus color
 val ApplicationStatus.color: Color
     get() = when (this) {
-        ApplicationStatus.PENDING -> Color(0xFFFFA726)
-        ApplicationStatus.REVIEWED -> Color(0xFF42A5F5)
-        ApplicationStatus.SHORTLISTED -> Color(0xFF9C27B0)
-        ApplicationStatus.ACCEPTED -> Color(0xFF66BB6A)
+        ApplicationStatus.PENDING -> Color(0xFFBE7B0B)
+        ApplicationStatus.REVIEWED -> Color(0xFF0067AD)
+        ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)
+        ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)
         ApplicationStatus.REJECTED -> Color(0xFFEF5350)
     }

@@ -140,15 +140,15 @@ fun CompanyApplicationsScreen(
                     ImprovedStatCard(
                         title = "Pending",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.PENDING),
-                        color = TextPrimary,
+                        color = Color(0xFFF59E0B),
                         backgroundColor = Color(0xFFFEF3C7),
                         modifier = Modifier.weight(1f)
                     )
                     ImprovedStatCard(
                         title = "Reviewed",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.REVIEWED),
-                        color = TextPrimary,
-                        backgroundColor = Color(0xFFDBEAFE),
+                        color = Color(0xFF3B82F6),
+                        backgroundColor = Color(0xFFDDD6FE),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -162,14 +162,14 @@ fun CompanyApplicationsScreen(
                     ImprovedStatCard(
                         title = "Shortlisted",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.SHORTLISTED),
-                        color = TextPrimary,
+                        color = Color(0xFF8B5CF6),
                         backgroundColor = Color(0xFFEDE9FE),
                         modifier = Modifier.weight(1f)
                     )
                     ImprovedStatCard(
                         title = "Accepted",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.ACCEPTED),
-                        color = TextPrimary,
+                        color = Color(0xFF10B981),
                         backgroundColor = Color(0xFFD1FAE5),
                         modifier = Modifier.weight(1f)
                     )
@@ -404,11 +404,11 @@ fun ApplicationDetailsCard(
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = when (application.status) {
-                        ApplicationStatus.PENDING -> Color(0xFFFBBF24)
-                        ApplicationStatus.REVIEWED -> Color(0xFF3B82F6)
-                        ApplicationStatus.SHORTLISTED -> Color(0xFF8B5CF6)
-                        ApplicationStatus.ACCEPTED -> Color(0xFF10B981)
-                        ApplicationStatus.REJECTED -> Color(0xFFE53935)
+                        ApplicationStatus.PENDING -> Color(0xFFBE7B0B)
+                        ApplicationStatus.REVIEWED -> Color(0xFF0067AD)
+                        ApplicationStatus.SHORTLISTED -> Color(0xFF66BB6A)
+                        ApplicationStatus.ACCEPTED -> Color(0xFF4CAF50)
+                        ApplicationStatus.REJECTED -> Color(0xFFEF5350)
                     }
                 ) {
                     Text(
