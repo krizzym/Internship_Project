@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 
 @Composable
 fun PrimaryButton(
@@ -28,7 +28,7 @@ fun PrimaryButton(
             .fillMaxWidth()
             .height(50.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = PurpleButton,
+            containerColor = PrimaryDeepBlueButton,
             contentColor = Color.White
         ),
         shape = RoundedCornerShape(8.dp),

@@ -24,6 +24,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 import com.example.internshipproject.viewmodel.CompanyApplicationsViewModel
 import com.example.internshipproject.viewmodel.UpdateState
 
@@ -114,21 +116,21 @@ fun CompanyApplicationDetailsScreen(
                     Text(
                         text = "Application Details",
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
+                            tint = Color.Black
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = Color.White
                 )
             )
         }
@@ -282,7 +284,7 @@ private fun CompanyApplicationDetailsContent(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .background(Color(0xFFF5F5F5))
+            .background(BackgroundGradientBrush)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -387,6 +389,7 @@ private fun CompanyApplicationDetailsContent(
             text = "Company Actions",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = Color.White,
             modifier = Modifier.padding(top = 8.dp)
         )
 
@@ -531,7 +534,7 @@ private fun CompanyApplicationDetailsContent(
                         modifier = Modifier.weight(1f),
                         enabled = !isUpdating && isFormValid,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
+                            containerColor = PrimaryDeepBlueButton,
                             disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
                         )
                     ) {
@@ -656,7 +659,7 @@ private fun TimelineItem(
                     .clip(CircleShape)
                     .background(
                         if (isCompleted) {
-                            Color(0xFF5C6BC0) // Material Blue-ish color matching screenshot
+                            Color(0xFF234353) // Material Blue-ish color matching screenshot
                         } else {
                             Color(0xFFE0E0E0) // Light gray for incomplete
                         }

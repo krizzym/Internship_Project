@@ -69,7 +69,7 @@ fun StudentRegistrationScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple)
+            .background(BackgroundGradientBrush)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
@@ -208,7 +208,7 @@ fun StudentRegistrationScreen(
                                 modifier = Modifier.fillMaxWidth().menuAnchor(),
                                 isError = state.errors.containsKey("course"),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 )
                             )
@@ -277,7 +277,7 @@ fun StudentRegistrationScreen(
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             isError = state.errors.containsKey("yearLevel"),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PurpleButton,
+                                focusedBorderColor = PrimaryDeepBlueButton,
                                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                             )
                         )
@@ -384,7 +384,7 @@ fun StudentRegistrationScreen(
                             append("I agree to the ")
 
                             pushStringAnnotation(tag = "TERMS", annotation = "terms")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(style = SpanStyle(color = PrimaryDeepBlueButton, fontWeight = FontWeight.Medium)) {
                                 append("Terms & Conditions")
                             }
                             pop()
@@ -392,7 +392,7 @@ fun StudentRegistrationScreen(
                             append(" and ")
 
                             pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
-                            withStyle(style = SpanStyle(color = PurpleButton, fontWeight = FontWeight.Medium)) {
+                            withStyle(style = SpanStyle(color = PrimaryDeepBlueButton, fontWeight = FontWeight.Medium)) {
                                 append("Privacy Policy")
                             }
                             pop()
@@ -463,7 +463,7 @@ fun StudentRegistrationScreen(
                             Text(
                                 text = "Log in",
                                 fontSize = 14.sp,
-                                color = PurpleButton,
+                                color = PrimaryDeepBlueButton,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }

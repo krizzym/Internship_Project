@@ -16,7 +16,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 import com.example.internshipproject.ui.theme.TextSecondary
 
 @Composable
@@ -49,10 +49,10 @@ fun InputField(
             maxLines = maxLines,
             shape = RoundedCornerShape(8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PurpleButton,
+                focusedBorderColor = PrimaryDeepBlueButton,
                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
                 errorBorderColor = Color.Red,
-                focusedLabelColor = PurpleButton,
+                focusedLabelColor = PrimaryDeepBlueButton,
                 unfocusedLabelColor = TextSecondary
             )
         )

@@ -157,9 +157,9 @@ fun StudentDashboardScreen(
                         selectedTab = 0
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
                 NavigationBarItem(
@@ -176,9 +176,9 @@ fun StudentDashboardScreen(
                         onNavigateToApplications()
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
                 NavigationBarItem(
@@ -189,9 +189,9 @@ fun StudentDashboardScreen(
                         onNavigateToProfile()
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
             }
@@ -200,7 +200,7 @@ fun StudentDashboardScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -280,7 +280,7 @@ fun StudentDashboardScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
                         ),
                         singleLine = true
@@ -291,12 +291,12 @@ fun StudentDashboardScreen(
                             onClick = { showFilterMenu = true },
                             modifier = Modifier
                                 .background(
-                                    if (selectedCategory != "All") PurpleButton else Color.White,
+                                    if (selectedCategory != "All") PrimaryDeepBlueButton else Color.White,
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .border(
                                     width = 1.dp,
-                                    color = if (selectedCategory != "All") PurpleButton else Color.Gray.copy(alpha = 0.3f),
+                                    color = if (selectedCategory != "All") PrimaryDeepBlueButton else Color.Gray.copy(alpha = 0.3f),
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .size(56.dp)
@@ -318,7 +318,7 @@ fun StudentDashboardScreen(
                                     text = { 
                                         Text(
                                             category,
-                                            color = if (selectedCategory == category) PurpleButton else TextPrimary,
+                                            color = if (selectedCategory == category) PrimaryDeepBlueButton else TextPrimary,
                                             fontWeight = if (selectedCategory == category) FontWeight.Bold else FontWeight.Normal
                                         ) 
                                     },
@@ -339,8 +339,8 @@ fun StudentDashboardScreen(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(16.dp),
-                            color = PurpleButton.copy(alpha = 0.1f),
-                            border = BorderStroke(1.dp, PurpleButton.copy(alpha = 0.2f))
+                            color = PrimaryDeepBlueButton.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, PrimaryDeepBlueButton.copy(alpha = 0.2f))
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -350,7 +350,7 @@ fun StudentDashboardScreen(
                                 Text(
                                     text = selectedCategory,
                                     fontSize = 12.sp,
-                                    color = PurpleButton,
+                                    color = PrimaryDeepBlueButton,
                                     fontWeight = FontWeight.Medium
                                 )
                                 IconButton(
@@ -360,7 +360,7 @@ fun StudentDashboardScreen(
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = "Remove filter",
-                                        tint = PurpleButton,
+                                        tint = PrimaryDeepBlueButton,
                                         modifier = Modifier.size(12.dp)
                                     )
                                 }
@@ -380,7 +380,7 @@ fun StudentDashboardScreen(
                     },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = Color(0xFFFFFF),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -394,7 +394,7 @@ fun StudentDashboardScreen(
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = PurpleButton)
+                        CircularProgressIndicator(color = PrimaryDeepBlueButton)
                     }
                 }
             }
@@ -441,7 +441,7 @@ fun StudentDashboardScreen(
                                     }
                                 },
                                 colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = PurpleButton
+                                    contentColor = PrimaryDeepBlueButton
                                 )
                             ) {
                                 Icon(
@@ -494,7 +494,7 @@ fun StatCard(
                 text = count.toString(),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = PurpleButton
+                color = PrimaryDeepBlueButton
             )
         }
     }
@@ -532,7 +532,7 @@ fun InternshipCard(
                     Text(
                         text = internship.companyName,
                         fontSize = 14.sp,
-                        color = PurpleButton,
+                        color = PrimaryDeepBlueButton,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(top = 4.dp)
                     )
@@ -578,7 +578,7 @@ fun InternshipCard(
             Button(
                 onClick = onClick,
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text("View Details", fontSize = 14.sp)

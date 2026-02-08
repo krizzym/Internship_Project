@@ -105,7 +105,7 @@ fun InternshipDetailsScreen(
                     Text(
                         text = internship.companyName,
                         fontSize = 18.sp,
-                        color = PurpleButton,
+                        color = PrimaryDeepBlueButton,
                         fontWeight = FontWeight.Medium
                     )
 
@@ -198,7 +198,7 @@ fun InternshipDetailsScreen(
                         Icon(
                             Icons.Default.LocationOn,
                             contentDescription = null,
-                            tint = PurpleButton,
+                            tint = PrimaryDeepBlueButton,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -246,7 +246,7 @@ fun InternshipDetailsScreen(
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp),
@@ -273,7 +273,7 @@ fun InternshipDetailsScreen(
                         shape = RoundedCornerShape(8.dp),
                         enabled = !isSubmitting,
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = if (resumeUri != null) PurpleButton else Color.Gray
+                            contentColor = if (resumeUri != null) PrimaryDeepBlueButton else Color.Gray
                         )
                     ) {
                         Icon(
@@ -351,7 +351,7 @@ fun InternshipDetailsScreen(
                             .fillMaxWidth()
                             .height(50.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PurpleButton
+                            containerColor = PrimaryDeepBlueButton
                         ),
                         shape = RoundedCornerShape(8.dp),
                         enabled = !isSubmitting
@@ -383,7 +383,7 @@ fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .background(
-                color = PurpleButton.copy(alpha = 0.1f),
+                color = PrimaryDeepBlueButton.copy(alpha = 0.1f),
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(horizontal = 12.dp, vertical = 8.dp)
@@ -391,7 +391,7 @@ fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = PurpleButton,
+            tint = PrimaryDeepBlueButton,
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))

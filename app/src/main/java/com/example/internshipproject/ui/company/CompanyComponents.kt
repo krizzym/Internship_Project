@@ -9,7 +9,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.internshipproject.ui.theme.CardWhite
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 import com.example.internshipproject.ui.theme.TextSecondary
 
 @Composable
@@ -35,7 +35,7 @@ fun StatCard(
             Text(
                 text = count.toString(),
                 fontSize = 32.sp,
-                color = PurpleButton,
+                color = PrimaryDeepBlueButton,
                 fontWeight = FontWeight.Bold
             )
         }

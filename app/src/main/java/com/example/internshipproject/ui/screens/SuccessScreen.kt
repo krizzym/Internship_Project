@@ -10,15 +10,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.internshipproject.ui.theme.BackgroundPurple
 import com.example.internshipproject.ui.theme.CardWhite
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
 
 @Composable
 fun SuccessScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple),
+            .background(BackgroundGradientBrush),
         contentAlignment = Alignment.Center
     ) {
         Column(

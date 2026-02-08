@@ -74,7 +74,7 @@ fun CompanyMyPostingsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -103,7 +103,7 @@ fun CompanyMyPostingsScreen(
                         Button(
                             onClick = { showCreateDialog = true },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null)
@@ -294,12 +294,12 @@ fun CompanyPostingCard(
                         Text("•", fontSize = 13.sp, color = TextSecondary)
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = PurpleButton.copy(alpha = 0.1f)
+                            color = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                         ) {
                             Text(
                                 text = posting.workType,
                                 fontSize = 11.sp,
-                                color = PurpleButton,
+                                color = PrimaryDeepBlueButton,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
@@ -311,7 +311,7 @@ fun CompanyPostingCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (posting.isActive) Color(0xFF10B981) else Color(0xFF6B7280)
+                    color = if (posting.isActive) Color(0xFF339900) else Color(0xFF6B7280)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -345,7 +345,7 @@ fun CompanyPostingCard(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = PurpleButton.copy(alpha = 0.08f)
+                        containerColor = PrimaryDeepBlueButton.copy(alpha = 0.08f)
                     )
                 ) {
                     Column(
@@ -358,7 +358,7 @@ fun CompanyPostingCard(
                             text = applicationCount.toString(),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            color = PurpleButton
+                            color = PrimaryDeepBlueButton
                         )
                         Text(
                             text = "Applications",
@@ -454,7 +454,7 @@ fun CompanyPostingCard(
                 Button(
                     onClick = onViewApplications,
                     modifier = Modifier.weight(1.5f),
-                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
@@ -472,9 +472,9 @@ fun CompanyPostingCard(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PurpleButton
+                        contentColor = PrimaryDeepBlueButton
                     ),
-                    border = BorderStroke(1.dp, PurpleButton),
+                    border = BorderStroke(1.dp, PrimaryDeepBlueButton),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
                     Icon(

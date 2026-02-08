@@ -129,7 +129,7 @@ fun CompanyCreatePostingDialog(
                                 singleLine = true,
                                 isError = state.errors.containsKey("jobTitle"),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -163,7 +163,7 @@ fun CompanyCreatePostingDialog(
                                     },
                                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = PurpleButton,
+                                        focusedBorderColor = PrimaryDeepBlueButton,
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -198,7 +198,7 @@ fun CompanyCreatePostingDialog(
                                 maxLines = 6,
                                 isError = state.errors.containsKey("jobDescription"),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -227,7 +227,7 @@ fun CompanyCreatePostingDialog(
                                     maxLines = 6,
                                     isError = state.errors.containsKey("requirements"),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = PurpleButton,
+                                        focusedBorderColor = PrimaryDeepBlueButton,
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -270,7 +270,7 @@ fun CompanyCreatePostingDialog(
                                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                                     isError = state.errors.containsKey("internshipType"),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = PurpleButton,
+                                        focusedBorderColor = PrimaryDeepBlueButton,
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -315,7 +315,7 @@ fun CompanyCreatePostingDialog(
                                     singleLine = true,
                                     isError = state.errors.containsKey("location"),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = PurpleButton,
+                                        focusedBorderColor = PrimaryDeepBlueButton,
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -341,7 +341,7 @@ fun CompanyCreatePostingDialog(
                                     singleLine = true,
                                     isError = state.errors.containsKey("duration"),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = PurpleButton,
+                                        focusedBorderColor = PrimaryDeepBlueButton,
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -380,7 +380,7 @@ fun CompanyCreatePostingDialog(
                                     singleLine = true,
                                     isError = state.errors.containsKey("slots"),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = PurpleButton,
+                                        focusedBorderColor = PrimaryDeepBlueButton,
                                         unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                     ),
                                     shape = RoundedCornerShape(8.dp)
@@ -411,7 +411,7 @@ fun CompanyCreatePostingDialog(
                                             Icon(
                                                 Icons.Default.CalendarToday,
                                                 contentDescription = "Select date",
-                                                tint = PurpleButton
+                                                tint = PrimaryDeepBlueButton
                                             )
                                         }
                                     },
@@ -422,7 +422,7 @@ fun CompanyCreatePostingDialog(
                                         disabledTextColor = MaterialTheme.colorScheme.onSurface,
                                         disabledBorderColor = MaterialTheme.colorScheme.outline,
                                         disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        disabledTrailingIconColor = PurpleButton
+                                        disabledTrailingIconColor = PrimaryDeepBlueButton
                                     )
                                 )
                                 if (state.errors.containsKey("deadline")) {
@@ -460,7 +460,7 @@ fun CompanyCreatePostingDialog(
                                     .fillMaxWidth()
                                     .menuAnchor(),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -499,7 +499,7 @@ fun CompanyCreatePostingDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -585,7 +585,7 @@ fun CompanyCreatePostingDialog(
                                     }
                                 }
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                             modifier = Modifier.weight(1f),
                             enabled = !state.isLoading,
                             shape = RoundedCornerShape(8.dp)
@@ -639,7 +639,7 @@ fun CompanyCreatePostingDialog(
                             showDatePicker = false
                         }
                     ) {
-                        Text("OK", color = PurpleButton)
+                        Text("OK", color = PrimaryDeepBlueButton)
                     }
                 },
                 dismissButton = {
@@ -651,9 +651,9 @@ fun CompanyCreatePostingDialog(
                 DatePicker(
                     state = datePickerState,
                     colors = DatePickerDefaults.colors(
-                        selectedDayContainerColor = PurpleButton,
-                        todayContentColor = PurpleButton,
-                        todayDateBorderColor = PurpleButton
+                        selectedDayContainerColor = PrimaryDeepBlueButton,
+                        todayContentColor = PrimaryDeepBlueButton,
+                        todayDateBorderColor = PrimaryDeepBlueButton
                     )
                 )
             }
@@ -692,7 +692,7 @@ fun CompanyCreatePostingDialog(
                                 )
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text("Confirm", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)

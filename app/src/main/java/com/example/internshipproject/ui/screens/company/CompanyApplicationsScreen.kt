@@ -69,8 +69,8 @@ fun CompanyApplicationsScreen(
                 if (state.isLoading) {
                     LinearProgressIndicator(
                         modifier = Modifier.fillMaxWidth(),
-                        color = PurpleButton,
-                        trackColor = PurpleButton.copy(alpha = 0.15f)
+                        color = PrimaryDeepBlueButton,
+                        trackColor = PrimaryDeepBlueButton.copy(alpha = 0.15f)
                     )
                 }
             }
@@ -79,7 +79,7 @@ fun CompanyApplicationsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -116,13 +116,13 @@ fun CompanyApplicationsScreen(
                             // Total count badge — always shows the FULL list size
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
-                                color = PurpleButton.copy(alpha = 0.1f)
+                                color = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                             ) {
                                 Text(
                                     text = "${state.applications.size}",
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = PurpleButton,
+                                    color = PrimaryDeepBlueButton,
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                                 )
                             }
@@ -140,14 +140,14 @@ fun CompanyApplicationsScreen(
                     ImprovedStatCard(
                         title = "Pending",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.PENDING),
-                        color = Color(0xFFFBBF24),
+                        color = TextPrimary,
                         backgroundColor = Color(0xFFFEF3C7),
                         modifier = Modifier.weight(1f)
                     )
                     ImprovedStatCard(
                         title = "Reviewed",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.REVIEWED),
-                        color = Color(0xFF3B82F6),
+                        color = TextPrimary,
                         backgroundColor = Color(0xFFDBEAFE),
                         modifier = Modifier.weight(1f)
                     )
@@ -162,14 +162,14 @@ fun CompanyApplicationsScreen(
                     ImprovedStatCard(
                         title = "Shortlisted",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.SHORTLISTED),
-                        color = Color(0xFF8B5CF6),
+                        color = TextPrimary,
                         backgroundColor = Color(0xFFEDE9FE),
                         modifier = Modifier.weight(1f)
                     )
                     ImprovedStatCard(
                         title = "Accepted",
                         count = viewModel.getApplicationCountByStatus(ApplicationStatus.ACCEPTED),
-                        color = Color(0xFF10B981),
+                        color = TextPrimary,
                         backgroundColor = Color(0xFFD1FAE5),
                         modifier = Modifier.weight(1f)
                     )
@@ -215,7 +215,7 @@ fun CompanyApplicationsScreen(
                                     .fillMaxWidth()
                                     .menuAnchor(),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -247,7 +247,7 @@ fun CompanyApplicationsScreen(
                                                     Icon(
                                                         Icons.Default.Check,
                                                         contentDescription = null,
-                                                        tint = PurpleButton,
+                                                        tint = PrimaryDeepBlueButton,
                                                         modifier = Modifier.size(20.dp)
                                                     )
                                                 }
@@ -287,13 +287,13 @@ fun CompanyApplicationsScreen(
                             )
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
-                                color = PurpleButton.copy(alpha = 0.1f)
+                                color = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                             ) {
                                 Text(
                                     text = "${filteredApplications.size}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = PurpleButton,
+                                    color = PrimaryDeepBlueButton,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                                 )
                             }
@@ -408,7 +408,7 @@ fun ApplicationDetailsCard(
                         ApplicationStatus.REVIEWED -> Color(0xFF3B82F6)
                         ApplicationStatus.SHORTLISTED -> Color(0xFF8B5CF6)
                         ApplicationStatus.ACCEPTED -> Color(0xFF10B981)
-                        ApplicationStatus.REJECTED -> Color(0xFFEF4444)
+                        ApplicationStatus.REJECTED -> Color(0xFFE53935)
                     }
                 ) {
                     Text(
@@ -474,7 +474,7 @@ fun ApplicationDetailsCard(
                 Button(
                     onClick = onReview,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(vertical = 14.dp)
                 ) {
@@ -497,7 +497,7 @@ fun ApplicationDetailsCard(
                     modifier = Modifier.weight(1f),
                     enabled = application.hasResume,
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PurpleButton
+                        contentColor = PrimaryDeepBlueButton
                     ),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(vertical = 14.dp)

@@ -65,13 +65,13 @@ fun CompanyDashboardScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = PurpleButton)
+                CircularProgressIndicator(color = PrimaryDeepBlueButton)
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(BackgroundPurple)
+                    .background(BackgroundGradientBrush)
                     .padding(paddingValues)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -239,7 +239,7 @@ fun ImprovedPostingCard(
                 // Status Badge
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = if (posting.isActive) Color(0xFF10B981) else Color(0xFF6B7280)
+                    color = if (posting.isActive) Color(0xFF339900) else Color(0xFF6B7280)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
@@ -346,9 +346,9 @@ fun ImprovedPostingCard(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PurpleButton
+                        contentColor = PrimaryDeepBlueButton
                     ),
-                    border = BorderStroke(1.dp, PurpleButton)
+                    border = BorderStroke(1.dp, PrimaryDeepBlueButton)
                 ) {
                     Text("Edit", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                 }
@@ -356,7 +356,7 @@ fun ImprovedPostingCard(
                 Button(
                     onClick = onViewApplications,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text("View", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)

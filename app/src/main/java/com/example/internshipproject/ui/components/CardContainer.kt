@@ -13,8 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.internshipproject.ui.theme.BackgroundPurple
 import com.example.internshipproject.ui.theme.CardWhite
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
+
 
 @Composable
 fun CardContainer(
@@ -24,7 +25,7 @@ fun CardContainer(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple),
+            .background(BackgroundGradientBrush),
         contentAlignment = Alignment.Center
     ) {
         Card(

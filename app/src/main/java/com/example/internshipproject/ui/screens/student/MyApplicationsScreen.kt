@@ -1,6 +1,7 @@
 package com.example.internshipproject.ui.screens.student
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -135,9 +136,9 @@ fun MyApplicationsScreen(
                         onBackToDashboard()
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
                 NavigationBarItem(
@@ -148,9 +149,9 @@ fun MyApplicationsScreen(
                         selectedTab = 1
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
                 NavigationBarItem(
@@ -162,9 +163,9 @@ fun MyApplicationsScreen(
                         onNavigateToProfile()
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
             }
@@ -173,7 +174,7 @@ fun MyApplicationsScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -235,7 +236,7 @@ fun MyApplicationsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             CircularProgressIndicator(
-                                color = PurpleButton,
+                                color = PrimaryDeepBlueButton,
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
                             )
@@ -283,7 +284,7 @@ fun MyApplicationsScreen(
                                 )
                                 Button(
                                     onClick = onBrowseInternships,
-                                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
+                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton)
                                 ) {
                                     Text("Browse Internships")
                                 }
@@ -321,7 +322,7 @@ fun StatusRow(label: String, count: Int) {
             count.toString(),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = PurpleButton
+            color = PrimaryDeepBlueButton
         )
     }
 }
@@ -337,7 +338,8 @@ fun ApplicationCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = BackgroundPurple.copy(alpha = 0.3f))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFF2C3E50))  // Dark border
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Title, Company, and Delete Button
@@ -406,7 +408,7 @@ fun ApplicationCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                 shape = RoundedCornerShape(6.dp)
             ) {
                 Text("View Application", fontSize = 13.sp)

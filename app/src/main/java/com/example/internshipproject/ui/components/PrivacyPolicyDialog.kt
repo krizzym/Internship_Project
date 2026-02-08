@@ -10,7 +10,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 
 @Composable
 fun PrivacyPolicyDialog(
@@ -108,7 +108,7 @@ By using FirstStep, you consent to the collection and use of information as desc
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton)
                 ) {
                     Text("Close", fontSize = 16.sp)
                 }

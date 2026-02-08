@@ -19,11 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.internshipproject.ui.components.CardContainer
 import com.example.internshipproject.ui.components.PrimaryButton
-import com.example.internshipproject.ui.theme.BackgroundPurple
 import com.example.internshipproject.ui.theme.CardWhite
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 import com.example.internshipproject.ui.theme.TextPrimary
 import com.example.internshipproject.ui.theme.TextSecondary
+import com.example.internshipproject.ui.theme.BackgroundGradientBrush
 
 @Composable
 fun JoinScreen(
@@ -34,7 +34,7 @@ fun JoinScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple),
+            .background(BackgroundGradientBrush),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -183,7 +183,7 @@ fun JoinScreen(
                         Text(
                             text = "Log in",
                             fontSize = 14.sp,
-                            color = PurpleButton,
+                            color = PrimaryDeepBlueButton,
                             fontWeight = FontWeight.SemiBold
                         )
                     }

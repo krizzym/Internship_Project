@@ -15,7 +15,7 @@ import com.example.internshipproject.ui.screens.company.CompanyDashboardScreen
 import com.example.internshipproject.ui.screens.company.CompanyMyPostingsScreen
 import com.example.internshipproject.ui.screens.company.CompanyProfileScreen
 import com.example.internshipproject.ui.screens.company.ViewApplicationsScreen
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 
 @Composable
 fun CompanyMainScreen(
@@ -43,9 +43,9 @@ fun CompanyMainScreen(
                             navigationState = NavigationState.Tab(0)
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PurpleButton,
-                            selectedTextColor = PurpleButton,
-                            indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                            selectedIconColor = PrimaryDeepBlueButton,
+                            selectedTextColor = PrimaryDeepBlueButton,
+                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                         )
                     )
                     NavigationBarItem(
@@ -57,9 +57,9 @@ fun CompanyMainScreen(
                             navigationState = NavigationState.Tab(1)
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PurpleButton,
-                            selectedTextColor = PurpleButton,
-                            indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                            selectedIconColor = PrimaryDeepBlueButton,
+                            selectedTextColor = PrimaryDeepBlueButton,
+                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                         )
                     )
                     NavigationBarItem(
@@ -71,9 +71,9 @@ fun CompanyMainScreen(
                             navigationState = NavigationState.Tab(2)
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PurpleButton,
-                            selectedTextColor = PurpleButton,
-                            indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                            selectedIconColor = PrimaryDeepBlueButton,
+                            selectedTextColor = PrimaryDeepBlueButton,
+                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                         )
                     )
                     NavigationBarItem(
@@ -85,9 +85,9 @@ fun CompanyMainScreen(
                             navigationState = NavigationState.Tab(3)
                         },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PurpleButton,
-                            selectedTextColor = PurpleButton,
-                            indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                            selectedIconColor = PrimaryDeepBlueButton,
+                            selectedTextColor = PrimaryDeepBlueButton,
+                            indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                         )
                     )
                 }

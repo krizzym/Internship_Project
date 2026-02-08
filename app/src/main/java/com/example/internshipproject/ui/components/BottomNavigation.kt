@@ -6,7 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.example.internshipproject.ui.theme.PurpleButton
+import com.example.internshipproject.ui.theme.PrimaryDeepBlueButton
 
 sealed class BottomNavItem(
     val route: String,
@@ -31,7 +31,7 @@ fun StudentBottomNavigation(
 
     NavigationBar(
         containerColor = Color.White,
-        contentColor = PurpleButton
+        contentColor = PrimaryDeepBlueButton
     ) {
         items.forEach { item ->
             NavigationBarItem(
@@ -40,9 +40,9 @@ fun StudentBottomNavigation(
                 selected = currentRoute == item.route,
                 onClick = { onNavigate(item.route) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = PurpleButton,
-                    selectedTextColor = PurpleButton,
-                    indicatorColor = PurpleButton.copy(alpha = 0.15f),
+                    selectedIconColor = PrimaryDeepBlueButton,
+                    selectedTextColor = PrimaryDeepBlueButton,
+                    indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.15f),
                     unselectedIconColor = Color.Gray,
                     unselectedTextColor = Color.Gray
                 )

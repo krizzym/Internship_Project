@@ -167,7 +167,7 @@ fun CompanyProfileScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -288,7 +288,7 @@ fun CompanyProfileScreen(
                         singleLine = true,
                         isError = state.errors.containsKey("contactNumber"),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -310,7 +310,7 @@ fun CompanyProfileScreen(
                         singleLine = true,
                         isError = state.errors.containsKey("companyName"),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -332,7 +332,7 @@ fun CompanyProfileScreen(
                         singleLine = true,
                         isError = state.errors.containsKey("contactPerson"),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -354,7 +354,7 @@ fun CompanyProfileScreen(
                         singleLine = true,
                         isError = state.errors.containsKey("industryType"),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -377,7 +377,7 @@ fun CompanyProfileScreen(
                         maxLines = 2,
                         isError = state.errors.containsKey("companyAddress"),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -400,7 +400,7 @@ fun CompanyProfileScreen(
                         maxLines = 5,
                         isError = state.errors.containsKey("companyDescription"),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -449,7 +449,7 @@ fun CompanyProfileScreen(
                                 Icon(
                                     Icons.Default.CheckCircle,
                                     contentDescription = null,
-                                    tint = PurpleButton,
+                                    tint = PrimaryDeepBlueButton,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -470,7 +470,7 @@ fun CompanyProfileScreen(
                                 .padding(bottom = 16.dp),
                             shape = RoundedCornerShape(8.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = PurpleButton
+                                contentColor = PrimaryDeepBlueButton
                             )
                         ) {
                             Icon(

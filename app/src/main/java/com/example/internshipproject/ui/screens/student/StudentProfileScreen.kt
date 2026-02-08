@@ -148,8 +148,8 @@ fun StudentProfileScreen(
                     selected = false,
                     onClick = onBackToDashboard,
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton
                     )
                 )
                 NavigationBarItem(
@@ -158,8 +158,8 @@ fun StudentProfileScreen(
                     selected = false,
                     onClick = onNavigateToApplications,
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton
                     )
                 )
                 NavigationBarItem(
@@ -168,9 +168,9 @@ fun StudentProfileScreen(
                     selected = true,
                     onClick = { },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PurpleButton,
-                        selectedTextColor = PurpleButton,
-                        indicatorColor = PurpleButton.copy(alpha = 0.1f)
+                        selectedIconColor = PrimaryDeepBlueButton,
+                        selectedTextColor = PrimaryDeepBlueButton,
+                        indicatorColor = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                     )
                 )
             }
@@ -179,7 +179,7 @@ fun StudentProfileScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
@@ -333,7 +333,7 @@ fun StudentProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             isError = state.errors.containsKey("school"),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PurpleButton,
+                                focusedBorderColor = PrimaryDeepBlueButton,
                                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                             ),
                             shape = RoundedCornerShape(8.dp)
@@ -366,7 +366,7 @@ fun StudentProfileScreen(
                             placeholder = { Text("e.g., BS Computer Science", fontSize = 14.sp, color = TextSecondary.copy(alpha = 0.5f)) },
                             isError = state.errors.containsKey("course"),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PurpleButton,
+                                focusedBorderColor = PrimaryDeepBlueButton,
                                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                             ),
                             shape = RoundedCornerShape(8.dp)
@@ -400,7 +400,7 @@ fun StudentProfileScreen(
                             modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             isError = state.errors.containsKey("yearLevel"),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PurpleButton,
+                                focusedBorderColor = PrimaryDeepBlueButton,
                                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                             ),
                             shape = RoundedCornerShape(8.dp)
@@ -445,7 +445,7 @@ fun StudentProfileScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 isError = state.errors.containsKey("city"),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -466,7 +466,7 @@ fun StudentProfileScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 isError = state.errors.containsKey("barangay"),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = PurpleButton,
+                                    focusedBorderColor = PrimaryDeepBlueButton,
                                     unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                                 ),
                                 shape = RoundedCornerShape(8.dp)
@@ -528,7 +528,7 @@ fun StudentProfileScreen(
                         singleLine = false,
                         maxLines = 3,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PurpleButton,
+                            focusedBorderColor = PrimaryDeepBlueButton,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         ),
                         shape = RoundedCornerShape(8.dp)
@@ -563,7 +563,7 @@ fun StudentProfileScreen(
     if (showUpdateDialog) {
         AlertDialog(
             onDismissRequest = { showUpdateDialog = false },
-            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = PurpleButton) },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = PrimaryDeepBlueButton) },
             title = { Text("Confirm Update") },
             text = { Text("Are you sure you want to update your profile information?") },
             confirmButton = {
@@ -572,7 +572,7 @@ fun StudentProfileScreen(
                         showUpdateDialog = false
                         viewModel.updateProfile()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton)
                 ) {
                     Text("Confirm")
                 }

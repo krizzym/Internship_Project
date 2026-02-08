@@ -44,7 +44,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple)
+            .background(BackgroundGradientBrush)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
@@ -183,7 +183,7 @@ fun LoginScreen(
                                 Text(
                                     text = "Register",
                                     fontSize = 14.sp,
-                                    color = PurpleButton,
+                                    color = PrimaryDeepBlueButton,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }

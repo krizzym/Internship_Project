@@ -210,7 +210,7 @@ fun StudentViewApplicationScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PurpleButton,
+                    containerColor = PrimaryDeepBlueButton,
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 )
@@ -220,14 +220,14 @@ fun StudentViewApplicationScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPurple)
+                .background(BackgroundGradientBrush)
                 .padding(paddingValues)
         ) {
             when {
                 isLoading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = PurpleButton
+                        color = PrimaryDeepBlueButton
                     )
                 }
                 errorMessage != null -> {
@@ -254,7 +254,7 @@ fun StudentViewApplicationScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         Button(
                             onClick = { navController.popBackStack() },
-                            colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton)
                         ) {
                             Text("Go Back")
                         }
@@ -356,12 +356,12 @@ fun StudentViewApplicationScreen(
                                         ) {
                                             Surface(
                                                 shape = RoundedCornerShape(4.dp),
-                                                color = PurpleButton.copy(alpha = 0.1f)
+                                                color = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                                             ) {
                                                 Text(
                                                     type,
                                                     fontSize = 13.sp,
-                                                    color = PurpleButton,
+                                                    color = PrimaryDeepBlueButton,
                                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                                 )
                                             }
@@ -430,7 +430,7 @@ fun StudentViewApplicationScreen(
                                                     resumeMimeType
                                                 )
                                             },
-                                            colors = ButtonDefaults.buttonColors(containerColor = PurpleButton),
+                                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton),
                                             shape = RoundedCornerShape(6.dp)
                                         ) {
                                             Icon(
@@ -525,7 +525,7 @@ fun TimelineItem(event: TimelineEvent, isLast: Boolean) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Surface(
                 shape = RoundedCornerShape(50),
-                color = if (event.isCompleted) PurpleButton else Color.LightGray,
+                color = if (event.isCompleted) PrimaryDeepBlueButton else Color.LightGray,
                 modifier = Modifier.size(16.dp)
             ) {}
             if (!isLast) {
@@ -533,7 +533,7 @@ fun TimelineItem(event: TimelineEvent, isLast: Boolean) {
                     modifier = Modifier
                         .width(2.dp)
                         .height(32.dp),
-                    color = if (event.isCompleted) PurpleButton else Color.LightGray
+                    color = if (event.isCompleted) PrimaryDeepBlueButton else Color.LightGray
                 )
             }
         }

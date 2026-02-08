@@ -52,17 +52,23 @@ fun ViewApplicationsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Applications") },
+                title = {
+                    Text(
+                        "Applications",
+                        color = Color.Black
+                    )
+                },
                 navigationIcon = {
-                    // Use callback instead of navController.popBackStack()
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            "Back",
+                            tint = Color.Black
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF6366F1),
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = Color.White
                 )
             )
         }
@@ -128,7 +134,7 @@ private fun ApplicationsContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple)
+            .background(BackgroundGradientBrush)
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -238,13 +244,13 @@ private fun ApplicationsContent(
                         )
                         Surface(
                             shape = RoundedCornerShape(20.dp),
-                            color = PurpleButton.copy(alpha = 0.1f)
+                            color = PrimaryDeepBlueButton.copy(alpha = 0.1f)
                         ) {
                             Text(
                                 text = "${state.applicationsWithStudents.size} Total",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = PurpleButton,
+                                color = PrimaryDeepBlueButton,
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                             )
                         }
@@ -387,7 +393,7 @@ private fun ApplicationCard(
                     onClick = onReview,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PurpleButton
+                        containerColor = PrimaryDeepBlueButton
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -406,7 +412,7 @@ private fun ApplicationCard(
                     modifier = Modifier.weight(1f),
                     enabled = app.hasResume,
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = PurpleButton
+                        contentColor = PrimaryDeepBlueButton
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -468,7 +474,7 @@ private fun InfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text
             icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = PurpleButton
+            tint = PrimaryDeepBlueButton
         )
         Text(
             text = text,
@@ -511,7 +517,7 @@ private fun ErrorView(message: String, onRetry: () -> Unit) {
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
-                containerColor = PurpleButton
+                containerColor = PrimaryDeepBlueButton
             )
         ) {
             Text("Retry")

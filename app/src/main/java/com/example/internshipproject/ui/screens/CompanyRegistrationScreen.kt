@@ -58,7 +58,7 @@ fun CompanyRegistrationScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundPurple)
+            .background(BackgroundGradientBrush)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
@@ -199,7 +199,7 @@ fun CompanyRegistrationScreen(
                             modifier = Modifier.fillMaxWidth().menuAnchor(),
                             isError = state.errors.containsKey("industryType"),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = PurpleButton,
+                                focusedBorderColor = PrimaryDeepBlueButton,
                                 unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                             )
                         )
@@ -276,7 +276,7 @@ fun CompanyRegistrationScreen(
                     Button(
                         onClick = { logoPicker.launch("image/*") },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = PurpleButton)
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDeepBlueButton)
                     ) {
                         Text("Upload Logo")
                     }
@@ -324,7 +324,7 @@ fun CompanyRegistrationScreen(
                             pushStringAnnotation(tag = "TERMS", annotation = "terms")
                             withStyle(
                                 style = SpanStyle(
-                                    color = PurpleButton,
+                                    color = PrimaryDeepBlueButton,
                                     fontWeight = FontWeight.Medium,
                                     textDecoration = TextDecoration.Underline  // ✅ Added underline
                                 )
@@ -338,7 +338,7 @@ fun CompanyRegistrationScreen(
                             pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
                             withStyle(
                                 style = SpanStyle(
-                                    color = PurpleButton,
+                                    color = PrimaryDeepBlueButton,
                                     fontWeight = FontWeight.Medium,
                                     textDecoration = TextDecoration.Underline  // ✅ Added underline
                                 )
@@ -422,7 +422,7 @@ fun CompanyRegistrationScreen(
                             Text(
                                 text = "Log in",
                                 fontSize = 14.sp,
-                                color = PurpleButton,
+                                color = PrimaryDeepBlueButton,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
