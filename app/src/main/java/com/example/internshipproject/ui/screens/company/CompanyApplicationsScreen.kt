@@ -123,7 +123,7 @@ fun CompanyApplicationsScreen(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = PrimaryDeepBlueButton,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
                                 )
                             }
                         }
